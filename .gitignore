@@ -1,0 +1,8 @@
+node_modules/
+.pnpm-store/
+dist/
+.env
+.env.*
+!.env.example
+# Registro local contém detalhes do computador e da sessão de aprendizagem.
+docs/prova-tecnica/roteiro.md
