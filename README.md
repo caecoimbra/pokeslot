@@ -8,6 +8,8 @@ O código inclui uma **prova técnica de identidade e saldo** e regras iniciais 
 
 A regra inicial dos três rolos está em desenvolvimento: cada rolo contém 10 Pokébolas, 6 símbolos de giro e 4 vales, com embaralhamento e escolha de posição por rodada. A prévia bilíngue apresenta rodadas geradas pelo servidor local de desenvolvimento; elas não movimentam saldo nem concedem recompensas.
 
+Para o jogo, a regra em desenvolvimento prevê saldo inicial de 20 giros e reposição de 10 a cada período completo de 24 horas, acumulada durante a ausência. A inicialização e a reposição locais ainda precisam ser integradas à persistência do jogo; as contas fictícias da prova mantêm sua configuração própria.
+
 A primeira versão está planejada com as 151 espécies de Kanto e uma interface bilíngue em português e inglês, com alternância pelo jogador. Há um cliente inicial para obter e preparar dados da PokéAPI, incluindo sprites e tipos, mas ele ainda não está integrado a uma Pokédex jogável. Quando um texto não estiver disponível no idioma escolhido, sua origem e tratamento precisarão ser definidos. A quantidade de giros, as chances e outras regras de recompensa permanecem em definição.
 
 Foram experimentados Neon Auth, PostgreSQL, Neon Data API e uma Neon Function em um branch de teste. A Data API apresentou falha intermitente de contexto de identidade; a causa não foi identificada. A função alternativa passou em cenários pontuais de recuperação de saldo, repetição e concorrência, mas a arquitetura para publicação e os privilégios de acesso ainda precisam de revisão. A comparação prática com Supabase foi interrompida por decisão do autor e não constitui resultado para aquela plataforma.

@@ -1,5 +1,14 @@
 export const REFILL_AMOUNT = 10;
+export const INITIAL_BALANCE = 20;
 export const REFILL_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+// O início do ciclo deve ser definido pelo backend com um relógio confiável.
+export function createInitialProgress(nowMs) {
+  if (!Number.isSafeInteger(nowMs)) {
+    throw new TypeError("timestamp must be safe integer milliseconds");
+  }
+  return { balance: INITIAL_BALANCE, cycleStartedAtMs: nowMs };
+}
 
 /**
  * Applies every complete refill period since the stored cycle anchor.
