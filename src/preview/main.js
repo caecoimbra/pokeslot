@@ -1,4 +1,5 @@
 import { findWinningLines } from '../domain/paylines.mjs';
+import { rewardTypesForLines } from '../domain/rewards.mjs';
 
 // A grade inicial é fixa; as rodadas demonstrativas vêm do servidor local.
 let grid = [
@@ -14,6 +15,8 @@ const messages = {
     results: 'LINHAS VENCEDORAS', caption: 'Os símbolos destacados fazem parte de uma ou mais linhas vencedoras.',
     footnote: 'Demonstração local: não usa saldo, não sorteia Pokémon e não concede prêmios.',
     spinButton: 'Girar demonstração', spinning: 'Gerando rodada…', noWins: 'Nenhuma nesta rodada',
+    rewardHeading: 'Tipos de recompensa — demonstração', noRewards: 'Nenhuma recompensa indicada nesta rodada.',
+    rewardTypes: { pokemon: 'Captura de Pokémon', extra_spins: 'Giros extras', voucher: 'Vale' },
     initial: 'A grade inicial é um exemplo fixo. Clique para gerar uma rodada.',
     success: 'Rodada demonstrativa concluída.', failure: 'Não foi possível gerar a rodada. Inicie o servidor local de desenvolvimento e tente novamente.',
     symbols: { pokeball: 'Pokébola', spin: 'Giro', voucher: 'Vale' },
@@ -26,6 +29,8 @@ const messages = {
     results: 'WINNING LINES', caption: 'Highlighted symbols belong to one or more winning lines.',
     footnote: 'Local demonstration: no balance, Pokémon draws or rewards are used.',
     spinButton: 'Spin demonstration', spinning: 'Generating round…', noWins: 'None this round',
+    rewardHeading: 'Reward types — demonstration', noRewards: 'No rewards indicated this round.',
+    rewardTypes: { pokemon: 'Pokémon capture', extra_spins: 'Extra spins', voucher: 'Voucher' },
     initial: 'The starting grid is a fixed example. Click to generate a round.',
     success: 'Demonstration round complete.', failure: 'Could not generate the round. Start the local development server and try again.',
     symbols: { pokeball: 'Poké Ball', spin: 'Spin', voucher: 'Voucher' },
@@ -66,6 +71,14 @@ function render() {
   document.querySelector('#grid').replaceChildren(...cells);
   document.querySelector('#grid').setAttribute('aria-label', text.machineTitle);
   document.querySelector('#lines').textContent = wins.length ? wins.map(({ line }) => text.lines[line]).join(' · ') : text.noWins;
+  const rewards = rewardTypesForLines(wins);
+  const rewardItems = rewards.map(({ line, type }) => {
+    const item = document.createElement('li');
+    item.textContent = `${text.lines[line]} — ${text.rewardTypes[type]}`;
+    return item;
+  });
+  document.querySelector('#rewards').replaceChildren(...rewardItems);
+  document.querySelector('#no-rewards').textContent = rewards.length ? '' : text.noRewards;
   const spin = document.querySelector('#spin');
   spin.disabled = pending;
   spin.textContent = pending ? text.spinning : text.spinButton;
