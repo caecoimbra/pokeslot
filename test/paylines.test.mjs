@@ -86,4 +86,9 @@ test('o resultado gerado no servidor preserva a grade e as linhas encontradas', 
   assert.deepEqual(result.grid, visibleGridFromReels(result.reels));
   assert.deepEqual(result.winningLines, findWinningLines(result.grid));
   assert.deepEqual(result.grid[1], result.reels.map((reel) => reel.symbol));
+  const expectedTypes = { pokeball: 'pokemon', spin: 'extra_spins', voucher: 'voucher' };
+  assert.deepEqual(result.rewardTypes, result.winningLines.map(({ line, symbol }) => ({
+    line,
+    type: expectedTypes[symbol],
+  })));
 });
