@@ -1,0 +1,28 @@
+:root { font-family: system-ui, sans-serif; color: #ecf2ff; background: #101829; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(circle at top, #283657, #101829 65%); min-height: 100vh; }
+.shell { width: min(100% - 36px, 760px); margin: auto; padding: 28px 0 56px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; }
+.brand { font-weight: 900; letter-spacing: .13em; font-size: 1.15rem; }
+.brand span { color: #ffcc63; }
+.language { color: white; background: #283958; border: 1px solid #7180a0; border-radius: 8px; padding: 8px 14px; font-weight: 800; cursor: pointer; }
+.language:focus-visible { outline: 3px solid #ffcb64; outline-offset: 3px; }
+.intro { margin: 50px 0 26px; }
+.eyebrow { text-transform: uppercase; color: #ffca61; font-size: .75rem; font-weight: 800; letter-spacing: .16em; }
+h1 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; margin: 10px 0; }
+.intro > p:last-child, .caption, .footnote { color: #c0cce1; line-height: 1.6; }
+.machine { background: #243657; border: 2px solid #d89441; border-radius: 20px; padding: clamp(18px, 5vw, 32px); box-shadow: 0 14px 0 #a95c35, 0 22px 38px #080e1c88; }
+.machine-header { display: flex; justify-content: space-between; color: #ffdf91; font-size: .72rem; letter-spacing: .13em; font-weight: 800; }
+.light { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #71e7b5; margin-right: 8px; }
+h2 { font-size: 1.05rem; margin: 24px 0 14px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 9px; background: #101a31; border-radius: 12px; }
+.cell { min-height: 105px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: #edf0ed; color: #26324a; border: 3px solid transparent; border-radius: 8px; font-size: .78rem; font-weight: 700; }
+.cell.winning { border-color: #ffc253; background: #fff8db; }
+.symbol { font-size: clamp(2rem, 8vw, 3rem); line-height: 1; }
+.pokeball .symbol { color: #de5553; } .spin .symbol { color: #3869b7; } .voucher .symbol { color: #d59326; }
+.results { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+.results > span { color: #ffdf91; letter-spacing: .1em; font-size: .68rem; font-weight: 800; }
+.results strong { font-size: .9rem; }
+.caption { margin-bottom: 0; font-size: .85rem; }
+.footnote { margin-top: 35px; font-size: .85rem; }
+@media (max-width: 420px) { .cell { min-height: 78px; font-size: .67rem; } .intro { margin-top: 36px; } }

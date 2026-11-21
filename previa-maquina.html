@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#17233d" />
+    <title>PokéSlot — prévia da máquina</title>
+    <link rel="stylesheet" href="/src/preview/style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <span class="brand">POKÉ<span>SLOT</span></span>
+        <button id="language" class="language" type="button" aria-label="Switch to English">EN</button>
+      </header>
+      <section class="intro">
+        <p class="eyebrow" data-text="eyebrow"></p>
+        <h1 data-text="title"></h1>
+        <p data-text="intro"></p>
+      </section>
+      <section class="machine" aria-labelledby="machine-title">
+        <div class="machine-header">
+          <div><span class="light"></span><span data-text="machineLabel"></span></div>
+          <span>03 × 03</span>
+        </div>
+        <h2 id="machine-title" data-text="machineTitle"></h2>
+        <div class="grid" id="grid" role="group"></div>
+        <div class="results" aria-live="polite">
+          <span data-text="results"></span>
+          <strong id="lines"></strong>
+        </div>
+        <p class="caption" data-text="caption"></p>
+      </section>
+      <p class="footnote" data-text="footnote"></p>
+    </main>
+    <script type="module" src="/src/preview/main.js"></script>
+  </body>
+</html>
