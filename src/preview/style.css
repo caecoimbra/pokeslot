@@ -23,6 +23,10 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .results { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
 .results > span { color: #ffdf91; letter-spacing: .1em; font-size: .68rem; font-weight: 800; }
 .results strong { font-size: .9rem; }
+.spin-button { width: 100%; margin-top: 22px; padding: 14px; border: 0; border-radius: 10px; background: #ffca61; color: #182641; font: inherit; font-weight: 800; cursor: pointer; }
+.spin-button:disabled { cursor: wait; opacity: .65; }
+.spin-button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+.status { min-height: 1.5em; margin: 10px 0 0; color: #ffe3a1; font-size: .9rem; }
 .caption { margin-bottom: 0; font-size: .85rem; }
 .footnote { margin-top: 35px; font-size: .85rem; }
 @media (max-width: 420px) { .cell { min-height: 78px; font-size: .67rem; } .intro { margin-top: 36px; } }

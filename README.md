@@ -6,7 +6,7 @@ Projeto de aprendizagem para construir uma máquina de três rolos inspirada em 
 
 O código inclui uma **prova técnica de identidade e saldo** e regras iniciais da máquina e das capturas. O jogo completo e a Pokédex ainda não estão integrados. A prova usa dados fictícios e uma reposição ilustrativa de 10 giros por período; essa quantidade não é uma regra final do jogo.
 
-A regra inicial dos três rolos está em desenvolvimento: cada rolo contém 10 Pokébolas, 6 símbolos de giro e 4 vales, com embaralhamento e escolha de posição por rodada. Há uma prévia bilíngue com grade fixa e linhas vencedoras; ela não executa rodadas nem movimenta saldo ou concede recompensas.
+A regra inicial dos três rolos está em desenvolvimento: cada rolo contém 10 Pokébolas, 6 símbolos de giro e 4 vales, com embaralhamento e escolha de posição por rodada. A prévia bilíngue apresenta rodadas geradas pelo servidor local de desenvolvimento; elas não movimentam saldo nem concedem recompensas.
 
 A primeira versão está planejada com as 151 espécies de Kanto e uma interface bilíngue em português e inglês, com alternância pelo jogador. Há um cliente inicial para obter e preparar dados da PokéAPI, incluindo sprites e tipos, mas ele ainda não está integrado a uma Pokédex jogável. Quando um texto não estiver disponível no idioma escolhido, sua origem e tratamento precisarão ser definidos. A quantidade de giros, as chances e outras regras de recompensa permanecem em definição.
 
@@ -24,7 +24,7 @@ Foram experimentados Neon Auth, PostgreSQL, Neon Data API e uma Neon Function em
 
 Requer Node.js e pnpm compatíveis com as dependências em `pnpm-lock.yaml`. Instale com `pnpm install --frozen-lockfile` e execute `pnpm dev`. O endereço exibido pelo Vite deve ser aberto com `localhost`: a configuração de autenticação de teste pode tratar `127.0.0.1` como outra origem.
 
-Para visualizar a grade demonstrativa, abra `http://localhost:5173/previa-maquina.html` enquanto o servidor local estiver em execução. Se a porta estiver ocupada, use a porta informada pelo Vite.
+Para experimentar a rodada demonstrativa, abra `http://localhost:5173/previa-maquina.html` enquanto o servidor local de desenvolvimento estiver em execução. Se a porta estiver ocupada, use a porta informada pelo Vite. A API de demonstração existe apenas nesse servidor; o build estático não oferece rodadas nem constitui um backend de produção.
 
 Os fluxos conectados também exigem infraestrutura Neon configurada. Copie `.env.example` para `.env.local` e informe os endereços públicos apropriados para cada branch. Variáveis `VITE_` são expostas ao navegador: nunca coloque senhas, tokens, chaves ou strings de conexão nelas. Os scripts SQL devem ser revisados antes de qualquer execução; não são migrações prontas para produção.
 
