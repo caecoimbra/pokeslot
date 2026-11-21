@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evaluateCapture } from '../src/domain/capture.mjs';
+import { evaluateCapture, evaluateCaptures } from '../src/domain/capture.mjs';
 
 const capture = (speciesId, isShiny, rarity = 'common') => ({ speciesId, isShiny, rarity });
 
@@ -66,4 +66,37 @@ test('não altera a captura nem a coleção fornecidas', () => {
   assert.equal(evaluateCapture(input, owned).status, 'duplicate');
   assert.deepEqual(owned, [{ speciesId: 1, isShiny: true }]);
   assert.deepEqual(input, capture(1, true, 'uncommon'));
+});
+
+test('capturas da mesma rodada consideram as variantes novas anteriores', () => {
+  const captures = Object.freeze([
+    Object.freeze(capture(25, false, 'rare')),
+    Object.freeze(capture(25, false, 'rare')),
+    Object.freeze(capture(25, true, 'rare')),
+    Object.freeze(capture(25, true, 'rare')),
+  ]);
+  const owned = Object.freeze([]);
+  assert.deepEqual(evaluateCaptures(captures, owned), [
+    { status: 'new', compensation: null },
+    { status: 'duplicate', compensation: { rarity: 'rare', useShinyMultiplier: false } },
+    { status: 'new', compensation: null },
+    { status: 'duplicate', compensation: { rarity: 'rare', useShinyMultiplier: true } },
+  ]);
+  assert.deepEqual(owned, []);
+});
+
+test('capturas em lote consideram a coleção anterior e aceitam uma rodada vazia', () => {
+  const owned = [{ speciesId: 1, isShiny: false }];
+  assert.deepEqual(evaluateCaptures([capture(1, false)], owned), [
+    { status: 'duplicate', compensation: { rarity: 'common', useShinyMultiplier: false } },
+  ]);
+  assert.deepEqual(evaluateCaptures([], owned), []);
+  assert.deepEqual(owned, [{ speciesId: 1, isShiny: false }]);
+});
+
+test('capturas em lote rejeitam dados inválidos mesmo sem capturas', () => {
+  assert.throws(() => evaluateCaptures(null, []), TypeError);
+  assert.throws(() => evaluateCaptures([], [null]), TypeError);
+  assert.throws(() => evaluateCaptures([capture(1, false), null], []), TypeError);
+  assert.throws(() => evaluateCaptures(Array(1), []), TypeError);
 });
