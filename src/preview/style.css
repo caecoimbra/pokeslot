@@ -41,6 +41,9 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .pokedex-content ul { padding-left: 20px; margin: 0; }
 .pokedex-content p { margin: 0; }
 .pokedex-content p:empty, .pokedex-content ul:empty { display: none; }
+.collection-entry { color: #ffdf91; background: transparent; border: 0; padding: 4px; font: inherit; cursor: pointer; text-align: left; }
+.collection-entry[aria-pressed="true"] { text-decoration: underline; font-weight: 700; }
+.collection-entry:focus-visible { outline: 3px solid #ffcb64; outline-offset: 2px; }
 .pokemon-detail { margin-top: 20px; padding: 14px 16px; border-radius: 10px; background: #182946; }
 .pokemon-detail[hidden], .pokemon-detail [hidden] { display: none; }
 .pokemon-detail h3 { margin-top: 0; }

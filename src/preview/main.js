@@ -3,6 +3,7 @@ import { rewardTypesForLines } from '../domain/rewards.mjs';
 import { evaluateRoundCaptures } from '../domain/round-captures.mjs';
 import { createPokeApiClient } from '../pokeapi/client.mjs';
 import { preparePokedexData } from '../pokeapi/pokedex-data.mjs';
+import { createSpeciesDetailsStore } from './species-details.mjs';
 
 // A grade inicial é fixa; as rodadas demonstrativas vêm do servidor local.
 let grid = [
@@ -28,7 +29,7 @@ const messages = {
     beforeRound: 'Gire para ver as capturas de teste.', noCaptures: 'Nenhuma captura nesta rodada.',
     emptyCollection: 'Sua coleção de teste está vazia.', normal: 'Normal', shiny: 'Shiny',
     captureStatus: { new: 'Nova captura', duplicate: 'Repetida (compensação ainda não aplicada)' },
-    detailsTitle: 'Dados da última captura — PokéAPI', loadingDetails: 'Carregando dados do Pokémon…',
+    detailsTitle: 'Pokémon selecionado — PokéAPI', loadingDetails: 'Carregando dados do Pokémon…',
     failedDetails: 'Não foi possível carregar os dados da PokéAPI.', retry: 'Tentar novamente',
     typeLabel: 'Tipo', electric: 'Elétrico', unknownType: 'Tipo indisponível',
     missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal',
@@ -52,7 +53,7 @@ const messages = {
     beforeRound: 'Spin to see test captures.', noCaptures: 'No captures this round.',
     emptyCollection: 'Your test collection is empty.', normal: 'Normal', shiny: 'Shiny',
     captureStatus: { new: 'New capture', duplicate: 'Duplicate (compensation not yet applied)' },
-    detailsTitle: 'Latest capture details — PokéAPI', loadingDetails: 'Loading Pokémon data…',
+    detailsTitle: 'Selected Pokémon — PokéAPI', loadingDetails: 'Loading Pokémon data…',
     failedDetails: 'Could not load data from PokéAPI.', retry: 'Try again',
     typeLabel: 'Type', electric: 'Electric', unknownType: 'Type unavailable',
     missingSprite: 'Image unavailable.', spriteAlt: 'Normal sprite',
@@ -77,6 +78,16 @@ let detailStatus = 'idle';
 let spriteFailed = false;
 let selectedSpeciesId = null;
 let detailsRequest = 0;
+const detailsStore = createSpeciesDetailsStore(async (speciesId) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const client = createPokeApiClient((url, options) => fetch(url, { ...options, signal: controller.signal }));
+    return preparePokedexData(await client.getKantoPokemon(speciesId));
+  } finally {
+    clearTimeout(timeout);
+  }
+});
 const portugueseTypes = { normal: 'Normal', fighting: 'Lutador', flying: 'Voador', poison: 'Venenoso', ground: 'Terrestre', rock: 'Pedra', bug: 'Inseto', ghost: 'Fantasma', steel: 'Aço', fire: 'Fogo', water: 'Água', grass: 'Planta', electric: 'Elétrico', psychic: 'Psíquico', ice: 'Gelo', dragon: 'Dragão', dark: 'Sombrio', fairy: 'Fada' };
 
 // A imagem é servida pelo repositório oficial de sprites da PokéAPI.
@@ -96,12 +107,8 @@ async function loadPokemon() {
   detailStatus = 'loading';
   spriteFailed = false;
   render();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
   try {
-    // Uma nova instância em cada tentativa evita preservar respostas inválidas no cache.
-    const client = createPokeApiClient((url, options) => fetch(url, { ...options, signal: controller.signal }));
-    const data = preparePokedexData(await client.getKantoPokemon(speciesId));
+    const data = await detailsStore.load(speciesId);
     if (requestId !== detailsRequest) return;
     pokemonData = data;
     detailStatus = 'ready';
@@ -110,8 +117,31 @@ async function loadPokemon() {
     pokemonData = null;
     detailStatus = 'error';
   } finally {
-    clearTimeout(timeout);
-    if (requestId === detailsRequest) render();
+    render();
+  }
+}
+
+function speciesLabel(id) {
+  const data = detailsStore.get(id);
+  const name = data?.names[language] || data?.names.en;
+  return `#${String(id).padStart(3, '0')}${name ? ` ${name}` : ''}`;
+}
+
+function renderCollection(text) {
+  const list = document.querySelector('#collection');
+  for (const entry of ownedVariants) {
+    let button = list.querySelector(`button[data-species-id="${entry.speciesId}"]`);
+    if (!button) {
+      const item = document.createElement('li');
+      button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'collection-entry';
+      button.dataset.speciesId = entry.speciesId;
+      item.append(button);
+      list.append(item);
+    }
+    button.textContent = `${speciesLabel(entry.speciesId)} — ${entry.isShiny ? text.shiny : text.normal}`;
+    button.setAttribute('aria-pressed', String(entry.speciesId === selectedSpeciesId));
   }
 }
 
@@ -180,13 +210,11 @@ function render() {
   document.querySelector('#rewards').replaceChildren(...rewardItems);
   document.querySelector('#no-rewards').textContent = rewards.length ? '' : text.noRewards;
   renderList('#capture-results', (lastCaptures ?? []).map(({ line, capture, status: captureStatus }) =>
-    `${text.lines[line]} — #${String(capture.speciesId).padStart(3, '0')} (${capture.isShiny ? text.shiny : text.normal}): ${text.captureStatus[captureStatus]}`
+    `${text.lines[line]} — ${speciesLabel(capture.speciesId)} (${capture.isShiny ? text.shiny : text.normal}): ${text.captureStatus[captureStatus]}`
   ));
   document.querySelector('#no-captures').textContent = lastCaptures === null
     ? text.beforeRound : lastCaptures.length === 0 ? text.noCaptures : '';
-  renderList('#collection', ownedVariants.map((entry) =>
-    `#${String(entry.speciesId).padStart(3, '0')} — ${entry.isShiny ? text.shiny : text.normal}`
-  ));
+  renderCollection(text);
   document.querySelector('#empty-collection').textContent = ownedVariants.length ? '' : text.emptyCollection;
   renderPokemonDetails(text);
   const spin = document.querySelector('#spin');
@@ -200,6 +228,13 @@ document.querySelector('#language').addEventListener('click', () => {
   render();
 });
 document.querySelector('#retry-detail').addEventListener('click', loadPokemon);
+document.querySelector('#collection').addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-species-id]');
+  if (!button) return;
+  selectedSpeciesId = Number(button.dataset.speciesId);
+  pokemonData = null;
+  loadPokemon();
+});
 document.querySelector('#pokemon-sprite').addEventListener('error', () => {
   spriteFailed = true;
   render();
@@ -237,6 +272,11 @@ document.querySelector('#spin').addEventListener('click', async () => {
       selectedSpeciesId = captures.at(-1).capture.speciesId;
       pokemonData = null;
       loadPokemon();
+      for (const { capture } of captures) {
+        if (capture.speciesId !== selectedSpeciesId) {
+          detailsStore.load(capture.speciesId).then(render, render);
+        }
+      }
     }
   } catch {
     status = 'failure';
