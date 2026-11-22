@@ -7,13 +7,13 @@ test('conta espécies normais e shiny separadamente, sem repetir variantes', () 
     { speciesId: 25, isShiny: false }, { speciesId: 25, isShiny: true },
     { speciesId: 25, isShiny: false }, { speciesId: 151, isShiny: true },
   ];
-  assert.deepEqual(getKantoCollectionProgress(entries), { normal: 1, shiny: 2, total: 151 });
+  assert.deepEqual(getKantoCollectionProgress(entries), { species: 2, normal: 1, shiny: 2, total: 151 });
 });
 
 test('conta de zero a 151 espécies normais', () => {
-  assert.deepEqual(getKantoCollectionProgress([]), { normal: 0, shiny: 0, total: 151 });
+  assert.deepEqual(getKantoCollectionProgress([]), { species: 0, normal: 0, shiny: 0, total: 151 });
   const entries = Array.from({ length: 151 }, (_, i) => ({ speciesId: i + 1, isShiny: false }));
-  assert.deepEqual(getKantoCollectionProgress(entries), { normal: 151, shiny: 0, total: 151 });
+  assert.deepEqual(getKantoCollectionProgress(entries), { species: 151, normal: 151, shiny: 0, total: 151 });
 });
 
 test('rejeita espécies ou variantes inválidas', () => {

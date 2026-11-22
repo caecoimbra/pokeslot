@@ -1,6 +1,6 @@
 const KANTO_SPECIES_COUNT = 151;
 
-// Cada espécie normal conta uma vez; shiny é uma variante opcional separada.
+// Qualquer variante registra a espécie; variantes continuam contadas separadamente.
 export function getKantoCollectionProgress(variants) {
   if (!Array.isArray(variants)) throw new TypeError('Expected a list of variants');
   const normal = new Set();
@@ -12,5 +12,5 @@ export function getKantoCollectionProgress(variants) {
     }
     (variant.isShiny ? shiny : normal).add(variant.speciesId);
   }
-  return { normal: normal.size, shiny: shiny.size, total: KANTO_SPECIES_COUNT };
+  return { species: new Set([...normal, ...shiny]).size, normal: normal.size, shiny: shiny.size, total: KANTO_SPECIES_COUNT };
 }

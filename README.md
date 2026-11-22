@@ -6,11 +6,11 @@ Projeto de aprendizagem para construir uma máquina de três rolos inspirada em 
 
 O código inclui uma **prova técnica de identidade e saldo** e regras iniciais da máquina e das capturas. O jogo completo e a Pokédex ainda não estão integrados. A prova usa dados fictícios e uma reposição ilustrativa de 10 giros por período; essa quantidade não é uma regra final do jogo.
 
-A regra inicial dos três rolos está em desenvolvimento: cada rolo contém 10 Pokébolas, 6 símbolos de giro e 4 vales, com embaralhamento e escolha de posição por rodada. A prévia bilíngue apresenta rodadas geradas pelo servidor local e uma Pokédex temporária. A coleção é perdida ao recarregar; as classificações usadas no teste não definem as raridades finais. A prévia não movimenta saldo nem concede recompensas reais.
+A regra inicial dos três rolos está em desenvolvimento: cada rolo contém 10 Pokébolas, 6 símbolos de giro e 4 vales, com embaralhamento e escolha de posição por rodada. A prévia bilíngue usa um banco SQLite local de teste: saldo e coleção sobrevivem a recarregar e reiniciar o servidor. Todos que acessam a prévia no mesmo computador compartilham o mesmo jogador fictício, sem autenticação; não é um backend seguro para publicação. A prévia usa classificações provisórias e não concede recompensas reais.
 
-Para o jogo, a regra em desenvolvimento prevê saldo inicial de 20 giros e reposição de 10 a cada período completo de 24 horas, acumulada durante a ausência. A inicialização e a reposição locais ainda precisam ser integradas à persistência do jogo; as contas fictícias da prova mantêm sua configuração própria.
+Para o jogo, a regra em desenvolvimento prevê saldo inicial de 20 giros e reposição de 10 a cada período completo de 24 horas, acumulada durante a ausência. A prévia local aplica essas regras, mas elas ainda precisam ser integradas ao backend autenticado; as contas fictícias da prova Neon mantêm sua configuração própria.
 
-A primeira versão está planejada com as 151 espécies de Kanto e uma interface bilíngue em português e inglês, com alternância pelo jogador. A prévia sorteia as espécies com chances iguais apenas para testes e consulta a PokéAPI para exibir seus nomes e os detalhes do Pokémon selecionado; uma falha na consulta não apaga a coleção temporária. A integração com uma Pokédex persistente ainda está pendente. Quando um texto não estiver disponível no idioma escolhido, sua origem e tratamento precisarão ser definidos. As chances finais e outras regras de recompensa permanecem em definição.
+A primeira versão está planejada com as 151 espécies de Kanto e uma interface bilíngue em português e inglês, com alternância pelo jogador. A prévia sorteia as espécies com chances iguais apenas para testes e consulta a PokéAPI para exibir seus nomes e os detalhes do Pokémon selecionado; uma falha na consulta não apaga a coleção local. A integração com uma Pokédex persistente por conta autenticada ainda está pendente. Quando um texto não estiver disponível no idioma escolhido, sua origem e tratamento precisarão ser definidos. As chances finais e outras regras de recompensa permanecem em definição.
 
 Foram experimentados Neon Auth, PostgreSQL, Neon Data API e uma Neon Function em um branch de teste. A Data API apresentou falha intermitente de contexto de identidade; a causa não foi identificada. A função alternativa passou em cenários pontuais de recuperação de saldo, repetição e concorrência, mas a arquitetura para publicação e os privilégios de acesso ainda precisam de revisão. A comparação prática com Supabase foi interrompida por decisão do autor e não constitui resultado para aquela plataforma.
 
@@ -24,7 +24,7 @@ Foram experimentados Neon Auth, PostgreSQL, Neon Data API e uma Neon Function em
 
 ## Executar localmente
 
-Requer Node.js e pnpm compatíveis com as dependências em `pnpm-lock.yaml`. Instale com `pnpm install --frozen-lockfile` e execute `pnpm dev`. O endereço exibido pelo Vite deve ser aberto com `localhost`: a configuração de autenticação de teste pode tratar `127.0.0.1` como outra origem.
+Requer Node.js compatível com `node:sqlite` e as dependências em `pnpm-lock.yaml` (a prévia foi testada com Node 26.13.1), além de pnpm. Instale com `pnpm install --frozen-lockfile` e execute `pnpm dev`. O endereço exibido pelo Vite deve ser aberto com `localhost`: a configuração de autenticação de teste pode tratar `127.0.0.1` como outra origem.
 
 Para experimentar a rodada demonstrativa, abra `http://localhost:5173/previa-maquina.html` enquanto o servidor local de desenvolvimento estiver em execução. Se a porta estiver ocupada, use a porta informada pelo Vite. A API de demonstração existe apenas nesse servidor; o build estático não oferece rodadas nem constitui um backend de produção.
 
