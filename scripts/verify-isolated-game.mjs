@@ -27,6 +27,10 @@ try {
   assert.deepEqual((await state(a)).ownedVariants, [{ speciesId: 25, isShiny: false }]);
   assert.deepEqual((await state(b)).ownedVariants, []);
   assert.equal((await spin(a, randomUUID())).captures[0].status, 'duplicate');
+  const shinyRound = JSON.stringify({ grid: [['pokeball']], winningLines: [], captures: [{ line: 'top', capture: { speciesId: 25, isShiny: true, rarity: 'common' } }] });
+  assert.equal((await spin(a, randomUUID(), shinyRound)).captures[0].status, 'new');
+  assert.equal((await spin(a, randomUUID(), shinyRound)).captures[0].status, 'duplicate');
+  assert.deepEqual((await state(a)).ownedVariants, [{ speciesId: 25, isShiny: false }, { speciesId: 25, isShiny: true }]);
   const before = await state(a);
   await assert.rejects(spin(a, randomUUID(), JSON.stringify({ grid: [], winningLines: [], captures: [{ line: 'top', capture: { speciesId: 152, isShiny: false } }] })));
   assert.deepEqual(await state(a), before);
@@ -46,7 +50,7 @@ try {
   const access = await pool.query("SELECT has_schema_privilege('authenticated', 'pokeslot_proof', 'USAGE') AS auth, has_schema_privilege('anonymous', 'pokeslot_proof', 'USAGE') AS anon");
   assert.equal(access.rows[0].auth, false);
   assert.equal(access.rows[0].anon, false);
-  console.log('PostgreSQL isolado: recuperação, contas sintéticas, concorrência, repetição, rollback, períodos de 24h e permissões básicas passaram.');
+  console.log('PostgreSQL isolado: recuperação, variantes normal e shiny, concorrência, repetição, rollback, períodos de 24h e permissões básicas passaram.');
 } catch (error) {
   console.error(`Verificação falhou: ${error.code || error.name || 'erro'}`);
   process.exitCode = 1;

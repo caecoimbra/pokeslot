@@ -2,6 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { defaultDeriveNeonUrls } from '@neon/neon-js';
+import { STUDY_TIERS } from './data/kanto-estudo.mjs';
 import assert from 'node:assert/strict';
 
 const env = await readFile(new URL('../.env.local', import.meta.url), 'utf8');
@@ -84,6 +85,8 @@ try {
     captureResult = result.payload.captures[0];
   }
   if (!captureResult) throw new Error('no_capture_observed');
+  assert.equal(typeof captureResult.capture.isShiny, 'boolean');
+  assert.ok(STUDY_TIERS.some((tier) => tier.rarity === captureResult.capture.rarity && tier.speciesIds.includes(captureResult.capture.speciesId)));
   const afterCapture = await request(a, 'state', { expectedUserId: a.userId });
   assert.equal(afterCapture.payload.balance, expectedBalance);
   assert.ok(afterCapture.payload.ownedVariants.some((variant) => variant.speciesId === captureResult.capture.speciesId && variant.isShiny === captureResult.capture.isShiny));

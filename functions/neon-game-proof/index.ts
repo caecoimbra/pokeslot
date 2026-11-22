@@ -5,7 +5,7 @@ import { createMiddleware } from 'hono/factory';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { neon } from '@neondatabase/serverless';
 import { createEvaluatedReelRound } from '../../src/server/reel-round.mjs';
-import { createDemoCaptures } from '../../src/server/demo-capture.mjs';
+import { createStudyCaptures } from '../../src/server/study-capture.mjs';
 
 const authUrl = process.env.NEON_AUTH_BASE_URL;
 const jwksUrl = process.env.NEON_AUTH_JWKS_URL;
@@ -50,7 +50,7 @@ app.post('/spin', authenticated, async (c) => {
   // O cliente não informa grade, captura, saldo nem relógio.
   try {
     const round = createEvaluatedReelRound();
-    const selected = createDemoCaptures(round.rewardTypes);
+    const selected = createStudyCaptures(round.rewardTypes);
     let index = 0;
     const captures = round.rewardTypes.filter(({ type }) => type === 'pokemon').map(({ line }) => ({ line, capture: selected[index++] }));
     const payload = JSON.stringify({ grid: round.grid, winningLines: round.winningLines, captures });
