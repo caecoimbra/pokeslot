@@ -17,10 +17,19 @@ test('produz uma captura controlada para cada linha de Pokébolas', () => {
   ];
   const wins = findWinningLines(grid);
   assert.deepEqual(wins.map(({ line }) => line), ['top', 'diagonal_down']);
-  const captures = createDemoCaptures(rewardTypesForLines(wins));
+  const ids = [1, 151];
+  const captures = createDemoCaptures(rewardTypesForLines(wins), (min, max) => {
+    assert.equal(min, 1);
+    assert.equal(max, 152);
+    return ids.shift();
+  });
   assert.deepEqual(captures, [
-    { speciesId: 25, isShiny: false, rarity: 'common' },
-    { speciesId: 25, isShiny: false, rarity: 'common' },
+    { speciesId: 1, isShiny: false, rarity: 'common' },
+    { speciesId: 151, isShiny: false, rarity: 'legendary' },
   ]);
   assert.notStrictEqual(captures[0], captures[1]);
+});
+
+test('recusa uma espécie fora de Kanto', () => {
+  assert.throws(() => createDemoCaptures([{ type: 'pokemon' }], () => 152), RangeError);
 });

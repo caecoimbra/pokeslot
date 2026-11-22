@@ -1,7 +1,14 @@
-// A espécie e a raridade são valores fixos apenas para a demonstração local;
-// não representam um sorteio ou uma classificação aprovada do jogo.
-export function createDemoCaptures(rewardTypes) {
+import { randomInt } from 'node:crypto';
+import { STUDY_TIERS } from '../../scripts/data/kanto-estudo.mjs';
+
+// Sorteio uniforme apenas para a prévia; não representa as chances finais.
+export function createDemoCaptures(rewardTypes, draw = randomInt) {
   return rewardTypes
     .filter(({ type }) => type === 'pokemon')
-    .map(() => ({ speciesId: 25, isShiny: false, rarity: 'common' }));
+    .map(() => {
+      const speciesId = draw(1, 152);
+      const tier = STUDY_TIERS.find(({ speciesIds }) => speciesIds.includes(speciesId));
+      if (!tier) throw new RangeError('Invalid demo species');
+      return { speciesId, isShiny: false, rarity: tier.rarity };
+    });
 }
