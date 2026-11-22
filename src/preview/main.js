@@ -6,6 +6,12 @@ import { createPokeApiClient } from '../pokeapi/client.mjs';
 import { preparePokedexData } from '../pokeapi/pokedex-data.mjs';
 import { createSpeciesDetailsStore } from './species-details.mjs';
 import { selectDescription } from './description.mjs';
+import { createNeonProofClient } from './neon-proof-client.mjs';
+import { completeGameOperation } from '../identity/game-operation.mjs';
+import { validateProofState, validateProofRound } from './proof-result.mjs';
+
+const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
+const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
 
 // A grade inicial é fixa; as rodadas demonstrativas vêm do servidor local.
 let grid = [
@@ -13,6 +19,7 @@ let grid = [
   ['spin', 'pokeball', 'voucher'],
   ['voucher', 'spin', 'pokeball'],
 ];
+const initialGrid = grid;
 const messages = {
   pt: {
     eyebrow: 'Prévia de desenvolvimento', title: 'Uma primeira olhada na máquina',
@@ -41,6 +48,9 @@ const messages = {
     descriptionSource: (version) => `Descrição da PokéAPI · versão ${version}`,
     unknownVersion: 'não informada',
     missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal',
+    authTitle: 'Conta fictícia da prova Neon', emailLabel: 'E-mail de teste', passwordLabel: 'Senha de teste', loginButton: 'Entrar', logoutButton: 'Sair',
+    authSignedOut: 'Entre com uma conta fictícia para recuperar seu progresso.', authFailed: 'Não foi possível confirmar a sessão ou o progresso. Tente novamente.',
+    earned: (lines, duplicates) => `Giros de teste: +${lines} por linhas e +${duplicates} por repetidos.`,
     symbols: { pokeball: 'Pokébola', spin: 'Giro', voucher: 'Vale' },
     lines: { top: 'Superior', middle: 'Central', bottom: 'Inferior', diagonal_down: 'Diagonal descendente', diagonal_up: 'Diagonal ascendente' },
   },
@@ -71,10 +81,23 @@ const messages = {
     descriptionSource: (version) => `PokéAPI description · ${version} version`,
     unknownVersion: 'unspecified',
     missingSprite: 'Image unavailable.', spriteAlt: 'Normal sprite',
+    authTitle: 'Fictional Neon proof account', emailLabel: 'Test email', passwordLabel: 'Test password', loginButton: 'Sign in', logoutButton: 'Sign out',
+    authSignedOut: 'Sign in with a fictional account to recover your progress.', authFailed: 'Could not confirm the session or progress. Try again.',
+    earned: (lines, duplicates) => `Test spins: +${lines} from lines and +${duplicates} from duplicates.`,
     symbols: { pokeball: 'Poké Ball', spin: 'Spin', voucher: 'Voucher' },
     lines: { top: 'Top', middle: 'Middle', bottom: 'Bottom', diagonal_down: 'Descending diagonal', diagonal_up: 'Ascending diagonal' },
   },
 };
+if (neonProof) {
+  Object.assign(messages.pt, { intro: 'Rodadas autenticadas no branch isolado da Neon, com valores de teste.', footnote: 'Prova isolada: contas fictícias, probabilidades e recompensas provisórias; não é o jogo publicado.',
+    pokedexEyebrow: 'Coleção da conta de teste', pokedexNote: 'O saldo e as variantes são recuperados da conta fictícia. Shiny e raridades usam valores provisórios.',
+    failure: 'Não foi possível confirmar a rodada. Entre na mesma conta e tente novamente para recuperar uma operação pendente.',
+    captureStatus: { new: 'Nova captura', duplicate: 'Repetida' } });
+  Object.assign(messages.en, { intro: 'Authenticated rounds on the isolated Neon branch, using test values.', footnote: 'Isolated proof: fictional accounts and provisional odds and rewards; not the published game.',
+    pokedexEyebrow: 'Test account collection', pokedexNote: 'Balance and variants are recovered from the fictional account. Shiny odds and rarities are provisional.',
+    failure: 'Could not confirm the round. Sign in to the same account and retry to recover a pending operation.',
+    captureStatus: { new: 'New capture', duplicate: 'Duplicate' } });
+}
 const icons = { pokeball: '●', spin: '↻', voucher: '★' };
 const positions = {
   top: [0, 1, 2], middle: [3, 4, 5], bottom: [6, 7, 8],
@@ -93,6 +116,12 @@ let detailStatus = 'idle';
 let spriteFailed = false;
 let selectedSpeciesId = null;
 let detailsRequest = 0;
+let selectedShiny = false;
+let proofClient = null;
+let proofUser = null;
+let proofGeneration = 0;
+let authStatus = '';
+let lastProofReward = null;
 const detailsStore = createSpeciesDetailsStore(async (speciesId) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
@@ -145,18 +174,19 @@ function speciesLabel(id) {
 function renderCollection(text) {
   const list = document.querySelector('#collection');
   for (const entry of ownedVariants) {
-    let button = list.querySelector(`button[data-species-id="${entry.speciesId}"]`);
+    let button = list.querySelector(`button[data-species-id="${entry.speciesId}"][data-shiny="${entry.isShiny}"]`);
     if (!button) {
       const item = document.createElement('li');
       button = document.createElement('button');
       button.type = 'button';
       button.className = 'collection-entry';
       button.dataset.speciesId = entry.speciesId;
+      button.dataset.shiny = String(entry.isShiny);
       item.append(button);
       list.append(item);
     }
     button.textContent = `${speciesLabel(entry.speciesId)} — ${entry.isShiny ? text.shiny : text.normal}`;
-    button.setAttribute('aria-pressed', String(entry.speciesId === selectedSpeciesId));
+    button.setAttribute('aria-pressed', String(entry.speciesId === selectedSpeciesId && entry.isShiny === selectedShiny));
   }
 }
 
@@ -180,8 +210,8 @@ function renderPokemonDetails(text) {
     ? text.descriptionSource(description.version || text.unknownVersion) : '';
 
   const sprite = document.querySelector('#pokemon-sprite');
-  const url = trustedSpriteUrl(pokemonData.sprites.normal);
-  sprite.alt = `${text.spriteAlt}: ${name}`;
+  const url = trustedSpriteUrl(selectedShiny ? pokemonData.sprites.shiny : pokemonData.sprites.normal);
+  sprite.alt = `${selectedShiny ? text.shiny : text.spriteAlt}: ${name}`;
   sprite.hidden = !url || spriteFailed;
   if (url && !spriteFailed && sprite.getAttribute('src') !== url) sprite.setAttribute('src', url);
   document.querySelector('#sprite-status').textContent = !url || spriteFailed ? text.missingSprite : '';
@@ -242,9 +272,11 @@ function render() {
   renderPokemonDetails(text);
   const spin = document.querySelector('#spin');
   spin.disabled = pending;
-  spin.textContent = pending ? text.spinning : text.spinButton;
+  spin.textContent = pending && (!neonProof || proofUser) ? text.spinning : text.spinButton;
   document.querySelector('#status').textContent = status ? text[status] : '';
   document.querySelector('#demo-balance').textContent = balance === null ? '' : text.balance(balance);
+  document.querySelector('#proof-rewards').textContent = lastProofReward ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : '';
+  if (neonProof) document.querySelector('#proof-auth-status').textContent = authStatus ? text[authStatus] : '';
 }
 
 async function refreshDemoState() {
@@ -257,6 +289,137 @@ async function refreshDemoState() {
   ownedVariants = state.ownedVariants;
 }
 
+function clearProofDisplay() {
+  balance = null;
+  ownedVariants = [];
+  lastCaptures = null;
+  lastProofReward = null;
+  selectedSpeciesId = null;
+  selectedShiny = false;
+  pokemonData = null;
+  detailStatus = 'idle';
+  detailsRequest++;
+  grid = initialGrid;
+  wins = findWinningLines(grid);
+  document.querySelector('#collection').replaceChildren();
+  status = 'initial';
+}
+function showProofIdentity(user) {
+  document.querySelector('#proof-login').hidden = !!user;
+  document.querySelector('#proof-logout').hidden = !user;
+  document.querySelector('#proof-user').textContent = user?.name || '';
+}
+function setProofState(state) {
+  validateProofState(state);
+  balance = state.balance;
+  ownedVariants = state.ownedVariants;
+}
+async function startNeonProof() {
+  document.querySelector('#proof-auth').hidden = false;
+  try {
+    proofClient = createNeonProofClient(import.meta.env.VITE_NEON_PROOF_DATABASE_URL, proofUrl);
+    pendingDb = await openPendingOperations();
+    await recoverProofSession();
+  } catch { clearProofDisplay(); authStatus = 'authFailed'; pending = true; render(); }
+}
+async function recoverProofSession() {
+  const version = ++proofGeneration;
+  pending = true;
+  clearProofDisplay();
+  proofUser = null;
+  showProofIdentity(null);
+  render();
+  try {
+    const user = await proofClient.user();
+    if (version !== proofGeneration) return;
+    if (!user) { authStatus = 'authSignedOut'; return; }
+    proofUser = user;
+    showProofIdentity(user);
+    const current = () => version === proofGeneration && proofUser?.id === user.id;
+    const state = validateProofState(await proofClient.request('state', user.id, current));
+    await proofClient.ensureSession(user.id, current);
+    if (!current()) return;
+    setProofState(state);
+    authStatus = '';
+    if (ownedVariants.length) {
+      const last = ownedVariants.at(-1);
+      selectedSpeciesId = last.speciesId;
+      selectedShiny = last.isShiny;
+      loadPokemon();
+    }
+    pending = false;
+  } catch {
+    if (version === proofGeneration) { clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authFailed'; }
+  } finally { if (version === proofGeneration) render(); }
+}
+async function spinNeonProof() {
+  if (!proofUser || !pendingDb) return;
+  const userId = proofUser.id, version = proofGeneration;
+  const current = () => version === proofGeneration && proofUser?.id === userId;
+  pending = true;
+  status = '';
+  render();
+  try {
+    await completeGameOperation({
+      ensureSession: () => proofClient.ensureSession(userId, current),
+      claim: () => claimPendingOperation(pendingDb, `game-proof:${userId}`),
+      send: async (operation) => validateProofRound(await proofClient.request('spin', userId, current, operation.operationId)),
+      readState: async () => validateProofState(await proofClient.request('state', userId, current)),
+      present: ([result], state) => {
+        setProofState(state);
+        if (result.status === 'no_balance') { status = 'noBalance'; return; }
+        grid = result.grid;
+        wins = result.winningLines;
+        lastCaptures = result.captures;
+        lastProofReward = { lines: result.lineSpins ?? 0, duplicates: result.duplicateSpins ?? 0 };
+        status = 'success';
+        if (lastCaptures.length) {
+          const last = lastCaptures.at(-1).capture;
+          selectedSpeciesId = last.speciesId;
+          selectedShiny = last.isShiny;
+          pokemonData = null;
+          loadPokemon();
+          for (const { capture } of lastCaptures) detailsStore.load(capture.speciesId).then(render, render);
+        }
+      },
+      clear: (operation) => clearPendingOperation(pendingDb, `game-proof:${userId}`, operation.operationId),
+    });
+  } catch (error) {
+    if (current()) {
+      if (error?.message === 'session_changed') { clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authSignedOut'; pending = true; render(); }
+      else status = 'failure';
+    }
+  } finally { if (current()) { pending = false; render(); } }
+}
+
+document.querySelector('#proof-login').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!neonProof || !proofClient) return;
+  const form = event.currentTarget;
+  const button = form.querySelector('button');
+  button.disabled = true;
+  try {
+    const result = await proofClient.signIn(form.elements.email.value.trim(), form.elements.password.value);
+    if (result.error || !result.data?.user) throw new Error('login_failed');
+    form.elements.password.value = '';
+    await recoverProofSession();
+  } catch { authStatus = 'authFailed'; render(); }
+  finally { button.disabled = false; }
+});
+document.querySelector('#proof-logout').addEventListener('click', async () => {
+  if (!neonProof || !proofClient || pending) return;
+  pending = true;
+  render();
+  try {
+    const result = await proofClient.signOut();
+    if (result.error) throw new Error('logout_failed');
+    await recoverProofSession();
+  } catch { authStatus = 'authFailed'; pending = false; render(); }
+});
+document.addEventListener('visibilitychange', () => {
+  if (neonProof && proofClient && document.visibilityState === 'visible') recoverProofSession();
+});
+
 document.querySelector('#language').addEventListener('click', () => {
   language = language === 'pt' ? 'en' : 'pt';
   render();
@@ -266,6 +429,7 @@ document.querySelector('#collection').addEventListener('click', (event) => {
   const button = event.target.closest('button[data-species-id]');
   if (!button) return;
   selectedSpeciesId = Number(button.dataset.speciesId);
+  selectedShiny = button.dataset.shiny === 'true';
   pokemonData = null;
   loadPokemon();
 });
@@ -275,6 +439,7 @@ document.querySelector('#pokemon-sprite').addEventListener('error', () => {
 });
 document.querySelector('#spin').addEventListener('click', async () => {
   if (pending) return;
+  if (neonProof) { await spinNeonProof(); return; }
   pending = true;
   status = '';
   render();
@@ -309,6 +474,7 @@ document.querySelector('#spin').addEventListener('click', async () => {
     status = 'success';
     if (captures.length) {
       selectedSpeciesId = captures.at(-1).capture.speciesId;
+      selectedShiny = captures.at(-1).capture.isShiny;
       pokemonData = null;
       loadPokemon();
       for (const { capture } of captures) {
@@ -325,7 +491,8 @@ document.querySelector('#spin').addEventListener('click', async () => {
   }
 });
 render();
-Promise.all([openPendingOperations(), refreshDemoState()]).then(([db]) => {
+if (neonProof) startNeonProof();
+else Promise.all([openPendingOperations(), refreshDemoState()]).then(([db]) => {
   pendingDb = db;
   if (ownedVariants.length) {
     selectedSpeciesId = ownedVariants.at(-1).speciesId;
