@@ -5,6 +5,21 @@ import { planKnownEvolution } from '../src/server/evolution.mjs';
 const eevee = Object.freeze({ speciesId: 133, isShiny: false });
 const base = { source: eevee, sourceAvailable: true, stoneCount: 1, ownedVariants: [eevee] };
 
+test('reconhece as compatibilidades clássicas de pedra em Kanto', () => {
+  const cases = [
+    [25, 26, 'thunder'], [30, 31, 'moon'], [33, 34, 'moon'], [35, 36, 'moon'],
+    [37, 38, 'fire'], [39, 40, 'moon'], [44, 45, 'leaf'], [58, 59, 'fire'],
+    [61, 62, 'water'], [70, 71, 'leaf'], [90, 91, 'water'], [102, 103, 'leaf'],
+    [120, 121, 'water'], [133, 134, 'water'], [133, 135, 'thunder'], [133, 136, 'fire'],
+  ];
+  for (const [sourceId, targetId, stone] of cases) {
+    const source = { speciesId: sourceId, isShiny: false };
+    const input = { source, targetId, selectedStone: stone, sourceAvailable: true, stoneCount: 1, ownedVariants: [source] };
+    assert.equal(planKnownEvolution(input).status, 'ready');
+    assert.equal(planKnownEvolution({ ...input, selectedStone: 'unrelated' }).status, 'incompatible');
+  }
+});
+
 test('associa cada evolução de Eevee à sua pedra de Kanto', () => {
   for (const [targetId, selectedStone] of [[134, 'water'], [135, 'thunder'], [136, 'fire']]) {
     assert.deepEqual(planKnownEvolution({ ...base, targetId, selectedStone }), {
