@@ -11,6 +11,7 @@ import { completeGameOperation } from '../identity/game-operation.mjs';
 import { validateProofState, validateProofRound } from './proof-result.mjs';
 import { nextRefillAt, formatNextRefill } from './next-refill.mjs';
 import { capturePresentationMessages, formatCaptureResult } from './capture-result.mjs';
+import { filterCollection } from './collection-filter.mjs';
 
 const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
 const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
@@ -44,6 +45,8 @@ const messages = {
     lastCaptures: 'Capturas da última rodada', collectionTitle: 'Variantes registradas',
     beforeRound: 'Gire para ver as capturas de teste.', noCaptures: 'Nenhuma captura nesta rodada.',
     emptyCollection: 'Sua coleção de teste está vazia.', normal: 'Normal', shiny: 'Shiny',
+    numberFilter: 'Número da espécie', variantFilter: 'Variante', allVariants: 'Todas',
+    filterCount: (count) => `${count} ${count === 1 ? 'variante encontrada' : 'variantes encontradas'}.`, noFilterMatches: 'Nenhuma variante corresponde aos filtros.',
     captureStatus: { new: 'Nova captura', duplicate: 'Repetida (compensação ainda não aplicada)' },
     detailsTitle: 'Pokémon selecionado — PokéAPI', loadingDetails: 'Carregando dados do Pokémon…',
     failedDetails: 'Não foi possível carregar os dados da PokéAPI.', retry: 'Tentar novamente',
@@ -81,6 +84,8 @@ const messages = {
     lastCaptures: 'Last round captures', collectionTitle: 'Registered variants',
     beforeRound: 'Spin to see test captures.', noCaptures: 'No captures this round.',
     emptyCollection: 'Your test collection is empty.', normal: 'Normal', shiny: 'Shiny',
+    numberFilter: 'Species number', variantFilter: 'Variant', allVariants: 'All',
+    filterCount: (count) => `${count} ${count === 1 ? 'variant found' : 'variants found'}.`, noFilterMatches: 'No variants match these filters.',
     captureStatus: { new: 'New capture', duplicate: 'Duplicate (compensation not yet applied)' },
     detailsTitle: 'Selected Pokémon — PokéAPI', loadingDetails: 'Loading Pokémon data…',
     failedDetails: 'Could not load data from PokéAPI.', retry: 'Try again',
@@ -188,6 +193,8 @@ function speciesLabel(id) {
 
 function renderCollection(text) {
   const list = document.querySelector('#collection');
+  const visible = filterCollection(ownedVariants, document.querySelector('#collection-number').value, document.querySelector('#collection-variant').value);
+  const visibleKeys = new Set(visible.map(({ speciesId, isShiny }) => `${speciesId}:${isShiny}`));
   for (const entry of ownedVariants) {
     let button = list.querySelector(`button[data-species-id="${entry.speciesId}"][data-shiny="${entry.isShiny}"]`);
     if (!button) {
@@ -201,13 +208,16 @@ function renderCollection(text) {
       list.append(item);
     }
     button.textContent = `${speciesLabel(entry.speciesId)} — ${entry.isShiny ? text.shiny : text.normal}`;
+    button.parentElement.hidden = !visibleKeys.has(`${entry.speciesId}:${entry.isShiny}`);
     button.setAttribute('aria-pressed', String(entry.speciesId === selectedSpeciesId && entry.isShiny === selectedShiny));
   }
+  document.querySelector('#filter-count').textContent = ownedVariants.length ? text.filterCount(visible.length) : '';
+  return visible;
 }
 
-function renderPokemonDetails(text) {
+function renderPokemonDetails(text, visible) {
   const detail = document.querySelector('#pokemon-detail');
-  detail.hidden = ownedVariants.length === 0;
+  detail.hidden = !visible.some((entry) => entry.speciesId === selectedSpeciesId && entry.isShiny === selectedShiny);
   const content = document.querySelector('#detail-content');
   content.hidden = detailStatus !== 'ready';
   document.querySelector('#detail-status').textContent = detailStatus === 'loading' ? text.loadingDetails
@@ -282,9 +292,9 @@ function render() {
   ));
   document.querySelector('#no-captures').textContent = lastCaptures === null
     ? text.beforeRound : lastCaptures.length === 0 ? text.noCaptures : '';
-  renderCollection(text);
-  document.querySelector('#empty-collection').textContent = ownedVariants.length ? '' : text.emptyCollection;
-  renderPokemonDetails(text);
+  const visible = renderCollection(text);
+  document.querySelector('#empty-collection').textContent = !ownedVariants.length ? text.emptyCollection : !visible.length ? text.noFilterMatches : '';
+  renderPokemonDetails(text, visible);
   const spin = document.querySelector('#spin');
   spin.disabled = pending;
   spin.textContent = pending && (!neonProof || proofUser) ? text.spinning : neonProof && proofHasPending ? text.recoverButton : text.spinButton;
@@ -493,6 +503,8 @@ document.querySelector('#refresh-balance').addEventListener('click', async () =>
   finally { pending = false; render(); }
 });
 document.querySelector('#retry-detail').addEventListener('click', loadPokemon);
+document.querySelector('#collection-number').addEventListener('input', render);
+document.querySelector('#collection-variant').addEventListener('change', render);
 document.querySelector('#collection').addEventListener('click', (event) => {
   const button = event.target.closest('button[data-species-id]');
   if (!button) return;

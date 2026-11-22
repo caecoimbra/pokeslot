@@ -50,6 +50,10 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .pokedex-content ul { padding-left: 20px; margin: 0; }
 .pokedex-content p { margin: 0; }
 .pokedex-content p:empty, .pokedex-content ul:empty { display: none; }
+.collection-filters { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+.collection-filters label { display: grid; gap: 4px; }
+.collection-filters input, .collection-filters select { min-width: 140px; padding: 8px; border: 1px solid #7180a0; border-radius: 6px; background: #fff; color: #182641; font: inherit; }
+.collection-filters input:focus-visible, .collection-filters select:focus-visible { outline: 3px solid #ffcb64; outline-offset: 2px; }
 .collection-entry { color: #ffdf91; background: transparent; border: 0; padding: 4px; font: inherit; cursor: pointer; text-align: left; }
 .collection-entry[aria-pressed="true"] { text-decoration: underline; font-weight: 700; }
 .collection-entry:focus-visible { outline: 3px solid #ffcb64; outline-offset: 2px; }

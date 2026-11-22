@@ -66,6 +66,11 @@
           <ul id="capture-results"></ul>
           <p id="no-captures"></p>
           <h3 data-text="collectionTitle"></h3>
+          <div class="collection-filters">
+            <label><span data-text="numberFilter"></span><input id="collection-number" type="text" inputmode="numeric" maxlength="4" placeholder="#025" autocomplete="off"></label>
+            <label><span data-text="variantFilter"></span><select id="collection-variant"><option value="all" data-text="allVariants"></option><option value="normal" data-text="normal"></option><option value="shiny" data-text="shiny"></option></select></label>
+          </div>
+          <p id="filter-count" role="status"></p>
           <ul id="collection"></ul>
           <p id="empty-collection"></p>
         </div>
