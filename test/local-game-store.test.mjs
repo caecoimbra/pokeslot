@@ -101,3 +101,39 @@ test('reposição acumulada, saldo zero e ausência de débito parcial em falha'
   assert.deepEqual(store.spin('a', id(21)), { status: 'no_balance', balance: 0, replayed: true });
   store.close();
 });
+
+test('vales locais são persistidos e repetição não duplica saldo nem inventário', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'pokeslot-vouchers-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const path = join(directory, 'game.sqlite');
+  const options = { now: () => 0, makeRound: () => ({ grid: [], winningLines: [], rewardTypes: [
+    { line: 'top', type: 'voucher' }, { line: 'bottom', type: 'voucher' },
+  ] }), makeCaptures: () => [], makeVouchers: () => [
+    { line: 'top', type: 'spins' }, { line: 'bottom', type: 'pokemon' },
+  ] };
+  let store = openLocalGameStore(path, options);
+  const first = store.spin('a', id(1));
+  assert.equal(first.balance, 21);
+  assert.equal(first.voucherSpins, 2);
+  assert.equal(first.vouchers[0].spinsAwarded, 2);
+  assert.deepEqual(store.read('a').vouchers, [{ type: 'pokemon', amount: 1 }]);
+  assert.equal(store.spin('a', id(1)).replayed, true);
+  assert.equal(store.spin('a', id(1)).vouchers[0].spinsAwarded, 2);
+  assert.equal(store.read('a').balance, 21);
+  assert.deepEqual(store.read('b').vouchers, []);
+  store.close();
+  store = openLocalGameStore(path, options);
+  assert.deepEqual(store.read('a').vouchers, [{ type: 'pokemon', amount: 1 }]);
+  assert.equal(store.read('a').balance, 21);
+  store.close();
+});
+
+test('falha após inserir um vale reverte inventário, saldo e captura', () => {
+  const store = openLocalGameStore(':memory:', { now: () => 0, makeRound: round, makeCaptures: captures,
+    makeVouchers: () => [{ line: 'top', type: 'pokemon' }, { line: 'bottom', type: null }] });
+  assert.throws(() => store.spin('a', id(1)));
+  assert.equal(store.read('a').balance, 20);
+  assert.deepEqual(store.read('a').ownedVariants, []);
+  assert.deepEqual(store.read('a').vouchers, []);
+  store.close();
+});

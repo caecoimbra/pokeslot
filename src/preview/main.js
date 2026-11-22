@@ -12,6 +12,7 @@ import { validateProofState, validateProofRound } from './proof-result.mjs';
 import { nextRefillAt, formatNextRefill } from './next-refill.mjs';
 import { capturePresentationMessages, formatCaptureResult } from './capture-result.mjs';
 import { filterCollection } from './collection-filter.mjs';
+import { DEMO_VOUCHER_TYPES } from '../domain/demo-vouchers.mjs';
 
 const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
 const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
@@ -48,6 +49,9 @@ const messages = {
     emptyCollection: 'Sua coleção de teste está vazia.', normal: 'Normal', shiny: 'Shiny',
     numberFilter: 'Número da espécie', variantFilter: 'Variante', allVariants: 'Todas',
     filterCount: (count) => `${count} ${count === 1 ? 'variante encontrada' : 'variantes encontradas'}.`, noFilterMatches: 'Nenhuma variante corresponde aos filtros.',
+    vouchersTitle: 'Vales — demonstração local', vouchersNote: 'Cinco tipos equiprováveis são uma hipótese de teste. O vale de giros concede 2 giros; os demais ficam guardados, sem uso implementado. Nesta prévia, linhas de giro e repetidos ainda não concedem giros.',
+    voucherRoundTitle: 'Vales da última rodada', voucherInventoryTitle: 'Vales guardados', voucherBefore: 'Gire para ver os vales sorteados.', voucherNone: 'Nenhum vale nesta rodada.', voucherInventoryEmpty: 'Nenhum vale guardado.', voucherUnknown: 'Detalhes dos vales indisponíveis para esta rodada antiga.',
+    voucherNames: { pokemon: 'Vale Pokémon', stone: 'Vale pedra', spins: 'Vale de giros', type: 'Vale de tipo', shiny_charm: 'Amuleto shiny' }, voucherSpins: (value) => `+${value} giros de teste`, voucherValueUnknown: 'valor indisponível',
     captureStatus: { new: 'Nova captura', duplicate: 'Repetida (compensação ainda não aplicada)' },
     detailsTitle: 'Pokémon selecionado — PokéAPI', loadingDetails: 'Carregando dados do Pokémon…',
     failedDetails: 'Não foi possível carregar os dados da PokéAPI.', retry: 'Tentar novamente',
@@ -88,6 +92,9 @@ const messages = {
     emptyCollection: 'Your test collection is empty.', normal: 'Normal', shiny: 'Shiny',
     numberFilter: 'Species number', variantFilter: 'Variant', allVariants: 'All',
     filterCount: (count) => `${count} ${count === 1 ? 'variant found' : 'variants found'}.`, noFilterMatches: 'No variants match these filters.',
+    vouchersTitle: 'Vouchers — local demonstration', vouchersNote: 'Five equally likely types are a test assumption. The spin voucher grants 2 spins; the others are saved but cannot be used yet. Spin lines and duplicates do not grant spins in this preview yet.',
+    voucherRoundTitle: 'Last round vouchers', voucherInventoryTitle: 'Saved vouchers', voucherBefore: 'Spin to see drawn vouchers.', voucherNone: 'No vouchers this round.', voucherInventoryEmpty: 'No vouchers saved.', voucherUnknown: 'Voucher details unavailable for this older round.',
+    voucherNames: { pokemon: 'Pokémon voucher', stone: 'Stone voucher', spins: 'Spin voucher', type: 'Type voucher', shiny_charm: 'Shiny charm' }, voucherSpins: (value) => `+${value} test spins`, voucherValueUnknown: 'value unavailable',
     captureStatus: { new: 'New capture', duplicate: 'Duplicate (compensation not yet applied)' },
     detailsTitle: 'Selected Pokémon — PokéAPI', loadingDetails: 'Loading Pokémon data…',
     failedDetails: 'Could not load data from PokéAPI.', retry: 'Try again',
@@ -132,6 +139,8 @@ let nextRefill = null;
 let pendingDb = null;
 let ownedVariants = [];
 let lastCaptures = null;
+let demoVouchers = [];
+let lastVouchers = null;
 let pokemonData = null;
 let detailStatus = 'idle';
 let spriteFailed = false;
@@ -303,6 +312,15 @@ function render() {
   const visible = renderCollection(text);
   document.querySelector('#empty-collection').textContent = !ownedVariants.length ? text.emptyCollection : !visible.length ? text.noFilterMatches : '';
   renderPokemonDetails(text, visible);
+  if (!neonProof) {
+    document.querySelector('#demo-vouchers').hidden = false;
+    renderList('#voucher-inventory', demoVouchers.map(({ type, amount }) => `${text.voucherNames[type]}: ${amount}`));
+    document.querySelector('#voucher-inventory-empty').textContent = demoVouchers.length ? '' : text.voucherInventoryEmpty;
+    renderList('#voucher-results', Array.isArray(lastVouchers) ? lastVouchers.map(({ line, type, spinsAwarded }) =>
+      `${text.lines[line]} — ${text.voucherNames[type]}${type === 'spins' ? ` · ${Number.isSafeInteger(spinsAwarded) && spinsAwarded >= 0 ? text.voucherSpins(spinsAwarded) : text.voucherValueUnknown}` : ''}`) : []);
+    document.querySelector('#voucher-results-empty').textContent = lastVouchers === null ? text.voucherBefore
+      : lastVouchers === 'unknown' ? text.voucherUnknown : lastVouchers.length ? '' : text.voucherNone;
+  }
   const spin = document.querySelector('#spin');
   spin.disabled = pending;
   spin.textContent = pending && (!neonProof || proofUser) ? text.spinning : neonProof && proofHasPending ? text.recoverButton : text.spinButton;
@@ -321,9 +339,12 @@ async function refreshDemoState() {
   const state = await response.json();
   if (!Number.isSafeInteger(state.balance) || state.balance < 0 || !Array.isArray(state.ownedVariants)) throw new Error('Invalid state');
   getKantoCollectionProgress(state.ownedVariants);
+  if (!Array.isArray(state.vouchers) || state.vouchers.some(({ type, amount }) =>
+    !DEMO_VOUCHER_TYPES.includes(type) || type === 'spins' || !Number.isSafeInteger(amount) || amount <= 0)) throw new Error('Invalid vouchers');
   const next = nextRefillAt(state.cycleStartedAtMs);
   balance = state.balance;
   ownedVariants = state.ownedVariants;
+  demoVouchers = state.vouchers;
   nextRefill = next;
 }
 
@@ -556,12 +577,16 @@ document.querySelector('#spin').addEventListener('click', async () => {
       !['common', 'uncommon', 'rare', 'legendary'].includes(capture?.rarity) || capture?.isShiny !== false
     )) throw new Error('Invalid demo captures');
     const captures = result.captures;
+    const voucherLines = rewardTypesForLines(checkedWins).filter(({ type }) => type === 'voucher');
+    if (result.vouchers !== undefined && (!Array.isArray(result.vouchers) || result.vouchers.length !== voucherLines.length ||
+      result.vouchers.some(({ line, type }, index) => line !== voucherLines[index].line || !DEMO_VOUCHER_TYPES.includes(type)))) throw new Error('Invalid vouchers');
     await refreshDemoState();
     await clearPendingOperation(pendingDb, 'local-demo', operation.operationId);
     // Só publicamos os estados depois de validar a rodada inteira.
     grid = result.grid;
     wins = checkedWins;
     lastCaptures = captures;
+    lastVouchers = result.vouchers ?? 'unknown';
     status = 'success';
     if (captures.length) {
       selectedSpeciesId = captures.at(-1).capture.speciesId;
