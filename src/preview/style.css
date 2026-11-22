@@ -38,6 +38,10 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .pokedex h2 { font-size: 1.35rem; margin: 8px 0; }
 .pokedex h3 { color: #ffdf91; font-size: .85rem; margin: 20px 0 8px; }
 .pokedex-note, .pokedex-content { color: #d3deef; font-size: .9rem; line-height: 1.6; }
+.collection-progress { color: #d3deef; margin: 18px 0; font-size: .9rem; }
+.collection-progress label { display: block; font-weight: 700; }
+.collection-progress progress { display: block; width: 100%; height: 12px; margin: 8px 0; accent-color: #ffca61; }
+.collection-progress p { margin: 0; }
 .pokedex-content ul { padding-left: 20px; margin: 0; }
 .pokedex-content p { margin: 0; }
 .pokedex-content p:empty, .pokedex-content ul:empty { display: none; }

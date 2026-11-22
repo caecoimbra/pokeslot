@@ -1,6 +1,7 @@
 import { findWinningLines } from '../domain/paylines.mjs';
 import { rewardTypesForLines } from '../domain/rewards.mjs';
 import { evaluateRoundCaptures } from '../domain/round-captures.mjs';
+import { getKantoCollectionProgress } from '../domain/collection-progress.mjs';
 import { createPokeApiClient } from '../pokeapi/client.mjs';
 import { preparePokedexData } from '../pokeapi/pokedex-data.mjs';
 import { createSpeciesDetailsStore } from './species-details.mjs';
@@ -24,6 +25,8 @@ const messages = {
     initial: 'A grade inicial é um exemplo fixo. Clique para gerar uma rodada.',
     success: 'Rodada demonstrativa concluída.', failure: 'Não foi possível gerar a rodada. Inicie o servidor local de desenvolvimento e tente novamente.',
     pokedexEyebrow: 'Coleção temporária', pokedexTitle: 'Pokédex de teste',
+    progressLabel: (count, total) => `Kanto: ${count} de ${total} espécies normais`,
+    shinyProgress: (count) => `Variantes shiny: ${count} (opcionais)`,
     pokedexNote: 'Nesta prévia, as 151 espécies são sorteadas com chances iguais, apenas para teste. A coleção é apagada ao recarregar ou fechar a aba.',
     lastCaptures: 'Capturas da última rodada', collectionTitle: 'Variantes registradas',
     beforeRound: 'Gire para ver as capturas de teste.', noCaptures: 'Nenhuma captura nesta rodada.',
@@ -48,6 +51,8 @@ const messages = {
     initial: 'The starting grid is a fixed example. Click to generate a round.',
     success: 'Demonstration round complete.', failure: 'Could not generate the round. Start the local development server and try again.',
     pokedexEyebrow: 'Temporary collection', pokedexTitle: 'Test Pokédex',
+    progressLabel: (count, total) => `Kanto: ${count} of ${total} normal species`,
+    shinyProgress: (count) => `Shiny variants: ${count} (optional)`,
     pokedexNote: 'In this preview, all 151 species have equal odds for testing only. Reloading or closing this tab clears the collection.',
     lastCaptures: 'Last round captures', collectionTitle: 'Registered variants',
     beforeRound: 'Spin to see test captures.', noCaptures: 'No captures this round.',
@@ -209,6 +214,10 @@ function render() {
   });
   document.querySelector('#rewards').replaceChildren(...rewardItems);
   document.querySelector('#no-rewards').textContent = rewards.length ? '' : text.noRewards;
+  const progress = getKantoCollectionProgress(ownedVariants);
+  document.querySelector('#progress-label').textContent = text.progressLabel(progress.normal, progress.total);
+  document.querySelector('#kanto-progress').value = progress.normal;
+  document.querySelector('#shiny-progress').textContent = text.shinyProgress(progress.shiny);
   renderList('#capture-results', (lastCaptures ?? []).map(({ line, capture, status: captureStatus }) =>
     `${text.lines[line]} — ${speciesLabel(capture.speciesId)} (${capture.isShiny ? text.shiny : text.normal}): ${text.captureStatus[captureStatus]}`
   ));
