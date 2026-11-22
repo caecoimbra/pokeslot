@@ -118,7 +118,7 @@ async function spin(concurrent) {
       present: (responses, state) => {
         const row = responses[0];
         showState(state);
-        $('round').textContent = row.status === 'ok' ? `Rodada: ${row.winningLines.length} linha(s) vencedora(s); ${row.captures.length} captura(s).` : 'Saldo insuficiente.';
+        $('round').textContent = row.status === 'ok' ? `Rodada: ${row.winningLines.length} linha(s) vencedora(s); ${row.captures.length} captura(s). Giros por linhas: ${row.lineSpins ?? 0}; por repetidos: ${row.duplicateSpins ?? 0}. Valores de teste.` : 'Saldo insuficiente.';
         message(concurrent ? `Respostas: ${responses.filter((v) => !v.replayed).length} nova e ${responses.filter((v) => v.replayed).length} recuperada.` : row.replayed ? 'Resultado anterior recuperado.' : 'Operação confirmada.');
       },
       clear: (operation) => clearPendingOperation(db, `game-proof:${userId}`, operation.operationId),

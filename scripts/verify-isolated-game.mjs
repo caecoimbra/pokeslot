@@ -26,14 +26,35 @@ try {
   assert.equal(responses[1].balance, 19);
   assert.deepEqual((await state(a)).ownedVariants, [{ speciesId: 25, isShiny: false }]);
   assert.deepEqual((await state(b)).ownedVariants, []);
-  assert.equal((await spin(a, randomUUID())).captures[0].status, 'duplicate');
+  const normalDuplicate = await spin(a, randomUUID());
+  assert.equal(normalDuplicate.captures[0].status, 'duplicate');
+  assert.equal(normalDuplicate.captures[0].compensationSpins, 1);
+  assert.equal(normalDuplicate.balance, 19);
   const shinyRound = JSON.stringify({ grid: [['pokeball']], winningLines: [], captures: [{ line: 'top', capture: { speciesId: 25, isShiny: true, rarity: 'common' } }] });
-  assert.equal((await spin(a, randomUUID(), shinyRound)).captures[0].status, 'new');
-  assert.equal((await spin(a, randomUUID(), shinyRound)).captures[0].status, 'duplicate');
+  const shinyNew = await spin(a, randomUUID(), shinyRound);
+  assert.equal(shinyNew.captures[0].status, 'new');
+  assert.equal(shinyNew.captures[0].compensationSpins, 0);
+  const shinyDuplicate = await spin(a, randomUUID(), shinyRound);
+  assert.equal(shinyDuplicate.captures[0].status, 'duplicate');
+  assert.equal(shinyDuplicate.captures[0].compensationSpins, 2);
   assert.deepEqual((await state(a)).ownedVariants, [{ speciesId: 25, isShiny: false }, { speciesId: 25, isShiny: true }]);
   const before = await state(a);
   await assert.rejects(spin(a, randomUUID(), JSON.stringify({ grid: [], winningLines: [], captures: [{ line: 'top', capture: { speciesId: 152, isShiny: false } }] })));
   assert.deepEqual(await state(a), before);
+  for (const [rarity, speciesId, reward] of [['uncommon', 2, 1], ['rare', 3, 2], ['legendary', 144, 3]]) {
+    const data = JSON.stringify({ grid: [], winningLines: [], captures: [{ line: 'top', capture: { speciesId, isShiny: false, rarity } }] });
+    assert.equal((await spin(a, randomUUID(), data)).captures[0].status, 'new');
+    const duplicate = await spin(a, randomUUID(), data);
+    assert.equal(duplicate.captures[0].compensationSpins, reward);
+  }
+  const multiple = JSON.stringify({ grid: [], winningLines: [{ line: 'top', symbol: 'spin' }, { line: 'diagonal_down', symbol: 'spin' }], captures: [] });
+  const balanceBefore = (await state(a)).balance;
+  const multipleId = randomUUID();
+  const firstMultiple = await spin(a, multipleId, multiple);
+  assert.equal(firstMultiple.lineSpins, 4);
+  assert.equal(firstMultiple.balance, balanceBefore + 3);
+  assert.equal((await spin(a, multipleId, multiple)).replayed, true);
+  assert.equal((await state(a)).balance, balanceBefore + 3);
   await pool.query("UPDATE pokeslot_proof.players SET cycle_at = clock_timestamp() - interval '23 hours 59 minutes' WHERE user_id = $1", [b]);
   assert.equal((await state(b)).balance, 20);
   await pool.query("UPDATE pokeslot_proof.players SET cycle_at = clock_timestamp() - interval '24 hours' WHERE user_id = $1", [b]);
