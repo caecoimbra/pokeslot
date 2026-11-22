@@ -6,7 +6,7 @@ Projeto de aprendizagem para construir uma máquina de três rolos inspirada em 
 
 O código inclui uma **prova técnica de identidade e saldo** e regras iniciais da máquina e das capturas. O jogo completo e a Pokédex ainda não estão integrados. A prova usa dados fictícios e uma reposição ilustrativa de 10 giros por período; essa quantidade não é uma regra final do jogo.
 
-A regra inicial dos três rolos está em desenvolvimento: cada rolo contém 10 Pokébolas, 6 símbolos de giro e 4 vales, com embaralhamento e escolha de posição por rodada. A prévia bilíngue apresenta rodadas geradas pelo servidor local e uma Pokédex temporária: cada linha de Pokébolas produz um Pikachu normal fixo para demonstrar capturas novas e repetidas. A coleção é perdida ao recarregar; a raridade usada no teste não define a raridade final de Pikachu. A prévia não movimenta saldo nem concede recompensas reais.
+A regra inicial dos três rolos está em desenvolvimento: cada rolo contém 10 Pokébolas, 6 símbolos de giro e 4 vales, com embaralhamento e escolha de posição por rodada. A prévia bilíngue apresenta rodadas geradas pelo servidor local e uma Pokédex temporária. A coleção é perdida ao recarregar; as classificações usadas no teste não definem as raridades finais. A prévia não movimenta saldo nem concede recompensas reais.
 
 Para o jogo, a regra em desenvolvimento prevê saldo inicial de 20 giros e reposição de 10 a cada período completo de 24 horas, acumulada durante a ausência. A inicialização e a reposição locais ainda precisam ser integradas à persistência do jogo; as contas fictícias da prova mantêm sua configuração própria.
 

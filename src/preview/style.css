@@ -52,6 +52,7 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .pokemon-detail[hidden], .pokemon-detail [hidden] { display: none; }
 .pokemon-detail h3 { margin-top: 0; }
 .pokemon-detail p { font-size: .9rem; margin: 5px 0; }
+.pokemon-detail .description-source { color: #c0cce1; font-size: .75rem; }
 .pokemon-detail p:empty { display: none; }
 .pokemon-detail img { display: block; image-rendering: pixelated; background: #eef2fb; border-radius: 10px; }
 .retry-detail { color: #182641; background: #ffca61; border: 0; border-radius: 8px; padding: 9px 14px; font: inherit; font-weight: 700; cursor: pointer; }

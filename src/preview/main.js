@@ -5,6 +5,7 @@ import { getKantoCollectionProgress } from '../domain/collection-progress.mjs';
 import { createPokeApiClient } from '../pokeapi/client.mjs';
 import { preparePokedexData } from '../pokeapi/pokedex-data.mjs';
 import { createSpeciesDetailsStore } from './species-details.mjs';
+import { selectDescription } from './description.mjs';
 
 // A grade inicial é fixa; as rodadas demonstrativas vêm do servidor local.
 let grid = [
@@ -35,6 +36,9 @@ const messages = {
     detailsTitle: 'Pokémon selecionado — PokéAPI', loadingDetails: 'Carregando dados do Pokémon…',
     failedDetails: 'Não foi possível carregar os dados da PokéAPI.', retry: 'Tentar novamente',
     typeLabel: 'Tipo', electric: 'Elétrico', unknownType: 'Tipo indisponível',
+    noDescription: 'Descrição indisponível em português na PokéAPI.',
+    descriptionSource: (version) => `Descrição da PokéAPI · versão ${version}`,
+    unknownVersion: 'não informada',
     missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal',
     symbols: { pokeball: 'Pokébola', spin: 'Giro', voucher: 'Vale' },
     lines: { top: 'Superior', middle: 'Central', bottom: 'Inferior', diagonal_down: 'Diagonal descendente', diagonal_up: 'Diagonal ascendente' },
@@ -61,6 +65,9 @@ const messages = {
     detailsTitle: 'Selected Pokémon — PokéAPI', loadingDetails: 'Loading Pokémon data…',
     failedDetails: 'Could not load data from PokéAPI.', retry: 'Try again',
     typeLabel: 'Type', electric: 'Electric', unknownType: 'Type unavailable',
+    noDescription: 'Description unavailable in English on PokéAPI.',
+    descriptionSource: (version) => `PokéAPI description · ${version} version`,
+    unknownVersion: 'unspecified',
     missingSprite: 'Image unavailable.', spriteAlt: 'Normal sprite',
     symbols: { pokeball: 'Poké Ball', spin: 'Spin', voucher: 'Voucher' },
     lines: { top: 'Top', middle: 'Middle', bottom: 'Bottom', diagonal_down: 'Descending diagonal', diagonal_up: 'Ascending diagonal' },
@@ -164,6 +171,10 @@ function renderPokemonDetails(text) {
   document.querySelector('#pokemon-name').textContent = `#${String(selectedSpeciesId).padStart(3, '0')} ${name}`;
   const types = pokemonData.types.map(({ key }) => language === 'pt' ? (portugueseTypes[key] || key) : key);
   document.querySelector('#pokemon-types').textContent = `${text.typeLabel}: ${types.join(', ') || text.unknownType}`;
+  const description = selectDescription(pokemonData.descriptions, language);
+  document.querySelector('#pokemon-description').textContent = description?.text || text.noDescription;
+  document.querySelector('#description-source').textContent = description
+    ? text.descriptionSource(description.version || text.unknownVersion) : '';
 
   const sprite = document.querySelector('#pokemon-sprite');
   const url = trustedSpriteUrl(pokemonData.sprites.normal);
