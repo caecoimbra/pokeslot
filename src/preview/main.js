@@ -34,6 +34,7 @@ const messages = {
     nextRefill: (date) => `Próxima reposição prevista: ${date} (horário local). Atualize o saldo para confirmar.`,
     refreshBalance: 'Atualizar saldo', balanceRefreshed: 'Saldo atualizado pelo servidor.',
     spinButton: 'Girar demonstração', spinning: 'Gerando rodada…', noWins: 'Nenhuma nesta rodada',
+    reelsSpinning: 'Rodada em andamento',
     rewardHeading: 'Tipos de recompensa — demonstração', noRewards: 'Nenhuma recompensa indicada nesta rodada.',
     rewardTypes: { pokemon: 'Captura de Pokémon', extra_spins: 'Giros extras', voucher: 'Vale' },
     initial: 'A grade inicial é um exemplo fixo. Clique para gerar uma rodada.',
@@ -73,6 +74,7 @@ const messages = {
     nextRefill: (date) => `Next refill expected: ${date} (local time). Refresh balance to confirm.`,
     refreshBalance: 'Refresh balance', balanceRefreshed: 'Balance refreshed from the server.',
     spinButton: 'Spin demonstration', spinning: 'Generating round…', noWins: 'None this round',
+    reelsSpinning: 'Round in progress',
     rewardHeading: 'Reward types — demonstration', noRewards: 'No rewards indicated this round.',
     rewardTypes: { pokemon: 'Pokémon capture', extra_spins: 'Extra spins', voucher: 'Voucher' },
     initial: 'The starting grid is a fixed example. Click to generate a round.',
@@ -124,6 +126,7 @@ let wins = findWinningLines(grid);
 let language = 'pt';
 let status = 'initial';
 let pending = true;
+let spinning = false;
 let balance = null;
 let nextRefill = null;
 let pendingDb = null;
@@ -272,8 +275,13 @@ function render() {
     cell.append(icon, label);
     return cell;
   });
-  document.querySelector('#grid').replaceChildren(...cells);
-  document.querySelector('#grid').setAttribute('aria-label', text.machineTitle);
+  const gridElement = document.querySelector('#grid');
+  gridElement.replaceChildren(...cells);
+  gridElement.classList.toggle('spinning', spinning);
+  gridElement.setAttribute('aria-busy', String(spinning));
+  gridElement.setAttribute('aria-label', spinning ? text.reelsSpinning : text.machineTitle);
+  document.querySelector('.results').hidden = spinning;
+  document.querySelector('.reward-preview').hidden = spinning;
   document.querySelector('#lines').textContent = wins.length ? wins.map(({ line }) => text.lines[line]).join(' · ') : text.noWins;
   const rewards = rewardTypesForLines(wins);
   const rewardItems = rewards.map(({ line, type }) => {
@@ -302,7 +310,7 @@ function render() {
   document.querySelector('#demo-balance').textContent = balance === null ? '' : text.balance(balance);
   document.querySelector('#next-refill').textContent = nextRefill === null ? '' : text.nextRefill(formatNextRefill(nextRefill, language));
   document.querySelector('#refresh-balance').disabled = pending || (neonProof && !proofUser);
-  document.querySelector('#proof-rewards').textContent = !lastProofReward ? ''
+  document.querySelector('#proof-rewards').textContent = spinning || !lastProofReward ? ''
     : lastProofReward.available ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : text.earnedUnavailable;
   if (neonProof) document.querySelector('#proof-auth-status').textContent = authStatus ? text[authStatus] : '';
 }
@@ -320,6 +328,7 @@ async function refreshDemoState() {
 }
 
 function clearProofDisplay() {
+  spinning = false;
   proofHasPending = false;
   balance = null;
   nextRefill = null;
@@ -394,6 +403,7 @@ async function spinNeonProof() {
   const userId = proofUser.id, version = proofGeneration;
   const current = () => version === proofGeneration && proofUser?.id === userId;
   pending = true;
+  spinning = true;
   status = '';
   render();
   try {
@@ -440,7 +450,7 @@ async function spinNeonProof() {
       if (error?.message === 'session_changed') { clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authSignedOut'; pending = true; render(); }
       else status = 'failure';
     }
-  } finally { if (current()) { pending = false; render(); } }
+  } finally { if (current()) { pending = false; spinning = false; render(); } }
 }
 
 document.querySelector('#proof-login').addEventListener('submit', async (event) => {
@@ -521,6 +531,7 @@ document.querySelector('#spin').addEventListener('click', async () => {
   if (pending) return;
   if (neonProof) { await spinNeonProof(); return; }
   pending = true;
+  spinning = true;
   status = '';
   render();
   try {
@@ -567,6 +578,7 @@ document.querySelector('#spin').addEventListener('click', async () => {
     status = 'failure';
   } finally {
     pending = false;
+    spinning = false;
     render();
   }
 });
