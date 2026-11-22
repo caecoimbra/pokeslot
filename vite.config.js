@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { createEvaluatedReelRound } from './src/server/reel-round.mjs';
+import { createDemoCaptures } from './src/server/demo-capture.mjs';
 
 // Endpoint apenas do servidor de desenvolvimento. Não é uma API de produção.
 function demoRoundPlugin() {
@@ -15,9 +16,10 @@ function demoRoundPlugin() {
           response.setHeader('Allow', 'POST');
           return response.end();
         }
-        const { grid, winningLines } = createEvaluatedReelRound();
+        const { grid, winningLines, rewardTypes } = createEvaluatedReelRound();
+        const captures = createDemoCaptures(rewardTypes);
         response.setHeader('Content-Type', 'application/json; charset=utf-8');
-        response.end(JSON.stringify({ grid, winningLines }));
+        response.end(JSON.stringify({ grid, winningLines, captures }));
       });
     },
   };

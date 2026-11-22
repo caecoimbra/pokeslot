@@ -38,6 +38,19 @@
         <p id="status" class="status" role="status"></p>
         <p class="caption" data-text="caption"></p>
       </section>
+      <section class="pokedex" aria-labelledby="pokedex-title">
+        <p class="eyebrow" data-text="pokedexEyebrow"></p>
+        <h2 id="pokedex-title" data-text="pokedexTitle"></h2>
+        <p class="pokedex-note" data-text="pokedexNote"></p>
+        <div class="pokedex-content" aria-live="polite">
+          <h3 data-text="lastCaptures"></h3>
+          <ul id="capture-results"></ul>
+          <p id="no-captures"></p>
+          <h3 data-text="collectionTitle"></h3>
+          <ul id="collection"></ul>
+          <p id="empty-collection"></p>
+        </div>
+      </section>
       <p class="footnote" data-text="footnote"></p>
     </main>
     <script type="module" src="/src/preview/main.js"></script>

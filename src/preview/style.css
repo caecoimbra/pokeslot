@@ -34,5 +34,12 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .spin-button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
 .status { min-height: 1.5em; margin: 10px 0 0; color: #ffe3a1; font-size: .9rem; }
 .caption { margin-bottom: 0; font-size: .85rem; }
+.pokedex { margin-top: 42px; padding: clamp(18px, 5vw, 28px); border: 1px solid #536683; border-radius: 16px; background: #1d2d4a; }
+.pokedex h2 { font-size: 1.35rem; margin: 8px 0; }
+.pokedex h3 { color: #ffdf91; font-size: .85rem; margin: 20px 0 8px; }
+.pokedex-note, .pokedex-content { color: #d3deef; font-size: .9rem; line-height: 1.6; }
+.pokedex-content ul { padding-left: 20px; margin: 0; }
+.pokedex-content p { margin: 0; }
+.pokedex-content p:empty, .pokedex-content ul:empty { display: none; }
 .footnote { margin-top: 35px; font-size: .85rem; }
 @media (max-width: 420px) { .cell { min-height: 78px; font-size: .67rem; } .intro { margin-top: 36px; } }
