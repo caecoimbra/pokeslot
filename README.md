@@ -34,4 +34,4 @@ As verificações locais existentes podem ser executadas com `node --test test/*
 
 ## Aprendizagem e participação
 
-O autor definiu a visão do projeto e a regra de ciclos, participou das decisões e operou contas fictícias durante as provas. A IA auxiliou na pesquisa, escrita e revisão de código, preparação de testes e documentação. O trabalho de compreensão, revisão e implementação continua; o funcionamento da prova não deve ser apresentado como domínio independente de todas as tecnologias usadas.
+O autor definiu a visão do projeto e a regra de ciclos, participou das decisões, orientou a diretriz de testes, escrita e revisão do código e operou contas fictícias durante as provas. A IA auxiliou na pesquisa, escrita e revisão de código, preparação de testes e documentação.
