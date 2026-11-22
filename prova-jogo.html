@@ -12,5 +12,12 @@
     <button id="concurrent">Testar duas solicitações iguais</button> <button id="logout">Sair</button>
     <p id="round"></p>
   </section>
+  <section id="session-test" hidden aria-labelledby="session-test-title">
+    <h2 id="session-test-title">Teste de troca de conta</h2>
+    <label><input id="pause-after-state" type="checkbox"> Pausar após receber o resultado da rodada</label>
+    <p>Use apenas contas fictícias. A rodada será concluída no banco antes da pausa.</p>
+    <button id="switch-paused" type="button" hidden>Sair e trocar de conta</button>
+    <button id="resume-paused" type="button" hidden>Continuar rodada pausada</button>
+  </section>
   <p id="status" role="status"></p>
 </main><script type="module" src="/src/identity/game-proof.js"></script></body></html>

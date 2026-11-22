@@ -11,6 +11,7 @@ const $ = (id) => document.getElementById(id);
 let currentUser = null;
 let generation = 0;
 let busy = false;
+if (import.meta.env.DEV) $('session-test').hidden = false;
 function message(text) { $('status').textContent = text; }
 function setBusy(value) {
   busy = value;
@@ -25,6 +26,16 @@ function showUser(user) {
   $('balance').textContent = '';
   $('collection').textContent = '';
   $('round').textContent = '';
+}
+async function pauseForSessionTest() {
+  if (!import.meta.env.DEV || !$('pause-after-state').checked) return;
+  $('pause-after-state').checked = false;
+  $('switch-paused').hidden = false;
+  $('resume-paused').hidden = false;
+  message('Rodada concluída no banco e pausada antes da confirmação da sessão.');
+  await new Promise((resolve) => $('resume-paused').addEventListener('click', resolve, { once: true }));
+  $('switch-paused').hidden = true;
+  $('resume-paused').hidden = true;
 }
 async function sessionFor(userId, version) {
   const result = await client.auth.getSession();
@@ -99,7 +110,11 @@ async function spin(concurrent) {
       ensureSession: () => sessionFor(userId, version),
       claim: () => claimPendingOperation(db, `game-proof:${userId}`),
       send: (operation) => request('spin', userId, version, operation.operationId),
-      readState: () => readState(userId, version),
+      readState: async () => {
+        const state = await readState(userId, version);
+        await pauseForSessionTest();
+        return state;
+      },
       present: (responses, state) => {
         const row = responses[0];
         showState(state);
@@ -108,11 +123,27 @@ async function spin(concurrent) {
       },
       clear: (operation) => clearPendingOperation(db, `game-proof:${userId}`, operation.operationId),
     }, concurrent);
-  } catch { if (version === generation) message('Resultado não confirmado. A próxima tentativa usará o mesmo identificador.'); }
+  } catch (error) {
+    if (version !== generation && error?.message === 'session_changed') {
+      message('A sessão mudou: o resultado da conta anterior não foi exibido nesta conta e permanece pendente para recuperação.');
+    } else if (version === generation) message('Resultado não confirmado. A próxima tentativa usará o mesmo identificador.');
+  }
   finally { setBusy(false); }
 }
 $('spin').addEventListener('click', () => spin(false));
 $('concurrent').addEventListener('click', () => spin(true));
+if (import.meta.env.DEV) {
+  $('switch-paused').addEventListener('click', async () => {
+    $('switch-paused').disabled = true;
+    try {
+      const result = await client.auth.signOut();
+      if (result.error) throw result.error;
+      showUser(null);
+      message('Rodada pausada. Entre na outra conta fictícia e continue o teste.');
+    } catch { message('Não foi possível confirmar a saída; a rodada continua pausada.'); }
+    finally { $('switch-paused').disabled = false; }
+  });
+}
 client.auth.getSession().then(async ({ data, error }) => {
   if (!error && data?.user) { showUser(data.user); await refresh(data.user.id, generation); message('Sessão e progresso recuperados.'); }
 }).catch(() => message('Não foi possível recuperar a sessão.'));
