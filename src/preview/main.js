@@ -10,6 +10,7 @@ import { createNeonProofClient } from './neon-proof-client.mjs';
 import { completeGameOperation } from '../identity/game-operation.mjs';
 import { validateProofState, validateProofRound } from './proof-result.mjs';
 import { nextRefillAt, formatNextRefill } from './next-refill.mjs';
+import { capturePresentationMessages, formatCaptureResult } from './capture-result.mjs';
 
 const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
 const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
@@ -55,6 +56,7 @@ const messages = {
     authSignedOut: 'Entre com uma conta fictícia para recuperar seu progresso.', authFailed: 'Não foi possível confirmar a sessão ou o progresso. Tente novamente.',
     recoverPending: 'Há uma rodada pendente de confirmação. Recupere-a antes de iniciar outra.', recoverButton: 'Recuperar rodada pendente',
     earned: (lines, duplicates) => `Giros de teste: +${lines} por linhas e +${duplicates} por repetidos.`,
+    earnedUnavailable: 'Detalhes totais de giros indisponíveis para esta rodada.',
     symbols: { pokeball: 'Pokébola', spin: 'Giro', voucher: 'Vale' },
     lines: { top: 'Superior', middle: 'Central', bottom: 'Inferior', diagonal_down: 'Diagonal descendente', diagonal_up: 'Diagonal ascendente' },
   },
@@ -91,10 +93,13 @@ const messages = {
     authSignedOut: 'Sign in with a fictional account to recover your progress.', authFailed: 'Could not confirm the session or progress. Try again.',
     recoverPending: 'A round is awaiting confirmation. Recover it before starting another.', recoverButton: 'Recover pending round',
     earned: (lines, duplicates) => `Test spins: +${lines} from lines and +${duplicates} from duplicates.`,
+    earnedUnavailable: 'Total spin details are unavailable for this round.',
     symbols: { pokeball: 'Poké Ball', spin: 'Spin', voucher: 'Voucher' },
     lines: { top: 'Top', middle: 'Middle', bottom: 'Bottom', diagonal_down: 'Descending diagonal', diagonal_up: 'Ascending diagonal' },
   },
 };
+Object.assign(messages.pt, capturePresentationMessages.pt);
+Object.assign(messages.en, capturePresentationMessages.en);
 if (neonProof) {
   Object.assign(messages.pt, { intro: 'Rodadas autenticadas no branch isolado da Neon, com valores de teste.', footnote: 'Prova isolada: contas fictícias, probabilidades e recompensas provisórias; não é o jogo publicado.',
     pokedexEyebrow: 'Coleção da conta de teste', pokedexNote: 'O saldo e as variantes são recuperados da conta fictícia. Shiny e raridades usam valores provisórios.',
@@ -272,8 +277,8 @@ function render() {
   document.querySelector('#progress-label').textContent = text.progressLabel(progress.species, progress.total);
   document.querySelector('#kanto-progress').value = progress.species;
   document.querySelector('#shiny-progress').textContent = text.shinyProgress(progress.shiny);
-  renderList('#capture-results', (lastCaptures ?? []).map(({ line, capture, status: captureStatus }) =>
-    `${text.lines[line]} — ${speciesLabel(capture.speciesId)} (${capture.isShiny ? text.shiny : text.normal}): ${text.captureStatus[captureStatus]}`
+  renderList('#capture-results', (lastCaptures ?? []).map((entry) =>
+    formatCaptureResult(entry, text, speciesLabel(entry.capture.speciesId), { authenticated: neonProof })
   ));
   document.querySelector('#no-captures').textContent = lastCaptures === null
     ? text.beforeRound : lastCaptures.length === 0 ? text.noCaptures : '';
@@ -287,7 +292,8 @@ function render() {
   document.querySelector('#demo-balance').textContent = balance === null ? '' : text.balance(balance);
   document.querySelector('#next-refill').textContent = nextRefill === null ? '' : text.nextRefill(formatNextRefill(nextRefill, language));
   document.querySelector('#refresh-balance').disabled = pending || (neonProof && !proofUser);
-  document.querySelector('#proof-rewards').textContent = lastProofReward ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : '';
+  document.querySelector('#proof-rewards').textContent = !lastProofReward ? ''
+    : lastProofReward.available ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : text.earnedUnavailable;
   if (neonProof) document.querySelector('#proof-auth-status').textContent = authStatus ? text[authStatus] : '';
 }
 
@@ -400,7 +406,10 @@ async function spinNeonProof() {
         grid = result.grid;
         wins = result.winningLines;
         lastCaptures = result.captures;
-        lastProofReward = { lines: result.lineSpins ?? 0, duplicates: result.duplicateSpins ?? 0 };
+        lastProofReward = {
+          lines: result.lineSpins, duplicates: result.duplicateSpins,
+          available: [result.lineSpins, result.duplicateSpins].every((value) => Number.isSafeInteger(value) && value >= 0),
+        };
         status = 'success';
         if (lastCaptures.length) {
           const last = lastCaptures.at(-1).capture;
