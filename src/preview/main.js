@@ -1,7 +1,7 @@
 import { findWinningLines } from '../domain/paylines.mjs';
 import { rewardTypesForLines } from '../domain/rewards.mjs';
 import { getKantoCollectionProgress } from '../domain/collection-progress.mjs';
-import { openPendingOperations, claimPendingOperation, clearPendingOperation } from '../identity/pending-operations.mjs';
+import { openPendingOperations, readPendingOperation, claimPendingOperation, clearPendingOperation } from '../identity/pending-operations.mjs';
 import { createPokeApiClient } from '../pokeapi/client.mjs';
 import { preparePokedexData } from '../pokeapi/pokedex-data.mjs';
 import { createSpeciesDetailsStore } from './species-details.mjs';
@@ -50,6 +50,7 @@ const messages = {
     missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal',
     authTitle: 'Conta fictícia da prova Neon', emailLabel: 'E-mail de teste', passwordLabel: 'Senha de teste', loginButton: 'Entrar', logoutButton: 'Sair',
     authSignedOut: 'Entre com uma conta fictícia para recuperar seu progresso.', authFailed: 'Não foi possível confirmar a sessão ou o progresso. Tente novamente.',
+    recoverPending: 'Há uma rodada pendente de confirmação. Recupere-a antes de iniciar outra.', recoverButton: 'Recuperar rodada pendente',
     earned: (lines, duplicates) => `Giros de teste: +${lines} por linhas e +${duplicates} por repetidos.`,
     symbols: { pokeball: 'Pokébola', spin: 'Giro', voucher: 'Vale' },
     lines: { top: 'Superior', middle: 'Central', bottom: 'Inferior', diagonal_down: 'Diagonal descendente', diagonal_up: 'Diagonal ascendente' },
@@ -83,6 +84,7 @@ const messages = {
     missingSprite: 'Image unavailable.', spriteAlt: 'Normal sprite',
     authTitle: 'Fictional Neon proof account', emailLabel: 'Test email', passwordLabel: 'Test password', loginButton: 'Sign in', logoutButton: 'Sign out',
     authSignedOut: 'Sign in with a fictional account to recover your progress.', authFailed: 'Could not confirm the session or progress. Try again.',
+    recoverPending: 'A round is awaiting confirmation. Recover it before starting another.', recoverButton: 'Recover pending round',
     earned: (lines, duplicates) => `Test spins: +${lines} from lines and +${duplicates} from duplicates.`,
     symbols: { pokeball: 'Poké Ball', spin: 'Spin', voucher: 'Voucher' },
     lines: { top: 'Top', middle: 'Middle', bottom: 'Bottom', diagonal_down: 'Descending diagonal', diagonal_up: 'Ascending diagonal' },
@@ -122,6 +124,7 @@ let proofUser = null;
 let proofGeneration = 0;
 let authStatus = '';
 let lastProofReward = null;
+let proofHasPending = false;
 const detailsStore = createSpeciesDetailsStore(async (speciesId) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
@@ -272,7 +275,7 @@ function render() {
   renderPokemonDetails(text);
   const spin = document.querySelector('#spin');
   spin.disabled = pending;
-  spin.textContent = pending && (!neonProof || proofUser) ? text.spinning : text.spinButton;
+  spin.textContent = pending && (!neonProof || proofUser) ? text.spinning : neonProof && proofHasPending ? text.recoverButton : text.spinButton;
   document.querySelector('#status').textContent = status ? text[status] : '';
   document.querySelector('#demo-balance').textContent = balance === null ? '' : text.balance(balance);
   document.querySelector('#proof-rewards').textContent = lastProofReward ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : '';
@@ -290,6 +293,7 @@ async function refreshDemoState() {
 }
 
 function clearProofDisplay() {
+  proofHasPending = false;
   balance = null;
   ownedVariants = [];
   lastCaptures = null;
@@ -337,9 +341,12 @@ async function recoverProofSession() {
     showProofIdentity(user);
     const current = () => version === proofGeneration && proofUser?.id === user.id;
     const state = validateProofState(await proofClient.request('state', user.id, current));
+    const savedOperation = await readPendingOperation(pendingDb, `game-proof:${user.id}`);
     await proofClient.ensureSession(user.id, current);
     if (!current()) return;
     setProofState(state);
+    proofHasPending = !!savedOperation;
+    if (proofHasPending) status = 'recoverPending';
     authStatus = '';
     if (ownedVariants.length) {
       const last = ownedVariants.at(-1);
@@ -362,7 +369,11 @@ async function spinNeonProof() {
   try {
     await completeGameOperation({
       ensureSession: () => proofClient.ensureSession(userId, current),
-      claim: () => claimPendingOperation(pendingDb, `game-proof:${userId}`),
+      claim: async () => {
+        const operation = await claimPendingOperation(pendingDb, `game-proof:${userId}`);
+        if (current()) proofHasPending = true;
+        return operation;
+      },
       send: async (operation) => validateProofRound(await proofClient.request('spin', userId, current, operation.operationId)),
       readState: async () => validateProofState(await proofClient.request('state', userId, current)),
       present: ([result], state) => {
@@ -382,7 +393,10 @@ async function spinNeonProof() {
           for (const { capture } of lastCaptures) detailsStore.load(capture.speciesId).then(render, render);
         }
       },
-      clear: (operation) => clearPendingOperation(pendingDb, `game-proof:${userId}`, operation.operationId),
+      clear: async (operation) => {
+        await clearPendingOperation(pendingDb, `game-proof:${userId}`, operation.operationId);
+        if (current()) proofHasPending = false;
+      },
     });
   } catch (error) {
     if (current()) {

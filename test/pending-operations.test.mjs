@@ -1,7 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { IDBFactory } from 'fake-indexeddb';
-import { openPendingOperations, claimPendingOperation, clearPendingOperation } from '../src/identity/pending-operations.mjs';
+import { openPendingOperations, readPendingOperation, claimPendingOperation, clearPendingOperation } from '../src/identity/pending-operations.mjs';
+
+test('consulta pendência sem criar operação e mantém contas separadas após reabrir', async () => {
+  const indexedDB = new IDBFactory();
+  const first = await openPendingOperations(indexedDB);
+  assert.equal(await readPendingOperation(first, 'A'), null);
+  await claimPendingOperation(first, 'A', () => 'original');
+  first.close();
+  const reopened = await openPendingOperations(indexedDB);
+  assert.equal((await readPendingOperation(reopened, 'A')).operationId, 'original');
+  assert.equal(await readPendingOperation(reopened, 'B'), null);
+  await clearPendingOperation(reopened, 'A', 'original');
+  assert.equal(await readPendingOperation(reopened, 'A'), null);
+  reopened.close();
+});
 
 test('duas abas obtêm o mesmo ID pendente para a mesma conta', async () => {
   const indexedDB = new IDBFactory();

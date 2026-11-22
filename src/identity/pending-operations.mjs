@@ -8,6 +8,17 @@ export function openPendingOperations(indexedDB = globalThis.indexedDB) {
     request.onblocked = () => reject(new Error('pending operation database blocked'));
   });
 }
+
+export function readPendingOperation(db, userId) {
+  if (!userId) return Promise.reject(new Error('user id required'));
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('pending', 'readonly');
+    const request = tx.objectStore('pending').get(userId);
+    tx.oncomplete = () => resolve(request.result ?? null);
+    tx.onabort = () => reject(tx.error || new Error('pending operation read aborted'));
+    tx.onerror = () => {};
+  });
+}
 // Transações de escrita no mesmo object store são serializadas entre abas.
 export function claimPendingOperation(db, userId, makeId = () => crypto.randomUUID()) {
   if (!userId) return Promise.reject(new Error('user id required'));
