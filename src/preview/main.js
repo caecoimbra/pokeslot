@@ -125,6 +125,7 @@ let proofGeneration = 0;
 let authStatus = '';
 let lastProofReward = null;
 let proofHasPending = false;
+let afterProofRound = null;
 const detailsStore = createSpeciesDetailsStore(async (speciesId) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
@@ -374,7 +375,11 @@ async function spinNeonProof() {
         if (current()) proofHasPending = true;
         return operation;
       },
-      send: async (operation) => validateProofRound(await proofClient.request('spin', userId, current, operation.operationId)),
+      send: async (operation) => {
+        const result = validateProofRound(await proofClient.request('spin', userId, current, operation.operationId));
+        if (import.meta.env.DEV && afterProofRound) await afterProofRound();
+        return result;
+      },
       readState: async () => validateProofState(await proofClient.request('state', userId, current)),
       present: ([result], state) => {
         setProofState(state);
@@ -505,6 +510,15 @@ document.querySelector('#spin').addEventListener('click', async () => {
   }
 });
 render();
+if (import.meta.env.DEV && neonProof && new URLSearchParams(location.search).get('test') === '1') {
+  import('./proof-test-controls.mjs').then(({ setupProofTestControls }) => {
+    afterProofRound = setupProofTestControls({ signOut: async () => {
+      const result = await proofClient.signOut();
+      if (result.error) throw new Error('logout_failed');
+      await recoverProofSession();
+    } });
+  });
+}
 if (neonProof) startNeonProof();
 else Promise.all([openPendingOperations(), refreshDemoState()]).then(([db]) => {
   pendingDb = db;
