@@ -57,8 +57,25 @@ try {
   assert.equal(finalA.payload.balance, 19);
   assert.equal(finalB.payload.balance, 20);
   assert.deepEqual(finalB.payload.ownedVariants, []);
+  // Simula perda após confirmação do servidor: descarta a primeira resposta
+  // e repete a mesma operação, comparando o resultado persistido.
+  const lostId = randomUUID();
+  const lost = await request(a, 'spin', { expectedUserId: a.userId, operationId: lostId });
+  assert.equal(lost.status, 200);
+  assert.equal(lost.payload.replayed, false);
+  const recovered = await request(a, 'spin', { expectedUserId: a.userId, operationId: lostId });
+  assert.equal(recovered.status, 200);
+  assert.equal(recovered.payload.replayed, true);
+  const { replayed: _firstFlag, ...firstResult } = lost.payload;
+  const { replayed: _secondFlag, ...secondResult } = recovered.payload;
+  assert.deepEqual(secondResult, firstResult);
+  assert.equal((await request(a, 'state', { expectedUserId: a.userId })).payload.balance, 18);
+  // Uma operação vinculada a A não é aceita com o JWT de B.
+  const wrongSession = await request(b, 'spin', { expectedUserId: a.userId, operationId: lostId });
+  assert.equal(wrongSession.status, 409);
+  assert.equal((await request(b, 'state', { expectedUserId: b.userId })).payload.balance, 20);
   let captureResult = responses[0].payload.captures[0];
-  let expectedBalance = 19;
+  let expectedBalance = 18;
   for (let attempt = 0; !captureResult && attempt < 12; attempt++) {
     const result = await request(a, 'spin', { expectedUserId: a.userId, operationId: randomUUID() });
     assert.equal(result.status, 200);

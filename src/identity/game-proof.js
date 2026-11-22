@@ -1,5 +1,6 @@
 import { createClient, defaultDeriveNeonUrls } from '@neon/neon-js';
 import { openPendingOperations, claimPendingOperation, clearPendingOperation } from './pending-operations.mjs';
+import { completeGameOperation } from './game-operation.mjs';
 import './style.css';
 
 const client = createClient(import.meta.env.VITE_NEON_PROOF_DATABASE_URL);
@@ -44,12 +45,19 @@ async function request(route, userId, version, operationId) {
   if (!response.ok) throw new Error('request_failed');
   return response.json();
 }
-async function refresh(userId, version) {
+async function readState(userId, version) {
   const state = await request('state', userId, version);
   if (!Number.isSafeInteger(state.balance) || !Array.isArray(state.ownedVariants)) throw new Error('invalid_state');
-  await sessionFor(userId, version);
+  return state;
+}
+function showState(state) {
   $('balance').textContent = `Saldo: ${state.balance} giros`;
   $('collection').textContent = `Coleção: ${state.ownedVariants.map((v) => `#${String(v.speciesId).padStart(3, '0')}${v.isShiny ? ' shiny' : ''}`).join(', ') || 'vazia'}`;
+}
+async function refresh(userId, version) {
+  const state = await readState(userId, version);
+  await sessionFor(userId, version);
+  showState(state);
 }
 $('login').addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -86,19 +94,20 @@ async function spin(concurrent) {
   const userId = currentUser.id, version = generation;
   setBusy(true);
   try {
-    await sessionFor(userId, version);
     const db = await dbPromise;
-    const pending = await claimPendingOperation(db, `game-proof:${userId}`);
-    const send = () => request('spin', userId, version, pending.operationId);
-    const responses = await Promise.all(concurrent ? [send(), send()] : [send()]);
-    if (!responses.every((row) => ['ok', 'no_balance'].includes(row.status) && typeof row.replayed === 'boolean')) throw new Error('invalid_result');
-    await sessionFor(userId, version);
-    await refresh(userId, version);
-    await clearPendingOperation(db, `game-proof:${userId}`, pending.operationId);
-    await sessionFor(userId, version);
-    const row = responses[0];
-    $('round').textContent = row.status === 'ok' ? `Rodada: ${row.winningLines.length} linha(s) vencedora(s); ${row.captures.length} captura(s).` : 'Saldo insuficiente.';
-    message(concurrent ? `Respostas: ${responses.filter((v) => !v.replayed).length} nova e ${responses.filter((v) => v.replayed).length} recuperada.` : row.replayed ? 'Resultado anterior recuperado.' : 'Operação confirmada.');
+    await completeGameOperation({
+      ensureSession: () => sessionFor(userId, version),
+      claim: () => claimPendingOperation(db, `game-proof:${userId}`),
+      send: (operation) => request('spin', userId, version, operation.operationId),
+      readState: () => readState(userId, version),
+      present: (responses, state) => {
+        const row = responses[0];
+        showState(state);
+        $('round').textContent = row.status === 'ok' ? `Rodada: ${row.winningLines.length} linha(s) vencedora(s); ${row.captures.length} captura(s).` : 'Saldo insuficiente.';
+        message(concurrent ? `Respostas: ${responses.filter((v) => !v.replayed).length} nova e ${responses.filter((v) => v.replayed).length} recuperada.` : row.replayed ? 'Resultado anterior recuperado.' : 'Operação confirmada.');
+      },
+      clear: (operation) => clearPendingOperation(db, `game-proof:${userId}`, operation.operationId),
+    }, concurrent);
   } catch { if (version === generation) message('Resultado não confirmado. A próxima tentativa usará o mesmo identificador.'); }
   finally { setBusy(false); }
 }
