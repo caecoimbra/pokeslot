@@ -9,6 +9,7 @@ import { selectDescription } from './description.mjs';
 import { createNeonProofClient } from './neon-proof-client.mjs';
 import { completeGameOperation } from '../identity/game-operation.mjs';
 import { validateProofState, validateProofRound } from './proof-result.mjs';
+import { nextRefillAt, formatNextRefill } from './next-refill.mjs';
 
 const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
 const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
@@ -28,6 +29,8 @@ const messages = {
     results: 'LINHAS VENCEDORAS', caption: 'Os símbolos destacados fazem parte de uma ou mais linhas vencedoras.',
     footnote: 'Demonstração local compartilhada neste computador: não usa uma conta autenticada nem concede prêmios reais.',
     balance: (value) => `Saldo de teste: ${value} giros`, noBalance: 'Sem giros no saldo de teste.',
+    nextRefill: (date) => `Próxima reposição prevista: ${date} (horário local). Atualize o saldo para confirmar.`,
+    refreshBalance: 'Atualizar saldo', balanceRefreshed: 'Saldo atualizado pelo servidor.',
     spinButton: 'Girar demonstração', spinning: 'Gerando rodada…', noWins: 'Nenhuma nesta rodada',
     rewardHeading: 'Tipos de recompensa — demonstração', noRewards: 'Nenhuma recompensa indicada nesta rodada.',
     rewardTypes: { pokemon: 'Captura de Pokémon', extra_spins: 'Giros extras', voucher: 'Vale' },
@@ -62,6 +65,8 @@ const messages = {
     results: 'WINNING LINES', caption: 'Highlighted symbols belong to one or more winning lines.',
     footnote: 'Local demonstration shared on this computer: no authenticated account or real rewards.',
     balance: (value) => `Test balance: ${value} spins`, noBalance: 'No test spins available.',
+    nextRefill: (date) => `Next refill expected: ${date} (local time). Refresh balance to confirm.`,
+    refreshBalance: 'Refresh balance', balanceRefreshed: 'Balance refreshed from the server.',
     spinButton: 'Spin demonstration', spinning: 'Generating round…', noWins: 'None this round',
     rewardHeading: 'Reward types — demonstration', noRewards: 'No rewards indicated this round.',
     rewardTypes: { pokemon: 'Pokémon capture', extra_spins: 'Extra spins', voucher: 'Voucher' },
@@ -110,6 +115,7 @@ let language = 'pt';
 let status = 'initial';
 let pending = true;
 let balance = null;
+let nextRefill = null;
 let pendingDb = null;
 let ownedVariants = [];
 let lastCaptures = null;
@@ -279,6 +285,8 @@ function render() {
   spin.textContent = pending && (!neonProof || proofUser) ? text.spinning : neonProof && proofHasPending ? text.recoverButton : text.spinButton;
   document.querySelector('#status').textContent = status ? text[status] : '';
   document.querySelector('#demo-balance').textContent = balance === null ? '' : text.balance(balance);
+  document.querySelector('#next-refill').textContent = nextRefill === null ? '' : text.nextRefill(formatNextRefill(nextRefill, language));
+  document.querySelector('#refresh-balance').disabled = pending || (neonProof && !proofUser);
   document.querySelector('#proof-rewards').textContent = lastProofReward ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : '';
   if (neonProof) document.querySelector('#proof-auth-status').textContent = authStatus ? text[authStatus] : '';
 }
@@ -289,13 +297,16 @@ async function refreshDemoState() {
   const state = await response.json();
   if (!Number.isSafeInteger(state.balance) || state.balance < 0 || !Array.isArray(state.ownedVariants)) throw new Error('Invalid state');
   getKantoCollectionProgress(state.ownedVariants);
+  const next = nextRefillAt(state.cycleStartedAtMs);
   balance = state.balance;
   ownedVariants = state.ownedVariants;
+  nextRefill = next;
 }
 
 function clearProofDisplay() {
   proofHasPending = false;
   balance = null;
+  nextRefill = null;
   ownedVariants = [];
   lastCaptures = null;
   lastProofReward = null;
@@ -316,8 +327,10 @@ function showProofIdentity(user) {
 }
 function setProofState(state) {
   validateProofState(state);
+  const next = nextRefillAt(Date.parse(state.cycleAt));
   balance = state.balance;
   ownedVariants = state.ownedVariants;
+  nextRefill = next;
 }
 async function startNeonProof() {
   document.querySelector('#proof-auth').hidden = false;
@@ -442,6 +455,33 @@ document.addEventListener('visibilitychange', () => {
 document.querySelector('#language').addEventListener('click', () => {
   language = language === 'pt' ? 'en' : 'pt';
   render();
+});
+document.querySelector('#refresh-balance').addEventListener('click', async () => {
+  if (pending) return;
+  if (neonProof) {
+    if (!proofUser) return;
+    const userId = proofUser.id, version = proofGeneration;
+    const current = () => version === proofGeneration && proofUser?.id === userId;
+    pending = true;
+    render();
+    try {
+      const state = validateProofState(await proofClient.request('state', userId, current));
+      await proofClient.ensureSession(userId, current);
+      if (!current()) return;
+      setProofState(state);
+      status = proofHasPending ? 'recoverPending' : 'balanceRefreshed';
+    } catch (error) {
+      if (current() && error?.message === 'session_changed') {
+        clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authSignedOut';
+      } else if (current()) status = 'failure';
+    } finally { if (current()) pending = false; render(); }
+    return;
+  }
+  pending = true;
+  render();
+  try { await refreshDemoState(); status = 'balanceRefreshed'; }
+  catch { status = 'failure'; }
+  finally { pending = false; render(); }
 });
 document.querySelector('#retry-detail').addEventListener('click', loadPokemon);
 document.querySelector('#collection').addEventListener('click', (event) => {
