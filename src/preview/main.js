@@ -1,6 +1,8 @@
 import { findWinningLines } from '../domain/paylines.mjs';
 import { rewardTypesForLines } from '../domain/rewards.mjs';
 import { evaluateRoundCaptures } from '../domain/round-captures.mjs';
+import { createPokeApiClient } from '../pokeapi/client.mjs';
+import { preparePokedexData } from '../pokeapi/pokedex-data.mjs';
 
 // A grade inicial é fixa; as rodadas demonstrativas vêm do servidor local.
 let grid = [
@@ -26,6 +28,10 @@ const messages = {
     beforeRound: 'Gire para ver as capturas de teste.', noCaptures: 'Nenhuma captura nesta rodada.',
     emptyCollection: 'Sua coleção de teste está vazia.', normal: 'Normal', shiny: 'Shiny',
     captureStatus: { new: 'Nova captura', duplicate: 'Repetida (compensação ainda não aplicada)' },
+    detailsTitle: 'Dados da PokéAPI', loadingDetails: 'Carregando dados do Pikachu…',
+    failedDetails: 'Não foi possível carregar os dados da PokéAPI.', retry: 'Tentar novamente',
+    typeLabel: 'Tipo', electric: 'Elétrico', unknownType: 'Tipo indisponível',
+    missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal de Pikachu',
     symbols: { pokeball: 'Pokébola', spin: 'Giro', voucher: 'Vale' },
     lines: { top: 'Superior', middle: 'Central', bottom: 'Inferior', diagonal_down: 'Diagonal descendente', diagonal_up: 'Diagonal ascendente' },
   },
@@ -46,6 +52,10 @@ const messages = {
     beforeRound: 'Spin to see test captures.', noCaptures: 'No captures this round.',
     emptyCollection: 'Your test collection is empty.', normal: 'Normal', shiny: 'Shiny',
     captureStatus: { new: 'New capture', duplicate: 'Duplicate (compensation not yet applied)' },
+    detailsTitle: 'PokéAPI data', loadingDetails: 'Loading Pikachu data…',
+    failedDetails: 'Could not load data from PokéAPI.', retry: 'Try again',
+    typeLabel: 'Type', electric: 'Electric', unknownType: 'Type unavailable',
+    missingSprite: 'Image unavailable.', spriteAlt: 'Normal Pikachu sprite',
     symbols: { pokeball: 'Poké Ball', spin: 'Spin', voucher: 'Voucher' },
     lines: { top: 'Top', middle: 'Middle', bottom: 'Bottom', diagonal_down: 'Descending diagonal', diagonal_up: 'Ascending diagonal' },
   },
@@ -62,6 +72,63 @@ let pending = false;
 // A coleção da demonstração existe apenas enquanto esta página estiver aberta.
 let ownedVariants = [];
 let lastCaptures = null;
+let pokemonData = null;
+let detailStatus = 'idle';
+let spriteFailed = false;
+
+// A imagem é servida pelo repositório oficial de sprites da PokéAPI.
+function trustedSpriteUrl(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname === 'raw.githubusercontent.com' &&
+      url.port === '' && url.pathname.startsWith('/PokeAPI/sprites/') ? url.href : null;
+  } catch { return null; }
+}
+
+async function loadPikachu() {
+  if (detailStatus === 'loading') return;
+  detailStatus = 'loading';
+  spriteFailed = false;
+  render();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    // Uma nova instância em cada tentativa evita preservar respostas inválidas no cache.
+    const client = createPokeApiClient((url, options) => fetch(url, { ...options, signal: controller.signal }));
+    pokemonData = preparePokedexData(await client.getKantoPokemon(25));
+    detailStatus = 'ready';
+  } catch {
+    pokemonData = null;
+    detailStatus = 'error';
+  } finally {
+    clearTimeout(timeout);
+    render();
+  }
+}
+
+function renderPokemonDetails(text) {
+  const detail = document.querySelector('#pokemon-detail');
+  detail.hidden = ownedVariants.length === 0;
+  const content = document.querySelector('#detail-content');
+  content.hidden = detailStatus !== 'ready';
+  document.querySelector('#detail-status').textContent = detailStatus === 'loading' ? text.loadingDetails
+    : detailStatus === 'error' ? text.failedDetails : '';
+  document.querySelector('#retry-detail').hidden = detailStatus !== 'error';
+  if (!pokemonData) return;
+
+  const name = pokemonData.names[language] || 'Pikachu';
+  document.querySelector('#pokemon-name').textContent = `#025 ${name}`;
+  const types = pokemonData.types.map(({ key }) => key === 'electric' ? text.electric : key);
+  document.querySelector('#pokemon-types').textContent = `${text.typeLabel}: ${types.join(', ') || text.unknownType}`;
+
+  const sprite = document.querySelector('#pokemon-sprite');
+  const url = trustedSpriteUrl(pokemonData.sprites.normal);
+  sprite.alt = text.spriteAlt;
+  sprite.hidden = !url || spriteFailed;
+  if (url && !spriteFailed && sprite.getAttribute('src') !== url) sprite.setAttribute('src', url);
+  document.querySelector('#sprite-status').textContent = !url || spriteFailed ? text.missingSprite : '';
+}
 
 function renderList(selector, values) {
   const items = values.map((value) => {
@@ -113,6 +180,7 @@ function render() {
     `#025 Pikachu — ${entry.isShiny ? text.shiny : text.normal}`
   ));
   document.querySelector('#empty-collection').textContent = ownedVariants.length ? '' : text.emptyCollection;
+  renderPokemonDetails(text);
   const spin = document.querySelector('#spin');
   spin.disabled = pending;
   spin.textContent = pending ? text.spinning : text.spinButton;
@@ -121,6 +189,11 @@ function render() {
 
 document.querySelector('#language').addEventListener('click', () => {
   language = language === 'pt' ? 'en' : 'pt';
+  render();
+});
+document.querySelector('#retry-detail').addEventListener('click', loadPikachu);
+document.querySelector('#pokemon-sprite').addEventListener('error', () => {
+  spriteFailed = true;
   render();
 });
 document.querySelector('#spin').addEventListener('click', async () => {
@@ -151,6 +224,7 @@ document.querySelector('#spin').addEventListener('click', async () => {
     ownedVariants = nextOwned;
     lastCaptures = captures;
     status = 'success';
+    if (ownedVariants.length && detailStatus === 'idle') loadPikachu();
   } catch {
     status = 'failure';
   } finally {
