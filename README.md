@@ -14,11 +14,14 @@ A primeira versão está planejada com as 151 espécies de Kanto e uma interface
 
 Foram experimentados Neon Auth, PostgreSQL, Neon Data API e uma Neon Function em um branch de teste. A Data API apresentou falha intermitente de contexto de identidade; a causa não foi identificada. A função alternativa passou em cenários pontuais de recuperação de saldo, repetição e concorrência, mas a arquitetura para publicação e os privilégios de acesso ainda precisam de revisão. A comparação prática com Supabase foi interrompida por decisão do autor e não constitui resultado para aquela plataforma.
 
+Uma segunda prova em `proof-identity-safe` integra autenticação, rodada, débito e coleção no PostgreSQL isolado. A função gera a rodada no servidor e registra o resultado junto com o débito; uma operação repetida recupera o mesmo resultado. Ela ainda é experimental: usa sorteio uniforme provisório, não aplica recompensas e não está conectada à prévia da máquina ou preparada para produção. A interface de prova é `http://localhost:5173/prova-jogo.html` com as variáveis públicas de teste configuradas. Não publique o arquivo SQL nem a função como arquitetura definitiva sem revisar privilégios, retenção e recuperação.
+
 ## Organização da prova
 
 - `src/domain/`: cálculo ilustrativo dos períodos de reposição.
 - `src/identity/`: interface e mecanismos usados nas verificações de identidade.
 - `functions/neon-authenticated-proof/`: API experimental que valida a identidade.
+- `functions/neon-game-proof/` e `db/neon/isolated_game.sql`: rodada transacional experimental para o branch isolado.
 - `db/neon/`: esquemas e consultas da prova. Alguns scripts são restritos ao branch isolado indicado neles.
 - `test/`: verificações locais com dados e dependências simulados quando indicado no próprio teste.
 

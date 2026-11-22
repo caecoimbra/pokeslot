@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PokéSlot — prova do jogo</title></head>
+<body><main class="shell">
+  <p>PROVA TÉCNICA · BRANCH ISOLADO</p><h1>Rodada e coleção</h1>
+  <p>Somente contas fictícias. Os resultados são provisórios e esta página não é o jogo publicado.</p>
+  <section id="login-section"><h2>Entrar na conta de teste</h2>
+    <form id="login"><label>E-mail fictício <input name="email" type="email" required></label>
+      <label>Senha de teste <input name="password" type="password" required></label><button>Entrar</button></form>
+  </section>
+  <section id="player" hidden><h2 id="player-name"></h2><p id="balance"></p><p id="collection"></p>
+    <button id="refresh">Recuperar progresso</button> <button id="spin">Girar uma vez</button>
+    <button id="concurrent">Testar duas solicitações iguais</button> <button id="logout">Sair</button>
+    <p id="round"></p>
+  </section>
+  <p id="status" role="status"></p>
+</main><script type="module" src="/src/identity/game-proof.js"></script></body></html>
