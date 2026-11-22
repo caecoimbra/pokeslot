@@ -1,5 +1,5 @@
 // Identificadores internos das raridades; os nomes exibidos serão traduzidos.
-const RARITIES = ['common', 'uncommon', 'rare', 'legendary'];
+export const RARITIES = Object.freeze(['common', 'uncommon', 'rare', 'legendary']);
 
 function isValidVariant(value) {
   return value !== null && typeof value === 'object'
