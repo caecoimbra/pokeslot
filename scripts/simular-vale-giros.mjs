@@ -1,9 +1,15 @@
 // Estudo local reproduzível: nenhum parâmetro hipotético define a regra do jogo.
+// --tiers-kanto usa os tamanhos propostos. Não simula evolução ou outros vales;
+// espécies são índices fictícios e as coleções iniciais não são trajetórias reais.
 const SESSIONS = 2000;
 const MAX_ROUNDS = 1000;
 const SEED = 123456789;
 const LINES = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [0, 1, 2], [2, 1, 0]];
-const TIERS = [[0, 90], [90, 40], [130, 15], [145, 6]];
+// O modo Kanto usa as quantidades propostas, não uma tabela real de espécies.
+const kantoTiers = process.argv.includes('--tiers-kanto');
+const TIERS = kantoTiers
+  ? [[0, 50], [50, 61], [111, 34], [145, 6]]
+  : [[0, 90], [90, 40], [130, 15], [145, 6]];
 const DUPLICATE_REWARDS = [1, 1, 2, 3];
 
 // PRNG para comparação reproduzível, não para sorteios reais do jogo.
@@ -71,7 +77,7 @@ const stages = [
   { stage: 'fim', initialBalance: 10, owned: 145 },
 ];
 for (const { stage, initialBalance, owned } of stages) {
-  for (const voucherValue of [0, 2, 5, 10]) {
+  for (const voucherValue of (kantoTiers ? [2] : [0, 2, 5, 10])) {
     // Cada sessão usa a mesma semente em todos os valores até as trajetórias divergirem.
     const sessions = Array.from({ length: SESSIONS }, (_, session) =>
       simulateSession(initialBalance, owned, voucherValue, session));
@@ -79,7 +85,7 @@ for (const { stage, initialBalance, owned } of stages) {
     const capped = sessions.filter(({ truncated }) => truncated).length;
     const averageVouchers = sessions.reduce((sum, item) => sum + item.spinVouchers, 0) / SESSIONS;
     console.log(JSON.stringify({
-      stage, initialBalance, owned, voucherValue,
+      stage, initialBalance, owned, voucherValue, tierSizes: TIERS.map(([, count]) => count),
       median: lengths[999], p90: lengths[1799], capped,
       averageSpinVouchers: Number(averageVouchers.toFixed(3)),
     }));
