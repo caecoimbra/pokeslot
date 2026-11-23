@@ -57,5 +57,19 @@ export function createPokeApiClient(fetchImpl = globalThis.fetch) {
     return { species, pokemon };
   }
 
-  return { getKantoPokemon };
+  async function listKantoSpecies() {
+    const dex = await getJson(`${API_BASE}/pokedex/2/`, (data) => {
+      if (data?.id !== 2 || !Array.isArray(data.pokemon_entries)) throw new Error('Invalid Kanto Pokédex');
+    });
+    return dex.pokemon_entries.flatMap((entry) => {
+      const species = entry?.pokemon_species;
+      const id = entry?.entry_number;
+      if (!Number.isInteger(id) || id < 1 || id > LAST_KANTO_SPECIES_ID ||
+          typeof species?.name !== 'string' || !species.name ||
+          species.url !== `${API_BASE}/pokemon-species/${id}/`) return [];
+      return [{ id, name: species.name }];
+    });
+  }
+
+  return { getKantoPokemon, listKantoSpecies };
 }

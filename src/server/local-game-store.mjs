@@ -5,7 +5,7 @@ import { createEvaluatedReelRound } from './reel-round.mjs';
 import { createDemoCaptures } from './demo-capture.mjs';
 import { createDemoVouchers } from './demo-vouchers.mjs';
 import { DEMO_SPIN_VOUCHER_VALUE } from '../domain/demo-vouchers.mjs';
-import { demoRedemptionDetails, normalVariantOwned } from './demo-redemption.mjs';
+import { demoRedemptionDetails, normalVariantOwned } from '../domain/demo-redemption.mjs';
 
 // Exclusivo para testes locais: playerId precisa vir de identidade autenticada
 // no backend real. O relógio e os sorteios não vêm de requisições do navegador.

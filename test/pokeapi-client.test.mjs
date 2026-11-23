@@ -134,3 +134,21 @@ test('um Pokémon malformado é solicitado novamente sem repetir a espécie vál
 test('recusa uma fonte de requisição que não seja função', () => {
   assert.throws(() => createPokeApiClient(null), TypeError);
 });
+
+test('lista nomes de Kanto em uma consulta, sem usar entradas fora do catálogo', async () => {
+  const entry = (id, name, speciesId = id) => ({
+    entry_number: id,
+    pokemon_species: { name, url: speciesUrl(speciesId) },
+  });
+  const calls = [];
+  const client = createPokeApiClient(async (url) => {
+    calls.push(url);
+    return response({ id: 2, pokemon_entries: [
+      entry(25, 'pikachu'), entry(151, 'mew'), entry(152, 'chikorita'), entry(5, 'bulbasaur', 1), null,
+    ] });
+  });
+  const expected = [{ id: 25, name: 'pikachu' }, { id: 151, name: 'mew' }];
+  assert.deepEqual(await client.listKantoSpecies(), expected);
+  assert.deepEqual(await client.listKantoSpecies(), expected);
+  assert.deepEqual(calls, [`${base}/pokedex/2/`]);
+});

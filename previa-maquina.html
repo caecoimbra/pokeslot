@@ -62,8 +62,8 @@
         <form id="demo-redeem" class="demo-redeem">
           <h3 data-text="redeemTitle"></h3>
           <p data-text="redeemNote"></p>
-          <label><span data-text="redeemNumber"></span><input name="speciesId" id="redeem-number" type="number" min="1" max="151" required></label>
-          <p id="redeem-choice"></p>
+          <label><span data-text="redeemSpecies"></span><select name="speciesId" id="redeem-species" required aria-describedby="redeem-choice"></select></label>
+          <p id="redeem-choice" aria-live="polite"></p>
           <button id="redeem-submit" type="submit" data-text="redeemButton"></button>
           <p id="redeem-status" role="status"></p>
         </form>

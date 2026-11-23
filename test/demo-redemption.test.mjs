@@ -7,7 +7,7 @@ import { Worker } from 'node:worker_threads';
 import { once } from 'node:events';
 import { DatabaseSync } from 'node:sqlite';
 import { openLocalGameStore } from '../src/server/local-game-store.mjs';
-import { demoRedemptionDetails } from '../src/server/demo-redemption.mjs';
+import { demoRedemptionDetails } from '../src/domain/demo-redemption.mjs';
 
 const id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 function options({ coupons = 0, capture = null } = {}) {
