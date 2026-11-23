@@ -55,6 +55,9 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .demo-redeem select { width: 100%; padding: 8px; font: inherit; }
 .demo-redeem button { margin-top: 8px; padding: 8px 14px; font: inherit; cursor: pointer; }
 .demo-redeem :focus-visible { outline: 3px solid #ffcb64; outline-offset: 2px; }
+#demo-stones[hidden] { display: none; }
+#demo-stones > p, #demo-stones > ul { color: #d3deef; font-size: .9rem; line-height: 1.5; }
+#demo-stones button:disabled { opacity: .65; cursor: not-allowed; }
 .pokedex-note, .pokedex-content { color: #d3deef; font-size: .9rem; line-height: 1.6; }
 .collection-progress { color: #d3deef; margin: 18px 0; font-size: .9rem; }
 .collection-progress label { display: block; font-weight: 700; }

@@ -68,6 +68,26 @@
           <p id="redeem-status" role="status"></p>
         </form>
       </section>
+      <section id="demo-stones" class="pokedex" aria-labelledby="stone-title" hidden>
+        <h2 id="stone-title"></h2>
+        <p id="stone-note" class="pokedex-note"></p>
+        <p id="stone-stock"></p>
+        <ul id="stone-inventory"></ul>
+        <p id="stone-recovery-message" role="status" hidden></p>
+        <button id="stone-recover-button" type="button" hidden></button>
+        <form id="stone-exchange" class="demo-redeem">
+          <h3 id="stone-exchange-title"></h3>
+          <label><span id="stone-choice-label"></span><select id="stone-choice" required></select></label>
+          <button id="stone-exchange-button" type="submit"></button>
+        </form>
+        <form id="stone-evolve" class="demo-redeem">
+          <h3 id="stone-evolve-title"></h3>
+          <label><span id="stone-evolution-label"></span><select id="stone-evolution-choice" required></select></label>
+          <p id="stone-evolution-info"></p>
+          <button id="stone-evolve-button" type="submit"></button>
+        </form>
+        <p id="stone-action-status" role="status"></p>
+      </section>
       <section class="pokedex" aria-labelledby="pokedex-title">
         <p class="eyebrow" data-text="pokedexEyebrow"></p>
         <h2 id="pokedex-title" data-text="pokedexTitle"></h2>

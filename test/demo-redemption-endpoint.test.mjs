@@ -15,9 +15,9 @@ test('endpoint local valida origem, dados e repetição de resgate', async () =>
   try {
     process.chdir(dir);
     config.plugins[0].configureServer({ httpServer, middlewares: { use(fn) { middleware = fn; } } });
-    const call = (body, { origin = 'http://localhost:5173', method = 'POST', contentType = 'application/json' } = {}) => new Promise((resolve) => {
+    const call = (body, { origin = 'http://localhost:5173', method = 'POST', contentType = 'application/json', path = '/api/demo-redeem' } = {}) => new Promise((resolve) => {
       const req = new EventEmitter();
-      Object.assign(req, { url: '/api/demo-redeem', method, headers: { host: 'localhost:5173', origin, 'content-type': contentType } });
+      Object.assign(req, { url: path, method, headers: { host: 'localhost:5173', origin, 'content-type': contentType } });
       const res = { statusCode: 200, setHeader() {}, end(value) { resolve({ status: this.statusCode, body: value ? JSON.parse(value) : null }); } };
       middleware(req, res, () => { throw new Error('Unexpected next'); });
       if (method === 'POST' && origin === 'http://localhost:5173' && contentType === 'application/json') {
@@ -36,6 +36,22 @@ test('endpoint local valida origem, dados e repetição de resgate', async () =>
     assert.equal(first.body.replayed, false);
     assert.equal((await call(input)).body.replayed, true);
     assert.equal((await call({ ...input, speciesId: 4 })).status, 400);
+    const stone = { operationId: input.operationId, stone: 'water' };
+    const stoneOptions = { path: '/api/demo-stone' };
+    assert.equal((await call(stone, { ...stoneOptions, origin: 'http://other.example' })).status, 403);
+    assert.equal((await call(stone, { ...stoneOptions, contentType: 'text/plain' })).status, 403);
+    assert.equal((await call(stone, { ...stoneOptions, method: 'GET' })).status, 405);
+    assert.equal((await call({ ...stone, stone: 'bug' }, stoneOptions)).status, 400);
+    assert.equal((await call(stone, stoneOptions)).body.status, 'insufficient_vouchers');
+    assert.equal((await call(stone, stoneOptions)).body.replayed, true);
+    assert.equal((await call({ ...stone, stone: 'fire' }, stoneOptions)).status, 400);
+    const evolution = { operationId: input.operationId, source: { speciesId: 133, isShiny: false }, targetId: 134, stone: 'water' };
+    const evolutionOptions = { path: '/api/demo-evolve' };
+    assert.equal((await call(evolution, { ...evolutionOptions, origin: 'http://other.example' })).status, 403);
+    assert.equal((await call({ ...evolution, source: { speciesId: 133, isShiny: 'false' } }, evolutionOptions)).status, 400);
+    assert.equal((await call(evolution, evolutionOptions)).body.status, 'source_unavailable');
+    assert.equal((await call(evolution, evolutionOptions)).body.replayed, true);
+    assert.equal((await call({ ...evolution, targetId: 135 }, evolutionOptions)).status, 400);
   } finally {
     httpServer.emit('close');
     process.chdir(original);

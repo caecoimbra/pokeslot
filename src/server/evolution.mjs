@@ -21,6 +21,14 @@ const STONE_EVOLUTIONS = Object.freeze([
   Object.freeze({ sourceId: 133, targetId: 136, stone: 'fire' }),
 ]);
 
+// Cópias para apresentação; o backend valida com a lista interna.
+export function knownEvolutionOptions() {
+  return STONE_EVOLUTIONS.map((entry) => ({ ...entry }));
+}
+
+// Pedras das 16 receitas clássicas nesta demonstração, não catálogo definitivo.
+export const DEMO_STONES = Object.freeze(['thunder', 'moon', 'fire', 'leaf', 'water']);
+
 // A receita é escolhida aqui, nunca recebida do navegador. O futuro endpoint
 // precisa obter coleção, disponibilidade e estoque a partir do backend autenticado.
 export function planKnownEvolution({ source, targetId, selectedStone, sourceAvailable, stoneCount, ownedVariants }) {

@@ -6,6 +6,7 @@ import { createDemoCaptures } from './demo-capture.mjs';
 import { createDemoVouchers } from './demo-vouchers.mjs';
 import { DEMO_SPIN_VOUCHER_VALUE } from '../domain/demo-vouchers.mjs';
 import { demoRedemptionDetails, normalVariantOwned } from '../domain/demo-redemption.mjs';
+import { DEMO_STONES, planKnownEvolution } from './evolution.mjs';
 
 // Exclusivo para testes locais: playerId precisa vir de identidade autenticada
 // no backend real. O relógio e os sorteios não vêm de requisições do navegador.
@@ -17,7 +18,10 @@ export function openLocalGameStore(path, { now = Date.now, makeRound = createEva
     CREATE TABLE IF NOT EXISTS variants (player_id TEXT NOT NULL REFERENCES players(id), species_id INTEGER NOT NULL, shiny INTEGER NOT NULL, PRIMARY KEY(player_id, species_id, shiny));
     CREATE TABLE IF NOT EXISTS rounds (player_id TEXT NOT NULL REFERENCES players(id), operation_id TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(player_id, operation_id));
     CREATE TABLE IF NOT EXISTS vouchers (player_id TEXT NOT NULL REFERENCES players(id), type TEXT NOT NULL, amount INTEGER NOT NULL CHECK(amount > 0), PRIMARY KEY(player_id, type));
-    CREATE TABLE IF NOT EXISTS voucher_redemptions (player_id TEXT NOT NULL REFERENCES players(id), operation_id TEXT NOT NULL, species_id INTEGER NOT NULL, result TEXT NOT NULL, PRIMARY KEY(player_id, operation_id));`);
+    CREATE TABLE IF NOT EXISTS voucher_redemptions (player_id TEXT NOT NULL REFERENCES players(id), operation_id TEXT NOT NULL, species_id INTEGER NOT NULL, result TEXT NOT NULL, PRIMARY KEY(player_id, operation_id));
+    CREATE TABLE IF NOT EXISTS stones (player_id TEXT NOT NULL REFERENCES players(id), type TEXT NOT NULL, amount INTEGER NOT NULL CHECK(amount > 0), PRIMARY KEY(player_id, type));
+    CREATE TABLE IF NOT EXISTS stone_redemptions (player_id TEXT NOT NULL REFERENCES players(id), operation_id TEXT NOT NULL, stone TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(player_id, operation_id));
+    CREATE TABLE IF NOT EXISTS evolutions (player_id TEXT NOT NULL REFERENCES players(id), operation_id TEXT NOT NULL, source_id INTEGER NOT NULL, source_shiny INTEGER NOT NULL, target_id INTEGER NOT NULL, stone TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(player_id, operation_id));`);
   const player = db.prepare('SELECT balance, cycle_ms FROM players WHERE id = ?');
   const variants = db.prepare('SELECT species_id, shiny FROM variants WHERE player_id = ? ORDER BY species_id, shiny');
   const savedRound = db.prepare('SELECT result FROM rounds WHERE player_id = ? AND operation_id = ?');
@@ -28,8 +32,16 @@ export function openLocalGameStore(path, { now = Date.now, makeRound = createEva
   const addVoucher = db.prepare('INSERT INTO vouchers VALUES (?, ?, 1) ON CONFLICT(player_id, type) DO UPDATE SET amount = amount + 1');
   const savedRedemption = db.prepare('SELECT species_id, result FROM voucher_redemptions WHERE player_id = ? AND operation_id = ?');
   const addRedemption = db.prepare('INSERT INTO voucher_redemptions VALUES (?, ?, ?, ?)');
-  const consumeVouchers = db.prepare("UPDATE vouchers SET amount = amount - ? WHERE player_id = ? AND type = 'pokemon'");
-  const deleteVouchers = db.prepare("DELETE FROM vouchers WHERE player_id = ? AND type = 'pokemon'");
+  const consumeVouchers = db.prepare('UPDATE vouchers SET amount = amount - ? WHERE player_id = ? AND type = ?');
+  const deleteVouchers = db.prepare('DELETE FROM vouchers WHERE player_id = ? AND type = ?');
+  const stones = db.prepare('SELECT type, amount FROM stones WHERE player_id = ? ORDER BY type');
+  const addStone = db.prepare('INSERT INTO stones VALUES (?, ?, 1) ON CONFLICT(player_id, type) DO UPDATE SET amount = amount + 1');
+  const consumeStone = db.prepare('UPDATE stones SET amount = amount - 1 WHERE player_id = ? AND type = ?');
+  const deleteStone = db.prepare('DELETE FROM stones WHERE player_id = ? AND type = ?');
+  const savedStoneRedemption = db.prepare('SELECT stone, result FROM stone_redemptions WHERE player_id = ? AND operation_id = ?');
+  const addStoneRedemption = db.prepare('INSERT INTO stone_redemptions VALUES (?, ?, ?, ?)');
+  const savedEvolution = db.prepare('SELECT source_id, source_shiny, target_id, stone, result FROM evolutions WHERE player_id = ? AND operation_id = ?');
+  const addEvolution = db.prepare('INSERT INTO evolutions VALUES (?, ?, ?, ?, ?, ?, ?)');
 
   function transaction(fn) {
     db.exec('BEGIN IMMEDIATE');
@@ -42,11 +54,19 @@ export function openLocalGameStore(path, { now = Date.now, makeRound = createEva
   function checkOperation(operationId) {
     if (typeof operationId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(operationId)) throw new TypeError('Invalid operation ID');
   }
+  function checkStone(stone) {
+    if (!DEMO_STONES.includes(stone)) throw new TypeError('Invalid stone');
+  }
+  function spendVoucher(id, type, amount, cost) {
+    if (amount === cost) deleteVouchers.run(id, type);
+    else consumeVouchers.run(cost, id, type);
+  }
   function snapshot(id) {
     const p = player.get(id);
     return { balance: p.balance, cycleStartedAtMs: p.cycle_ms,
       ownedVariants: variants.all(id).map((v) => ({ speciesId: v.species_id, isShiny: !!v.shiny })),
-      vouchers: vouchers.all(id).map(({ type, amount }) => ({ type, amount })) };
+      vouchers: vouchers.all(id).map(({ type, amount }) => ({ type, amount })),
+      stones: stones.all(id).map(({ type, amount }) => ({ type, amount })) };
   }
   function refresh(id) {
     const clock = now();
@@ -105,13 +125,62 @@ export function openLocalGameStore(path, { now = Date.now, makeRound = createEva
         if (normalVariantOwned(state.ownedVariants, speciesId)) status = 'already_owned';
         else if (amount < details.cost) status = 'insufficient_vouchers';
         else {
-          if (amount === details.cost) deleteVouchers.run(id);
-          else consumeVouchers.run(details.cost, id);
+          spendVoucher(id, 'pokemon', amount, details.cost);
           if (addVariant.run(id, speciesId, 0).changes !== 1) throw new Error('Variant insert failed');
           status = 'ok';
         }
         const result = { status, ...details };
         addRedemption.run(id, operationId, speciesId, JSON.stringify(result));
+        return { ...result, replayed: false };
+      });
+    },
+    redeemStone(id, operationId, stone) {
+      checkPlayer(id);
+      checkOperation(operationId);
+      checkStone(stone);
+      return transaction(() => {
+        const previous = savedStoneRedemption.get(id, operationId);
+        if (previous) {
+          if (previous.stone !== stone) throw new TypeError('Operation ID used for another stone');
+          return { ...JSON.parse(previous.result), replayed: true };
+        }
+        const state = refresh(id);
+        const amount = state.vouchers.find((entry) => entry.type === 'stone')?.amount ?? 0;
+        const status = amount ? 'ok' : 'insufficient_vouchers';
+        if (amount) {
+          spendVoucher(id, 'stone', amount, 1);
+          addStone.run(id, stone);
+        }
+        const result = { status, stone };
+        addStoneRedemption.run(id, operationId, stone, JSON.stringify(result));
+        return { ...result, replayed: false };
+      });
+    },
+    evolve(id, operationId, source, targetId, stone) {
+      checkPlayer(id);
+      checkOperation(operationId);
+      checkStone(stone);
+      if (!source || !Number.isInteger(source.speciesId) || source.speciesId < 1 || source.speciesId > 151 ||
+          typeof source.isShiny !== 'boolean' || !Number.isInteger(targetId) || targetId < 1 || targetId > 151) throw new TypeError('Invalid evolution');
+      return transaction(() => {
+        const previous = savedEvolution.get(id, operationId);
+        if (previous) {
+          if (previous.source_id !== source.speciesId || !!previous.source_shiny !== source.isShiny ||
+              previous.target_id !== targetId || previous.stone !== stone) throw new TypeError('Operation ID used for another evolution');
+          return { ...JSON.parse(previous.result), replayed: true };
+        }
+        const state = refresh(id);
+        const stoneCount = state.stones.find((entry) => entry.type === stone)?.amount ?? 0;
+        const sourceAvailable = state.ownedVariants.some((entry) => entry.speciesId === source.speciesId && entry.isShiny === source.isShiny);
+        const plan = planKnownEvolution({ source, targetId, selectedStone: stone, sourceAvailable, stoneCount, ownedVariants: state.ownedVariants });
+        const status = plan.status === 'ready' ? 'ok' : plan.status;
+        if (status === 'ok') {
+          if (stoneCount === 1) deleteStone.run(id, stone);
+          else consumeStone.run(id, stone);
+          if (addVariant.run(id, plan.target.speciesId, Number(plan.target.isShiny)).changes !== 1) throw new Error('Variant insert failed');
+        }
+        const result = { status, source: { speciesId: source.speciesId, isShiny: source.isShiny }, targetId, stone };
+        addEvolution.run(id, operationId, source.speciesId, Number(source.isShiny), targetId, stone, JSON.stringify(result));
         return { ...result, replayed: false };
       });
     },

@@ -1,7 +1,7 @@
 import { findWinningLines } from '../domain/paylines.mjs';
 import { rewardTypesForLines } from '../domain/rewards.mjs';
 import { getKantoCollectionProgress } from '../domain/collection-progress.mjs';
-import { openPendingOperations, readPendingOperation, claimPendingOperation, clearPendingOperation } from '../identity/pending-operations.mjs';
+import { openPendingOperations, readPendingOperation, readPendingLocalAction, claimPendingLocalAction, claimPendingOperation, clearPendingOperation } from '../identity/pending-operations.mjs';
 import { createPokeApiClient } from '../pokeapi/client.mjs';
 import { preparePokedexData } from '../pokeapi/pokedex-data.mjs';
 import { createSpeciesDetailsStore } from './species-details.mjs';
@@ -14,6 +14,8 @@ import { capturePresentationMessages, formatCaptureResult } from './capture-resu
 import { filterCollection } from './collection-filter.mjs';
 import { DEMO_VOUCHER_TYPES } from '../domain/demo-vouchers.mjs';
 import { demoRedemptionSpecies, demoRedemptionDetails, normalVariantOwned } from '../domain/demo-redemption.mjs';
+import { setupStoneUI } from './stone-ui.mjs';
+import { knownEvolutionOptions, DEMO_STONES } from '../server/evolution.mjs';
 
 const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
 const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
@@ -50,13 +52,14 @@ const messages = {
     emptyCollection: 'Sua coleção de teste está vazia.', normal: 'Normal', shiny: 'Shiny',
     numberFilter: 'Número da espécie', variantFilter: 'Variante', allVariants: 'Todas',
     filterCount: (count) => `${count} ${count === 1 ? 'variante encontrada' : 'variantes encontradas'}.`, noFilterMatches: 'Nenhuma variante corresponde aos filtros.',
-    vouchersTitle: 'Vales — demonstração local', vouchersNote: 'Cinco tipos equiprováveis são uma hipótese de teste. O vale de giros concede 2 giros e o vale Pokémon pode ser trocado abaixo; pedra, tipo e amuleto ficam guardados sem uso implementado. Nesta prévia, linhas de giro e repetidos ainda não concedem giros.',
+    vouchersTitle: 'Vales — demonstração local', vouchersNote: 'Cinco tipos equiprováveis são uma hipótese de teste. O vale de giros concede 2 giros; os vales Pokémon e pedra podem ser trocados abaixo. Tipo e amuleto ficam guardados sem uso implementado. Nesta prévia, linhas de giro e repetidos ainda não concedem giros.',
     voucherRoundTitle: 'Vales da última rodada', voucherInventoryTitle: 'Vales guardados', voucherBefore: 'Gire para ver os vales sorteados.', voucherNone: 'Nenhum vale nesta rodada.', voucherInventoryEmpty: 'Nenhum vale guardado.', voucherUnknown: 'Detalhes dos vales indisponíveis para esta rodada antiga.',
     voucherNames: { pokemon: 'Vale Pokémon', stone: 'Vale pedra', spins: 'Vale de giros', type: 'Vale de tipo', shiny_charm: 'Amuleto shiny' }, voucherSpins: (value) => `+${value} giros de teste`, voucherValueUnknown: 'valor indisponível',
     redeemTitle: 'Trocar vale Pokémon — teste', redeemNote: 'O resgate registra a variante normal. As raridades e os custos ainda estão em teste.', redeemSpecies: 'Pokémon de Kanto', redeemPlaceholder: 'Escolha uma espécie', redeemButton: 'Trocar vales',
     redeemStock: (count) => `Vales Pokémon disponíveis: ${count}.`,
     redeemChoice: (id, rarity, cost, name) => `#${String(id).padStart(3, '0')}${name ? ` ${name}` : ''} · ${rarity} · ${cost} ${cost === 1 ? 'vale' : 'vales'} Pokémon`,
     redeemOk: 'Resgate concluído e registrado na coleção.', redeemOwned: 'Você já possui a variante normal desta espécie.', redeemInsufficient: 'Você não possui vales Pokémon suficientes.', redeemFailure: 'Não foi possível confirmar o resgate. Tente novamente com o mesmo número para recuperar a operação.',
+    redeemPending: 'Há um resgate anterior pendente. Recupere-o antes de escolher outra espécie.', redeemRecover: 'Recuperar resgate pendente', localActionOtherPending: 'Há outra ação local pendente; confirme-a antes de resgatar.',
     captureStatus: { new: 'Nova captura', duplicate: 'Repetida (compensação ainda não aplicada)' },
     detailsTitle: 'Pokémon selecionado — PokéAPI', loadingDetails: 'Carregando dados do Pokémon…',
     failedDetails: 'Não foi possível carregar os dados da PokéAPI.', retry: 'Tentar novamente',
@@ -97,13 +100,14 @@ const messages = {
     emptyCollection: 'Your test collection is empty.', normal: 'Normal', shiny: 'Shiny',
     numberFilter: 'Species number', variantFilter: 'Variant', allVariants: 'All',
     filterCount: (count) => `${count} ${count === 1 ? 'variant found' : 'variants found'}.`, noFilterMatches: 'No variants match these filters.',
-    vouchersTitle: 'Vouchers — local demonstration', vouchersNote: 'Five equally likely types are a test assumption. The spin voucher grants 2 spins and the Pokémon voucher can be redeemed below; stone, type and charm are saved but cannot be used yet. Spin lines and duplicates do not grant spins in this preview yet.',
+    vouchersTitle: 'Vouchers — local demonstration', vouchersNote: 'Five equally likely types are a test assumption. The spin voucher grants 2 spins; Pokémon and stone vouchers can be redeemed below. Type and charm are saved but cannot be used yet. Spin lines and duplicates do not grant spins in this preview yet.',
     voucherRoundTitle: 'Last round vouchers', voucherInventoryTitle: 'Saved vouchers', voucherBefore: 'Spin to see drawn vouchers.', voucherNone: 'No vouchers this round.', voucherInventoryEmpty: 'No vouchers saved.', voucherUnknown: 'Voucher details unavailable for this older round.',
     voucherNames: { pokemon: 'Pokémon voucher', stone: 'Stone voucher', spins: 'Spin voucher', type: 'Type voucher', shiny_charm: 'Shiny charm' }, voucherSpins: (value) => `+${value} test spins`, voucherValueUnknown: 'value unavailable',
     redeemTitle: 'Redeem Pokémon vouchers — test', redeemNote: 'Redemption registers the normal variant. Rarities and costs are still being tested.', redeemSpecies: 'Kanto Pokémon', redeemPlaceholder: 'Choose a species', redeemButton: 'Redeem vouchers',
     redeemStock: (count) => `Pokémon vouchers available: ${count}.`,
     redeemChoice: (id, rarity, cost, name) => `#${String(id).padStart(3, '0')}${name ? ` ${name}` : ''} · ${rarity} · ${cost} Pokémon ${cost === 1 ? 'voucher' : 'vouchers'}`,
     redeemOk: 'Redemption complete and registered in the collection.', redeemOwned: 'You already own the normal variant of this species.', redeemInsufficient: 'You do not have enough Pokémon vouchers.', redeemFailure: 'Could not confirm the redemption. Retry with the same number to recover the operation.',
+    redeemPending: 'A previous redemption is pending. Recover it before choosing another species.', redeemRecover: 'Recover pending redemption', localActionOtherPending: 'Another local action is pending; confirm it before redeeming.',
     captureStatus: { new: 'New capture', duplicate: 'Duplicate (compensation not yet applied)' },
     detailsTitle: 'Selected Pokémon — PokéAPI', loadingDetails: 'Loading Pokémon data…',
     failedDetails: 'Could not load data from PokéAPI.', retry: 'Try again',
@@ -149,8 +153,11 @@ let pendingDb = null;
 let ownedVariants = [];
 let lastCaptures = null;
 let demoVouchers = [];
+let demoStones = [];
+let stoneActionMessage = '';
 let lastVouchers = null;
 let redeemStatus = '';
+let pendingLocalAction = null;
 const redeemSpecies = document.querySelector('#redeem-species');
 let redeemNames = new Map();
 let pokemonData = null;
@@ -166,6 +173,12 @@ let authStatus = '';
 let lastProofReward = null;
 let proofHasPending = false;
 let afterProofRound = null;
+const stoneUI = setupStoneUI({
+  getState: () => ({ visible: !neonProof, enabled: !!pendingDb, language, ownedVariants,
+    vouchers: demoVouchers, stones: demoStones, recipes: knownEvolutionOptions(), pending,
+    pendingAction: pendingLocalAction, actionMessage: stoneActionMessage }),
+  performAction: performStoneAction,
+});
 const detailsStore = createSpeciesDetailsStore(async (speciesId) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
@@ -233,6 +246,13 @@ function setupRedemptionPicker() {
   }, () => {}); // Os números de Kanto continuam disponíveis sem a PokéAPI.
 }
 
+function showPendingLocalAction(operation) {
+  pendingLocalAction = operation;
+  if (operation?.action === 'redeem-pokemon' && demoRedemptionSpecies.includes(operation.payload?.speciesId)) {
+    redeemSpecies.value = String(operation.payload.speciesId);
+  }
+}
+
 function renderRedemption(text) {
   const selected = Number(redeemSpecies.value);
   const stock = demoVouchers.find(({ type }) => type === 'pokemon')?.amount ?? 0;
@@ -246,9 +266,13 @@ function renderRedemption(text) {
     choice.textContent += ` ${text.redeemChoice(selected, text.rarities[rarity], cost, name)}.`;
     if (!redeemStatus && normalVariantOwned(ownedVariants, selected)) choice.textContent += ` ${text.redeemOwned}`;
   }
-  redeemSpecies.disabled = pending;
-  document.querySelector('#redeem-submit').disabled = pending || !selected;
-  document.querySelector('#redeem-status').textContent = redeemStatus ? text[redeemStatus] : '';
+  redeemSpecies.disabled = pending || !!pendingLocalAction;
+  const recoverable = pendingLocalAction?.action === 'redeem-pokemon' && demoRedemptionSpecies.includes(pendingLocalAction.payload?.speciesId);
+  const submit = document.querySelector('#redeem-submit');
+  submit.disabled = pending || !selected || (!!pendingLocalAction && !recoverable);
+  submit.textContent = recoverable ? text.redeemRecover : text.redeemButton;
+  document.querySelector('#redeem-status').textContent = redeemStatus ? text[redeemStatus]
+    : pendingLocalAction ? text[recoverable ? 'redeemPending' : 'localActionOtherPending'] : '';
 }
 
 function renderCollection(text) {
@@ -370,6 +394,7 @@ function render() {
       : lastVouchers === 'unknown' ? text.voucherUnknown : lastVouchers.length ? '' : text.voucherNone;
     renderRedemption(text);
   }
+  stoneUI.render();
   const spin = document.querySelector('#spin');
   spin.disabled = pending;
   spin.textContent = spinning ? text.spinning : neonProof && proofHasPending ? text.recoverButton : text.spinButton;
@@ -390,10 +415,13 @@ async function refreshDemoState() {
   getKantoCollectionProgress(state.ownedVariants);
   if (!Array.isArray(state.vouchers) || state.vouchers.some(({ type, amount }) =>
     !DEMO_VOUCHER_TYPES.includes(type) || type === 'spins' || !Number.isSafeInteger(amount) || amount <= 0)) throw new Error('Invalid vouchers');
+  if (!Array.isArray(state.stones) || state.stones.some(({ type, amount }) =>
+    !DEMO_STONES.includes(type) || !Number.isSafeInteger(amount) || amount <= 0)) throw new Error('Invalid stones');
   const next = nextRefillAt(state.cycleStartedAtMs);
   balance = state.balance;
   ownedVariants = state.ownedVariants;
   demoVouchers = state.vouchers;
+  demoStones = state.stones;
   nextRefill = next;
 }
 
@@ -584,18 +612,60 @@ document.querySelector('#refresh-balance').addEventListener('click', async () =>
   finally { pending = false; render(); }
 });
 document.querySelector('#retry-detail').addEventListener('click', loadPokemon);
+async function performStoneAction(action, payload) {
+  if (neonProof || pending || !pendingDb) return;
+  pending = true;
+  stoneActionMessage = '';
+  render();
+  try {
+    const operation = action === 'recover'
+      ? await readPendingLocalAction(pendingDb)
+      : await claimPendingLocalAction(pendingDb, action, payload);
+    showPendingLocalAction(operation);
+    if (!operation || !['stone', 'evolve'].includes(operation.action)) return;
+    if (action !== 'recover' && (operation.action !== action || JSON.stringify(operation.payload) !== JSON.stringify(payload))) return;
+    const route = operation.action === 'stone' ? '/api/demo-stone' : '/api/demo-evolve';
+    const response = await fetch(route, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...operation.payload, operationId: operation.operationId }) });
+    if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error('action unavailable');
+    const result = await response.json();
+    const validStatus = operation.action === 'stone'
+      ? ['ok', 'insufficient_vouchers'] : ['ok', 'incompatible', 'source_unavailable', 'already_registered', 'missing_stone'];
+    if (!validStatus.includes(result.status) || typeof result.replayed !== 'boolean' || result.stone !== operation.payload.stone ||
+      (operation.action === 'evolve' && (result.targetId !== operation.payload.targetId ||
+        result.source?.speciesId !== operation.payload.source.speciesId || result.source?.isShiny !== operation.payload.source.isShiny))) throw new Error('invalid action result');
+    await refreshDemoState();
+    stoneActionMessage = result.status === 'ok' ? (operation.action === 'stone' ? 'stoneOk' : 'evolveOk') : result.status;
+    if (operation.action === 'evolve' && result.status === 'ok') {
+      selectedSpeciesId = operation.payload.targetId;
+      selectedShiny = operation.payload.source.isShiny;
+      pokemonData = null;
+      loadPokemon();
+    }
+    render();
+    await clearPendingOperation(pendingDb, operation.userId, operation.operationId);
+    showPendingLocalAction(await readPendingLocalAction(pendingDb));
+  } catch (error) {
+    stoneActionMessage = 'failure';
+    throw error;
+  } finally { pending = false; render(); }
+}
 redeemSpecies.addEventListener('change', () => { redeemStatus = ''; render(); });
 document.querySelector('#demo-redeem').addEventListener('submit', async (event) => {
   event.preventDefault();
   if (neonProof || pending || !pendingDb) return;
   const speciesId = Number(redeemSpecies.value);
   if (!demoRedemptionSpecies.includes(speciesId)) return;
-  const key = `local-redeem:${speciesId}`;
   pending = true;
   redeemStatus = '';
   render();
   try {
-    const operation = await claimPendingOperation(pendingDb, key);
+    const operation = await claimPendingLocalAction(pendingDb, 'redeem-pokemon', { speciesId });
+    showPendingLocalAction(operation);
+    if (operation.action !== 'redeem-pokemon' || operation.payload?.speciesId !== speciesId) {
+      redeemStatus = '';
+      return;
+    }
     const response = await fetch('/api/demo-redeem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ speciesId, operationId: operation.operationId }) });
     if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error('redemption unavailable');
     const result = await response.json();
@@ -604,7 +674,9 @@ document.querySelector('#demo-redeem').addEventListener('submit', async (event) 
     redeemStatus = { ok: 'redeemOk', already_owned: 'redeemOwned', insufficient_vouchers: 'redeemInsufficient' }[result.status];
     if (result.status === 'ok') { selectedSpeciesId = speciesId; selectedShiny = false; pokemonData = null; loadPokemon(); }
     render();
-    await clearPendingOperation(pendingDb, key, operation.operationId);
+    await clearPendingOperation(pendingDb, operation.userId, operation.operationId);
+    showPendingLocalAction(await readPendingLocalAction(pendingDb));
+    if (pendingLocalAction) redeemStatus = '';
   } catch { redeemStatus = 'redeemFailure'; }
   finally { pending = false; render(); }
 });
@@ -693,8 +765,9 @@ if (import.meta.env.DEV && neonProof && new URLSearchParams(location.search).get
   });
 }
 if (neonProof) startNeonProof();
-else Promise.all([openPendingOperations(), refreshDemoState()]).then(([db]) => {
+else Promise.all([openPendingOperations(), refreshDemoState()]).then(async ([db]) => {
   pendingDb = db;
+  showPendingLocalAction(await readPendingLocalAction(db));
   if (ownedVariants.length) {
     selectedSpeciesId = ownedVariants.at(-1).speciesId;
     loadPokemon();

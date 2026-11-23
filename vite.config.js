@@ -10,14 +10,15 @@ function demoRoundPlugin() {
       const store = openLocalGameStore('.pokeslot-demo.sqlite');
       server.httpServer?.once('close', () => store.close());
       server.middlewares.use((request, response, next) => {
-        if (request.url !== '/api/demo-round' && request.url !== '/api/demo-state' && request.url !== '/api/demo-redeem') return next();
+        const postPaths = ['/api/demo-round', '/api/demo-redeem', '/api/demo-stone', '/api/demo-evolve'];
+        if (!postPaths.includes(request.url) && request.url !== '/api/demo-state') return next();
         response.setHeader('Cache-Control', 'no-store');
         response.setHeader('Content-Type', 'application/json; charset=utf-8');
         if (request.url === '/api/demo-state' && request.method === 'GET') {
           try { return response.end(JSON.stringify(store.read('local-demo'))); }
           catch { response.statusCode = 503; return response.end('{}'); }
         }
-        if ((request.url !== '/api/demo-round' && request.url !== '/api/demo-redeem') || request.method !== 'POST') {
+        if (!postPaths.includes(request.url) || request.method !== 'POST') {
           response.statusCode = 405;
           return response.end();
         }
@@ -31,9 +32,14 @@ function demoRoundPlugin() {
         request.on('end', () => {
           let input;
           try { input = JSON.parse(body); } catch { response.statusCode = 400; return response.end('{}'); }
-          try { return response.end(JSON.stringify(request.url === '/api/demo-redeem'
-            ? store.redeemPokemon('local-demo', input?.operationId, input?.speciesId)
-            : store.spin('local-demo', input?.operationId))); }
+          try {
+            let result;
+            if (request.url === '/api/demo-redeem') result = store.redeemPokemon('local-demo', input?.operationId, input?.speciesId);
+            else if (request.url === '/api/demo-stone') result = store.redeemStone('local-demo', input?.operationId, input?.stone);
+            else if (request.url === '/api/demo-evolve') result = store.evolve('local-demo', input?.operationId, input?.source, input?.targetId, input?.stone);
+            else result = store.spin('local-demo', input?.operationId);
+            return response.end(JSON.stringify(result));
+          }
           catch (error) { response.statusCode = error instanceof TypeError ? 400 : 503; return response.end('{}'); }
         });
       });
