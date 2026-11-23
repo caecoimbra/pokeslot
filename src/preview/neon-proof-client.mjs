@@ -31,13 +31,18 @@ export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, {
     return result.data?.user ?? null;
   }
   async function ensureSession(userId, isCurrent) {
-    if (!isCurrent() || (await user())?.id !== userId) throw new Error('session_changed');
+    if (!isCurrent()) throw new Error('session_changed');
+    const initial = await user();
+    if (!isCurrent() || initial?.id !== userId) throw new Error('session_changed');
     const { token } = await timedJson(`${authUrl}/token`, { credentials: 'include' });
-    if (!isCurrent() || (await user())?.id !== userId || typeof token !== 'string') throw new Error('session_changed');
+    if (!isCurrent() || typeof token !== 'string') throw new Error('session_changed');
+    const confirmed = await user();
+    if (!isCurrent() || confirmed?.id !== userId) throw new Error('session_changed');
     return token;
   }
   async function request(route, userId, isCurrent, operationId) {
     const token = await ensureSession(userId, isCurrent);
+    if (!isCurrent()) throw new Error('session_changed');
     return timedJson(`${apiUrl}/${route}`, { method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ expectedUserId: userId, ...(operationId ? { operationId } : {}) }),

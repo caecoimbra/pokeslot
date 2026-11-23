@@ -458,6 +458,7 @@ async function spinNeonProof() {
       },
       readState: async () => validateProofState(await proofClient.request('state', userId, current)),
       present: ([result], state) => {
+        if (!current()) throw new Error('session_changed');
         setProofState(state);
         if (result.status === 'no_balance') { status = 'noBalance'; return; }
         grid = result.grid;

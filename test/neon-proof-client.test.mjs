@@ -58,6 +58,25 @@ test('corpo da resposta que não termina também expira', async () => {
   await assert.rejects(client.ensureSession('A', () => true), /request_timeout/);
 });
 
+test('a sessão precisa estar atual quando a última consulta termina', async () => {
+  let current = true;
+  let reads = 0;
+  const started = Promise.withResolvers();
+  const lastRead = Promise.withResolvers();
+  const client = createNeonProofClient(base, api, async () => json({ token: 'token-ficticio' }), {
+    client: { auth: { getSession: () => {
+      if (++reads === 1) return Promise.resolve({ data: { user: account } });
+      started.resolve();
+      return lastRead.promise;
+    } } },
+  });
+  const validation = client.ensureSession('A', () => current);
+  await started.promise;
+  current = false;
+  lastRead.resolve({ data: { user: account } });
+  await assert.rejects(validation, /session_changed/);
+});
+
 test('consulta de sessão que não retorna também expira', async () => {
   const client = createNeonProofClient(base, api, async () => json({}), {
     client: { auth: { getSession: () => new Promise(() => {}) } }, timeoutMs: 10,
