@@ -59,6 +59,14 @@
         <ul id="voucher-results"></ul><p id="voucher-results-empty"></p>
         <h3 data-text="voucherInventoryTitle"></h3>
         <ul id="voucher-inventory"></ul><p id="voucher-inventory-empty"></p>
+        <form id="demo-redeem" class="demo-redeem">
+          <h3 data-text="redeemTitle"></h3>
+          <p data-text="redeemNote"></p>
+          <label><span data-text="redeemNumber"></span><input name="speciesId" id="redeem-number" type="number" min="1" max="151" required></label>
+          <p id="redeem-choice"></p>
+          <button id="redeem-submit" type="submit" data-text="redeemButton"></button>
+          <p id="redeem-status" role="status"></p>
+        </form>
       </section>
       <section class="pokedex" aria-labelledby="pokedex-title">
         <p class="eyebrow" data-text="pokedexEyebrow"></p>
