@@ -24,16 +24,21 @@ function request(path, bearer, body) {
   return app.request(path, { method: 'POST', headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 }
 test('nega estado e rodada sem sessão antes de consultar banco', async () => {
-  for (const path of ['/state', '/spin']) assert.equal((await request(path, null, {})).status, 401);
+  for (const path of ['/state', '/spin', '/inventory/action']) assert.equal((await request(path, null, {})).status, 401);
   assert.equal(databaseCalls, 0);
 });
 test('não usa uma identidade diferente da sessão validada', async () => {
   const bearer = await token('B');
-  for (const path of ['/state', '/spin']) assert.equal((await request(path, bearer, { expectedUserId: 'A' })).status, 409);
+  for (const path of ['/state', '/spin', '/inventory/action']) assert.equal((await request(path, bearer, { expectedUserId: 'A' })).status, 409);
   assert.equal(databaseCalls, 0);
 });
 test('recusa identificador de operação inválido antes de consultar banco', async () => {
   const response = await request('/spin', await token('A'), { expectedUserId: 'A', operationId: 'bad' });
+  assert.equal(response.status, 400);
+  assert.equal(databaseCalls, 0);
+});
+test('recusa preço fornecido pelo cliente antes de consultar banco', async () => {
+  const response = await request('/inventory/action', await token('A'), { expectedUserId: 'A', operationId: '00000000-0000-4000-8000-000000000001', action: 'pokemon', args: { speciesId: 25, cost: 0 } });
   assert.equal(response.status, 400);
   assert.equal(databaseCalls, 0);
 });
