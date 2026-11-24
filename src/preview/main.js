@@ -16,7 +16,7 @@ import { filterCollection } from './collection-filter.mjs';
 import { DEMO_VOUCHER_TYPES } from '../domain/demo-vouchers.mjs';
 import { demoRedemptionSpecies, demoRedemptionDetails, normalVariantOwned } from '../domain/demo-redemption.mjs';
 import { setupStoneUI } from './stone-ui.mjs';
-import { knownEvolutionOptions, DEMO_STONES } from '../server/evolution.mjs';
+import { knownEvolutionOptions, kantoEvolutionOptions, DEMO_STONES } from '../server/evolution.mjs';
 import { createRedemptionNamesLoader } from './redemption-names.mjs';
 
 const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
@@ -144,12 +144,12 @@ Object.assign(messages.en, capturePresentationMessages.en);
 if (neonProof) {
   Object.assign(messages.pt, { intro: 'Rodadas autenticadas no branch isolado da Neon, com valores de teste.', footnote: 'Prova isolada: contas fictícias, probabilidades e recompensas provisórias; não é o jogo publicado.',
     pokedexEyebrow: 'Coleção da conta de teste', pokedexNote: 'O saldo e as variantes são recuperados da conta fictícia. Shiny e raridades usam valores provisórios.',
-    vouchersTitle: 'Vales — prova autenticada', vouchersNote: 'Cinco tipos equiprováveis são uma hipótese de teste. Troque vales Pokémon ou pedra abaixo; tipo e amuleto ainda não têm uso.',
+    vouchersTitle: 'Vales — prova autenticada', vouchersNote: 'Vales Pokémon, pedra e giros têm a mesma chance. Cada vale de giros credita 2 giros ao sair na rodada. Itens de tipo e amuletos de testes anteriores podem aparecer no estoque.',
     failure: 'Não foi possível confirmar a rodada. Entre na mesma conta e tente novamente para recuperar uma operação pendente.',
     captureStatus: { new: 'Nova captura', duplicate: 'Repetida' } });
   Object.assign(messages.en, { intro: 'Authenticated rounds on the isolated Neon branch, using test values.', footnote: 'Isolated proof: fictional accounts and provisional odds and rewards; not the published game.',
     pokedexEyebrow: 'Test account collection', pokedexNote: 'Balance and variants are recovered from the fictional account. Shiny odds and rarities are provisional.',
-    vouchersTitle: 'Vouchers — authenticated proof', vouchersNote: 'Five equally likely types are a test assumption. Redeem Pokémon or stone vouchers below; type and charm are not usable yet.',
+    vouchersTitle: 'Vouchers — authenticated proof', vouchersNote: 'Pokémon, stone and spin vouchers have equal odds. Each spin voucher credits 2 spins when awarded. Type vouchers and charms from earlier tests may appear in the inventory.',
     failure: 'Could not confirm the round. Sign in to the same account and retry to recover a pending operation.',
     captureStatus: { new: 'New capture', duplicate: 'Duplicate' } });
 }
@@ -189,9 +189,10 @@ let authStatus = '';
 let lastProofReward = null;
 let proofPendingRoundId = null;
 let afterProofRound = null;
+const evolutionRecipes = neonProof ? kantoEvolutionOptions() : knownEvolutionOptions();
 const stoneUI = setupStoneUI({
   getState: () => ({ visible: !neonProof || !!proofUser, authenticated: neonProof, enabled: !!pendingDb && (!neonProof || (!!proofUser && (!proofPendingRoundId || !!pendingLocalAction))), language, ownedVariants,
-    vouchers: demoVouchers, stones: demoStones, recipes: knownEvolutionOptions(), pending,
+    vouchers: demoVouchers, stones: demoStones, recipes: evolutionRecipes, pending,
     pendingAction: pendingLocalAction, actionMessage: stoneActionMessage }),
   performAction: performStoneAction,
 });

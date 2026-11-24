@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { Pool, neonConfig } from '@neondatabase/serverless';
+import { KANTO_STONES, kantoEvolutionOptions } from '../src/server/evolution.mjs';
 
 const command = 'pnpm dlx neon@8.11.0 connection-string br-dry-block-be4mfcuo --project-id rapid-math-17905990 --profile pokeslot-proof';
 const cli = spawnSync('cmd.exe', ['/d', '/s', '/c', command], { encoding: 'utf8', windowsHide: true });
@@ -29,6 +30,30 @@ const amount = (entries, type) => entries.find((entry) => entry.type === type)?.
 const has = (stateValue, speciesId, isShiny) => stateValue.ownedVariants.some((v) => v.speciesId === speciesId && v.isShiny === isShiny);
 
 try {
+  const { rows: stones } = await pool.query('SELECT type FROM pokeslot_proof.stone_types');
+  const { rows: recipes } = await pool.query(`
+    SELECT source_id AS "sourceId", target_id AS "targetId", stone
+    FROM pokeslot_proof.evolution_recipes ORDER BY source_id, target_id
+  `);
+  assert.deepEqual(stones.map(({ type }) => type).sort(), [...KANTO_STONES].sort());
+  assert.deepEqual(recipes, kantoEvolutionOptions().sort((a, b) => a.sourceId - b.sourceId || a.targetId - b.targetId));
+
+  const { rows: grants } = await pool.query(`
+    SELECT EXISTS (
+      SELECT 1 FROM pg_class AS c
+      CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, acldefault('r', c.relowner))) AS grant_entry
+      WHERE c.oid IN ('pokeslot_proof.stone_types'::regclass, 'pokeslot_proof.evolution_recipes'::regclass)
+        AND grant_entry.grantee = 0
+    ) AS public_access,
+    EXISTS (
+      SELECT 1 FROM unnest(ARRAY['authenticated', 'anonymous']::name[]) AS roles(role_name)
+      CROSS JOIN unnest(ARRAY['pokeslot_proof.stone_types'::regclass, 'pokeslot_proof.evolution_recipes'::regclass]) AS tables(table_id)
+      WHERE has_table_privilege(role_name, table_id, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+    ) AS api_access
+  `);
+  assert.deepEqual(grants, [{ public_access: false, api_access: false }]);
+  console.log(`Catálogo validado no PostgreSQL: ${recipes.length} receitas e ${stones.length} pedras sem acesso direto pelos papéis da API.`);
+
   await Promise.all([state(a), state(b), state(c), state(d)]);
   assert.deepEqual(await inventory(b), { vouchers: [], stones: [] });
   // Estoque e variante são fornecidos diretamente para tornar o teste determinístico.

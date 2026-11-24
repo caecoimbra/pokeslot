@@ -2,7 +2,7 @@ import { findWinningLines } from '../domain/paylines.mjs';
 import { rewardTypesForLines } from '../domain/rewards.mjs';
 import { getKantoCollectionProgress } from '../domain/collection-progress.mjs';
 import { DEMO_VOUCHER_TYPES } from '../domain/demo-vouchers.mjs';
-import { DEMO_STONES } from '../server/evolution.mjs';
+import { KANTO_STONES } from '../server/evolution.mjs';
 
 function validateInventory(entries, types) {
   if (!Array.isArray(entries)) throw new Error('invalid_inventory');
@@ -19,7 +19,7 @@ export function validateProofState(state) {
   getKantoCollectionProgress(state.ownedVariants);
   // Respostas antigas podem não incluir inventários; campos presentes devem ser válidos.
   if (state.vouchers !== undefined) validateInventory(state.vouchers, DEMO_VOUCHER_TYPES.filter((type) => type !== 'spins'));
-  if (state.stones !== undefined) validateInventory(state.stones, DEMO_STONES);
+  if (state.stones !== undefined) validateInventory(state.stones, KANTO_STONES);
   return state;
 }
 export function validateProofRound(result) {

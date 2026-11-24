@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { evolutionOptions, setupStoneUI } from '../src/preview/stone-ui.mjs';
-import { knownEvolutionOptions } from '../src/server/evolution.mjs';
+import { KANTO_STONES, kantoEvolutionOptions, knownEvolutionOptions } from '../src/server/evolution.mjs';
 
 test('oferece as três evoluções clássicas para cada variante registrada de Eevee', () => {
   const variants = [{ speciesId: 133, isShiny: false }, { speciesId: 133, isShiny: true }];
@@ -20,6 +20,14 @@ test('não apresenta evolução para espécie não registrada nem pedra fora do 
   assert.deepEqual(evolutionOptions(variants, [{ sourceId: 25, targetId: 26, stone: 'unknown' }]), []);
   assert.deepEqual(evolutionOptions(variants, knownEvolutionOptions()), [
     { source: { speciesId: 25, isShiny: false }, targetId: 26, stone: 'thunder' },
+  ]);
+});
+
+test('a coleção autenticada oferece adaptações com pedras próprias e conserva a variante', () => {
+  const variants = [{ speciesId: 148, isShiny: true }];
+  assert.deepEqual(evolutionOptions(variants, knownEvolutionOptions()), []);
+  assert.deepEqual(evolutionOptions(variants, kantoEvolutionOptions(), KANTO_STONES), [
+    { source: { speciesId: 148, isShiny: true }, targetId: 149, stone: 'dragon' },
   ]);
 });
 

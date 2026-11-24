@@ -54,8 +54,8 @@ try {
   const b = await createUser();
   assert.equal((await getState(a)).status, 200);
   assert.equal((await getState(b)).status, 200);
-  await pool.query("INSERT INTO pokeslot_proof.vouchers (user_id, type, amount) VALUES ($1, 'pokemon', 4), ($1, 'stone', 1)", [a.userId]);
-  await pool.query('INSERT INTO pokeslot_proof.variants (user_id, species_id, shiny) VALUES ($1, 25, true)', [a.userId]);
+  await pool.query("INSERT INTO pokeslot_proof.vouchers (user_id, type, amount) VALUES ($1, 'pokemon', 4), ($1, 'stone', 2), ($1, 'type', 1)", [a.userId]);
+  await pool.query('INSERT INTO pokeslot_proof.variants (user_id, species_id, shiny) VALUES ($1, 25, true), ($1, 148, false)', [a.userId]);
 
   const pokemonId = randomUUID();
   const mismatched = await inventoryAction(b, pokemonId, 'pokemon', { speciesId: 25 }, a.userId);
@@ -92,13 +92,26 @@ try {
   assert.equal(evolved.status, 200);
   assert.equal(evolved.payload.status, 'ok');
   assert.equal((await inventoryAction(a, evolveId, 'evolve', evolveArgs)).payload.replayed, true);
+
+  const dragonExchange = await inventoryAction(a, randomUUID(), 'stone', { stone: 'dragon' });
+  assert.equal(dragonExchange.status, 200);
+  assert.equal(dragonExchange.payload.status, 'ok');
+  assert.equal(amount((await getState(a)).payload.stones, 'dragon'), 1);
+  const dragonEvolution = { source: { speciesId: 148, isShiny: false }, targetId: 149, stone: 'dragon' };
+  const newEvolutionId = randomUUID();
+  const newest = await inventoryAction(a, newEvolutionId, 'evolve', dragonEvolution);
+  assert.equal(newest.status, 200);
+  assert.equal(newest.payload.status, 'ok');
+  assert.equal((await inventoryAction(a, newEvolutionId, 'evolve', dragonEvolution)).payload.replayed, true);
   const finalA = await getState(a);
   const finalB = await getState(b);
   assert.equal(finalA.status, 200);
   assert.equal(finalB.status, 200);
   assert.equal(amount(finalA.payload.stones, 'thunder'), 0);
+  assert.equal(amount(finalA.payload.stones, 'dragon'), 0);
+  assert.equal(amount(finalA.payload.vouchers, 'type'), 1);
   assert.equal(amount(finalA.payload.vouchers, 'stone'), 0);
-  for (const [speciesId, isShiny] of [[25, true], [25, false], [26, true]]) {
+  for (const [speciesId, isShiny] of [[25, true], [25, false], [26, true], [148, false], [149, false]]) {
     assert.ok(finalA.payload.ownedVariants.some((v) => v.speciesId === speciesId && v.isShiny === isShiny));
   }
   assert.deepEqual(finalB.payload.ownedVariants, []);
@@ -107,9 +120,12 @@ try {
   const wrongSession = await inventoryAction(b, evolveId, 'evolve', evolveArgs, a.userId);
   assert.equal(wrongSession.status, 409);
   assert.deepEqual((await getState(b)).payload.ownedVariants, []);
-  console.log('Fluxo autenticado de duas contas fictícias: resgate, retomada, troca, evolução e isolamento passaram. Estoque inicial inserido administrativamente.');
+  console.log('Duas contas fictícias: resgate, retomada, isolamento, Pikachu shiny → Raichu shiny e Dragonair → Dragonite passaram. Estoque inicial inserido administrativamente.');
 } catch (error) {
-  console.error(`Fluxo autenticado não concluído: ${error.code || error.name || 'erro'}.`);
+  const line = error.stack?.match(/verify-inventory-auth-flow\.mjs:(\d+):/)?.[1];
+  const location = line ? ` na linha ${line}` : '';
+  const status = Number.isInteger(error.actual) ? ` (recebido: ${error.actual})` : '';
+  console.error(`Fluxo autenticado não concluído${location}: ${error.code || error.name || 'erro'}${status}.`);
   process.exitCode = 1;
 } finally {
   await pool.end();

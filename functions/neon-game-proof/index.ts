@@ -7,7 +7,7 @@ import { neon } from '@neondatabase/serverless';
 import { createEvaluatedReelRound } from '../../src/server/reel-round.mjs';
 import { createStudyCaptures } from '../../src/server/study-capture.mjs';
 import { validInventoryAction } from '../../src/server/inventory-request.mjs';
-import { createDemoVouchers } from '../../src/server/demo-vouchers.mjs';
+import { createKantoVouchers } from '../../src/server/demo-vouchers.mjs';
 
 const authUrl = process.env.NEON_AUTH_BASE_URL;
 const jwksUrl = process.env.NEON_AUTH_JWKS_URL;
@@ -55,8 +55,7 @@ app.post('/spin', authenticated, async (c) => {
     const selected = createStudyCaptures(round.rewardTypes);
     let index = 0;
     const captures = round.rewardTypes.filter(({ type }) => type === 'pokemon').map(({ line }) => ({ line, capture: selected[index++] }));
-    // Hipótese de estudo: cinco vales equiprováveis; os valores finais ainda estão em aberto.
-    const vouchers = createDemoVouchers(round.rewardTypes);
+    const vouchers = createKantoVouchers(round.rewardTypes);
     const payload = JSON.stringify({ grid: round.grid, winningLines: round.winningLines, captures, vouchers });
     const rows = await sql`SELECT pokeslot_proof.spin(${userId}, ${body.operationId}::uuid, ${payload}::jsonb) AS result`;
     return c.json(rows[0].result);

@@ -1,6 +1,6 @@
-// Dados provisórios exclusivos para simulação; não são o catálogo final do jogo.
-// Tiers: proposta das 151 espécies fornecida por Caetano e mantida para estudo.
-// Pedras: 16 compatibilidades clássicas e 56 adaptações discutidas, ainda em revisão.
+// Fonte compartilhada do catálogo de Kanto para simulação e prova autenticada.
+// Tiers: distribuição inicial das 151 espécies aprovada por Caetano para a 1.0.
+// Pedras: 16 compatibilidades clássicas e 56 adaptações pelo tipo principal.
 // IDs: https://github.com/PokeAPI/pokeapi/blob/master/data/v2/csv/pokemon_species.csv
 // Tipos: https://github.com/PokeAPI/pokeapi/blob/master/data/v2/csv/pokemon_types.csv
 // Evoluções: https://github.com/PokeAPI/pokeapi/blob/master/data/v2/csv/pokemon_evolution.csv

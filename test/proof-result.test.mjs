@@ -24,9 +24,14 @@ test('recusa grade, linhas, capturas e estado incoerentes', () => {
 
 test('valida estoques sem aceitar tipo, quantidade ou entradas duplicadas', () => {
   const base = { balance: 20, ownedVariants: [] };
-  assert.doesNotThrow(() => validateProofState({ ...base, vouchers: [{ type: 'pokemon', amount: 2 }], stones: [{ type: 'moon', amount: 1 }] }));
+  assert.doesNotThrow(() => validateProofState({
+    ...base,
+    vouchers: [{ type: 'pokemon', amount: 2 }],
+    stones: [{ type: 'moon', amount: 1 }, { type: 'dragon', amount: 1 }],
+  }));
   assert.throws(() => validateProofState({ ...base, vouchers: [{ type: 'spins', amount: 1 }] }));
   assert.throws(() => validateProofState({ ...base, stones: [{ type: 'moon', amount: 0 }] }));
+  assert.throws(() => validateProofState({ ...base, stones: [{ type: 'steel', amount: 1 }] }));
   assert.throws(() => validateProofState({ ...base, stones: [{ type: 'moon', amount: 1 }, { type: 'moon', amount: 2 }] }));
   assert.throws(() => validateProofState({ ...base, vouchers: null }));
 });
@@ -42,4 +47,17 @@ test('valida prêmios de vale contra a grade e conserva rodadas antigas', () => 
   assert.throws(() => validateProofRound({ ...base, vouchers: [{ line: 'top', type: 'spins', spinsAwarded: 2 }], voucherSpins: 4 }));
   assert.throws(() => validateProofRound({ ...base, vouchers: [{ line: 'top', type: 'unknown' }], voucherSpins: 0 }));
   assert.throws(() => validateProofRound({ ...base, vouchers: [], voucherSpins: 0 }));
+});
+
+test('recupera rodadas e estoque dos vales que só existiam na prova de cinco tipos', () => {
+  const vouchers = [
+    { line: 'top', type: 'type' }, { line: 'bottom', type: 'shiny_charm' },
+  ];
+  const replay = { status: 'ok', replayed: true,
+    grid: [['voucher', 'voucher', 'voucher'], ['spin', 'pokeball', 'spin'], ['voucher', 'voucher', 'voucher']],
+    winningLines: [{ line: 'top', symbol: 'voucher' }, { line: 'bottom', symbol: 'voucher' }],
+    captures: [], vouchers, voucherSpins: 0 };
+  const state = { balance: 19, ownedVariants: [], vouchers: [{ type: 'type', amount: 1 }, { type: 'shiny_charm', amount: 2 }] };
+  assert.equal(validateProofRound(replay), replay);
+  assert.equal(validateProofState(state), state);
 });

@@ -1,4 +1,6 @@
-const stones = new Set(['thunder', 'moon', 'fire', 'leaf', 'water']);
+import { KANTO_STONES } from './evolution.mjs';
+
+const stones = new Set(KANTO_STONES);
 const species = (value) => Number.isInteger(value) && value >= 1 && value <= 151;
 const exactKeys = (value, keys) => value && typeof value === 'object' && !Array.isArray(value)
   && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));

@@ -1,6 +1,15 @@
 -- Somente para o branch isolado. Identidade deve vir do JWT validado no servidor.
--- Execute depois de isolated_game.sql. Não concede acesso aos papéis da API.
-BEGIN;
+-- Execute depois de isolated_game.sql usando scripts/apply-isolated-inventory.mjs.
+-- O script aplica este arquivo e carrega o catálogo em uma só transação.
+CREATE TABLE IF NOT EXISTS pokeslot_proof.stone_types (
+  type text PRIMARY KEY
+);
+CREATE TABLE IF NOT EXISTS pokeslot_proof.evolution_recipes (
+  source_id integer NOT NULL CHECK (source_id BETWEEN 1 AND 151),
+  target_id integer NOT NULL CHECK (target_id BETWEEN 1 AND 151),
+  stone text NOT NULL REFERENCES pokeslot_proof.stone_types(type),
+  PRIMARY KEY (source_id, target_id), CHECK (source_id <> target_id)
+);
 CREATE TABLE IF NOT EXISTS pokeslot_proof.vouchers (
   user_id text NOT NULL REFERENCES pokeslot_proof.players(user_id),
   type text NOT NULL CHECK (type IN ('pokemon', 'stone', 'type', 'shiny_charm')),
@@ -8,7 +17,7 @@ CREATE TABLE IF NOT EXISTS pokeslot_proof.vouchers (
 );
 CREATE TABLE IF NOT EXISTS pokeslot_proof.stones (
   user_id text NOT NULL REFERENCES pokeslot_proof.players(user_id),
-  type text NOT NULL CHECK (type IN ('thunder', 'moon', 'fire', 'leaf', 'water')),
+  type text NOT NULL,
   amount bigint NOT NULL CHECK (amount > 0), PRIMARY KEY (user_id, type)
 );
 CREATE TABLE IF NOT EXISTS pokeslot_proof.inventory_operations (
@@ -16,7 +25,8 @@ CREATE TABLE IF NOT EXISTS pokeslot_proof.inventory_operations (
   operation_id uuid NOT NULL, action text NOT NULL, parameters jsonb NOT NULL,
   result jsonb NOT NULL, PRIMARY KEY (user_id, operation_id)
 );
-REVOKE ALL ON pokeslot_proof.vouchers, pokeslot_proof.stones, pokeslot_proof.inventory_operations FROM PUBLIC, authenticated, anonymous;
+REVOKE ALL ON pokeslot_proof.vouchers, pokeslot_proof.stones, pokeslot_proof.inventory_operations,
+  pokeslot_proof.stone_types, pokeslot_proof.evolution_recipes FROM PUBLIC, authenticated, anonymous;
 
 CREATE OR REPLACE FUNCTION pokeslot_proof.inventory_state(p_user_id text)
 RETURNS jsonb LANGUAGE plpgsql SET search_path = pg_catalog AS $f$
@@ -53,10 +63,12 @@ BEGIN
     ELSIF v_species = ANY(ARRAY[144,145,146,149,150,151]) THEN v_rarity := 'legendary'; v_cost := 4;
     ELSE RAISE EXCEPTION 'species missing from catalog' USING ERRCODE = '22023'; END IF;
   ELSIF p_action = 'stone' OR p_action = 'evolve' THEN
-    IF jsonb_typeof(p_args->'stone') IS DISTINCT FROM 'string' OR p_args->>'stone' NOT IN ('thunder','moon','fire','leaf','water') THEN
+    v_stone := p_args->>'stone';
+    IF jsonb_typeof(p_args->'stone') IS DISTINCT FROM 'string' OR NOT EXISTS (
+      SELECT 1 FROM pokeslot_proof.stone_types WHERE type = v_stone
+    ) THEN
       RAISE EXCEPTION 'invalid stone' USING ERRCODE = '22023';
     END IF;
-    v_stone := p_args->>'stone';
     IF p_action = 'stone' THEN v_params := jsonb_build_object('stone', v_stone);
     ELSE
       IF jsonb_typeof(p_args->'source') IS DISTINCT FROM 'object' OR jsonb_typeof(p_args->'source'->'speciesId') IS DISTINCT FROM 'number' OR
@@ -101,7 +113,10 @@ BEGIN
     END IF;
     v_result := jsonb_build_object('status',v_status,'stone',v_stone);
   ELSE
-    IF NOT EXISTS(SELECT 1 FROM (VALUES (25,26,'thunder'),(30,31,'moon'),(33,34,'moon'),(35,36,'moon'),(37,38,'fire'),(39,40,'moon'),(44,45,'leaf'),(58,59,'fire'),(61,62,'water'),(70,71,'leaf'),(90,91,'water'),(102,103,'leaf'),(120,121,'water'),(133,134,'water'),(133,135,'thunder'),(133,136,'fire')) AS r(source_id,target_id,stone) WHERE r.source_id = v_source AND r.target_id = v_target AND r.stone = v_stone) THEN v_status := 'incompatible';
+    IF NOT EXISTS (
+      SELECT 1 FROM pokeslot_proof.evolution_recipes
+      WHERE source_id = v_source AND target_id = v_target AND stone = v_stone
+    ) THEN v_status := 'incompatible';
     ELSIF NOT EXISTS(SELECT 1 FROM pokeslot_proof.variants WHERE user_id = p_user_id AND species_id = v_source AND shiny = v_shiny) THEN v_status := 'source_unavailable';
     ELSIF EXISTS(SELECT 1 FROM pokeslot_proof.variants WHERE user_id = p_user_id AND species_id = v_target AND shiny = v_shiny) THEN v_status := 'already_registered';
     ELSE
@@ -119,5 +134,4 @@ BEGIN
 END;
 $f$;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA pokeslot_proof FROM PUBLIC, authenticated, anonymous;
-COMMIT;
 

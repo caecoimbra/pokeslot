@@ -1,7 +1,7 @@
 import { planEvolution } from '../domain/evolution.mjs';
+import { STUDY_EVOLUTIONS } from '../../scripts/data/kanto-estudo.mjs';
 
-// Compatibilidades de pedra da Geração I entre espécies de Kanto.
-// As adaptações próprias para outras evoluções permanecem em revisão.
+// A demonstração local mantém as compatibilidades clássicas da Geração I.
 const STONE_EVOLUTIONS = Object.freeze([
   Object.freeze({ sourceId: 25, targetId: 26, stone: 'thunder' }),
   Object.freeze({ sourceId: 30, targetId: 31, stone: 'moon' }),
@@ -29,8 +29,17 @@ export function knownEvolutionOptions() {
 // Pedras das 16 receitas clássicas nesta demonstração, não catálogo definitivo.
 export const DEMO_STONES = Object.freeze(['thunder', 'moon', 'fire', 'leaf', 'water']);
 
-// A receita é escolhida aqui, nunca recebida do navegador. O futuro endpoint
-// precisa obter coleção, disponibilidade e estoque a partir do backend autenticado.
+// Catálogo aprovado para Kanto: 16 receitas clássicas e 56 adaptações.
+const KANTO_EVOLUTIONS = Object.freeze(STUDY_EVOLUTIONS.map((recipe) => Object.freeze({ ...recipe })));
+export const KANTO_STONES = Object.freeze([
+  ...new Set([...DEMO_STONES, ...KANTO_EVOLUTIONS.map(({ stone }) => stone)]),
+]);
+
+export function kantoEvolutionOptions() {
+  return KANTO_EVOLUTIONS.map((entry) => ({ ...entry }));
+}
+
+// A prévia local busca a receita clássica no servidor pelo par de espécies.
 export function planKnownEvolution({ source, targetId, selectedStone, sourceAvailable, stoneCount, ownedVariants }) {
   const recipe = STONE_EVOLUTIONS.find((entry) =>
     entry.sourceId === source?.speciesId && entry.targetId === targetId
