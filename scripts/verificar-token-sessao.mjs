@@ -10,6 +10,8 @@ const baseUrl = env.match(/^VITE_NEON_PROOF_DATABASE_URL=(.+)$/m)?.[1]?.trim();
 if (!baseUrl) throw new Error('Endpoint de prova indisponível');
 const authUrl = defaultDeriveNeonUrls(baseUrl).auth.replace(/\/$/, '');
 const functionUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
+const legacyFunctionUrl = 'https://br-dry-block-be4mfcuo-pokeslotproof.compute.c-9.us-east-2.aws.neon.tech';
+const dataApiUrl = defaultDeriveNeonUrls(baseUrl).dataApi.replace(/\/$/, '');
 const origin = 'http://localhost:5173';
 const jsonHeaders = { 'Content-Type': 'application/json', Origin: origin };
 const command = 'pnpm dlx neon@8.11.0 connection-string br-dry-block-be4mfcuo --project-id rapid-math-17905990 --profile pokeslot-proof';
@@ -59,6 +61,16 @@ try {
   });
   const before = await readState(sessionToken);
   if (!before.ok) throw new Error(`consulta inicial HTTP ${before.status}`);
+  const readLegacy = () => fetch(`${legacyFunctionUrl}/refresh`, {
+    method: 'POST', headers: { ...jsonHeaders, Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ expectedUserId: session.user.id }),
+  });
+  const refreshLegacy = () => fetch(`${dataApiUrl}/rpc/refresh_test_replenishment_bound`, {
+    method: 'POST', headers: { ...jsonHeaders, Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ p_expected_user_id: session.user.id }),
+  });
+  const legacyBefore = await readLegacy();
+  const dataBefore = await refreshLegacy();
   if ((await readState()).status !== 401) throw new Error('JWT sem sessão não foi recusado');
   if ((await readState('invalid-session-test')).status !== 401) throw new Error('sessão incorreta não foi recusada');
   const logout = await fetch(`${authUrl}/sign-out`, { method: 'POST', headers: { ...jsonHeaders, Cookie: cookie }, body: '{}' });
@@ -75,8 +87,12 @@ try {
     console.log('Consulta por token de sessão: não confirmada nesse serviço.');
   }
   const replay = await readState(sessionToken);
+  const legacyAfter = await readLegacy();
+  const dataAfter = await refreshLegacy();
   if (Date.now() / 1000 >= claims.exp) throw new Error('token expirou durante a prova');
   console.log(`Sessão encerrada confirmada. Reutilização do token: HTTP ${replay.status}.`);
+  console.log(`Função legada antes/depois da saída: HTTP ${legacyBefore.status}/${legacyAfter.status}.`);
+  console.log(`Data API legada antes/depois da saída: HTTP ${dataBefore.status}/${dataAfter.status}.`);
   if (replay.status === 401) console.log('A função recusou o token depois do encerramento da sessão.');
   else { console.log('A função não recusou a sessão encerrada.'); process.exitCode = 1; }
 } catch (error) {

@@ -1,11 +1,12 @@
-import { createClient, defaultDeriveNeonUrls } from '@neon/neon-js';
+import { createClient } from '@neon/neon-js';
 import { openPendingOperations, claimPendingOperation, clearPendingOperation } from './pending-operations.mjs';
 import { completeGameOperation } from './game-operation.mjs';
+import { createNeonProofClient } from '../preview/neon-proof-client.mjs';
 import './style.css';
 
 const client = createClient(import.meta.env.VITE_NEON_PROOF_DATABASE_URL);
-const authUrl = defaultDeriveNeonUrls(import.meta.env.VITE_NEON_PROOF_DATABASE_URL).auth.replace(/\/$/, '');
 const functionUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
+const proofClient = createNeonProofClient(import.meta.env.VITE_NEON_PROOF_DATABASE_URL, functionUrl, fetch, { client });
 const dbPromise = openPendingOperations();
 const $ = (id) => document.getElementById(id);
 let currentUser = null;
@@ -38,23 +39,10 @@ async function pauseForSessionTest() {
   $('resume-paused').hidden = true;
 }
 async function sessionFor(userId, version) {
-  const result = await client.auth.getSession();
-  if (result.error || generation !== version || currentUser?.id !== userId || result.data?.user?.id !== userId) throw new Error('session_changed');
-  const tokenResponse = await fetch(`${authUrl}/token`, { credentials: 'include' });
-  if (!tokenResponse.ok) throw new Error('token_unavailable');
-  const { token } = await tokenResponse.json();
-  const confirmed = await client.auth.getSession();
-  if (confirmed.error || generation !== version || currentUser?.id !== userId || confirmed.data?.user?.id !== userId || typeof token !== 'string') throw new Error('session_changed');
-  return token;
+  return proofClient.ensureSession(userId, () => generation === version && currentUser?.id === userId);
 }
 async function request(route, userId, version, operationId) {
-  const token = await sessionFor(userId, version);
-  const response = await fetch(`${functionUrl}/${route}`, { method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ expectedUserId: userId, ...(operationId ? { operationId } : {}) }),
-  });
-  if (!response.ok) throw new Error('request_failed');
-  return response.json();
+  return proofClient.request(route, userId, () => generation === version && currentUser?.id === userId, operationId);
 }
 async function readState(userId, version) {
   const state = await request('state', userId, version);
