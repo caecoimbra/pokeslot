@@ -63,6 +63,8 @@
           <h3 data-text="redeemTitle"></h3>
           <p data-text="redeemNote"></p>
           <label><span data-text="redeemSpecies"></span><select name="speciesId" id="redeem-species" required aria-describedby="redeem-choice"></select></label>
+          <p id="redeem-names-status" role="status"></p>
+          <button id="retry-redeem-names" type="button" data-text="retryNames" hidden></button>
           <p id="redeem-choice" aria-live="polite"></p>
           <button id="redeem-submit" type="submit" data-text="redeemButton"></button>
           <p id="redeem-status" role="status"></p>
@@ -77,14 +79,14 @@
         <button id="stone-recover-button" type="button" hidden></button>
         <form id="stone-exchange" class="demo-redeem">
           <h3 id="stone-exchange-title"></h3>
-          <label><span id="stone-choice-label"></span><select id="stone-choice" required></select></label>
-          <button id="stone-exchange-button" type="submit"></button>
+          <label><span id="stone-choice-label"></span><select id="stone-choice" required aria-describedby="stone-stock"></select></label>
+          <button id="stone-exchange-button" type="submit" aria-describedby="stone-stock"></button>
         </form>
         <form id="stone-evolve" class="demo-redeem">
           <h3 id="stone-evolve-title"></h3>
-          <label><span id="stone-evolution-label"></span><select id="stone-evolution-choice" required></select></label>
+          <label><span id="stone-evolution-label"></span><select id="stone-evolution-choice" required aria-describedby="stone-evolution-info"></select></label>
           <p id="stone-evolution-info"></p>
-          <button id="stone-evolve-button" type="submit"></button>
+          <button id="stone-evolve-button" type="submit" aria-describedby="stone-evolution-info"></button>
         </form>
         <p id="stone-action-status" role="status"></p>
       </section>

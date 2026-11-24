@@ -17,6 +17,7 @@ import { DEMO_VOUCHER_TYPES } from '../domain/demo-vouchers.mjs';
 import { demoRedemptionSpecies, demoRedemptionDetails, normalVariantOwned } from '../domain/demo-redemption.mjs';
 import { setupStoneUI } from './stone-ui.mjs';
 import { knownEvolutionOptions, DEMO_STONES } from '../server/evolution.mjs';
+import { createRedemptionNamesLoader } from './redemption-names.mjs';
 
 const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
 const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
@@ -57,6 +58,7 @@ const messages = {
     voucherRoundTitle: 'Vales da última rodada', voucherInventoryTitle: 'Vales guardados', voucherBefore: 'Gire para ver os vales sorteados.', voucherNone: 'Nenhum vale nesta rodada.', voucherInventoryEmpty: 'Nenhum vale guardado.', voucherUnknown: 'Detalhes dos vales indisponíveis para esta rodada antiga.',
     voucherNames: { pokemon: 'Vale Pokémon', stone: 'Vale pedra', spins: 'Vale de giros', type: 'Vale de tipo', shiny_charm: 'Amuleto shiny' }, voucherSpins: (value) => `+${value} giros de teste`, voucherValueUnknown: 'valor indisponível',
     redeemTitle: 'Trocar vale Pokémon — teste', redeemNote: 'O resgate registra a variante normal. As raridades e os custos ainda estão em teste.', redeemSpecies: 'Pokémon de Kanto', redeemPlaceholder: 'Escolha uma espécie', redeemButton: 'Trocar vales',
+    namesLoading: 'Carregando nomes da PokéAPI…', namesUnavailable: 'Nomes indisponíveis. Você ainda pode escolher pelo número.', retryNames: 'Tentar carregar nomes novamente',
     redeemStock: (count) => `Vales Pokémon disponíveis: ${count}.`,
     redeemChoice: (id, rarity, cost, name) => `#${String(id).padStart(3, '0')}${name ? ` ${name}` : ''} · ${rarity} · ${cost} ${cost === 1 ? 'vale' : 'vales'} Pokémon`,
     redeemOk: 'Resgate concluído e registrado na coleção.', redeemOwned: 'Você já possui a variante normal desta espécie.', redeemInsufficient: 'Você não possui vales Pokémon suficientes.', redeemFailure: 'Não foi possível confirmar o resgate. Tente novamente com o mesmo número para recuperar a operação.',
@@ -105,6 +107,7 @@ const messages = {
     voucherRoundTitle: 'Last round vouchers', voucherInventoryTitle: 'Saved vouchers', voucherBefore: 'Spin to see drawn vouchers.', voucherNone: 'No vouchers this round.', voucherInventoryEmpty: 'No vouchers saved.', voucherUnknown: 'Voucher details unavailable for this older round.',
     voucherNames: { pokemon: 'Pokémon voucher', stone: 'Stone voucher', spins: 'Spin voucher', type: 'Type voucher', shiny_charm: 'Shiny charm' }, voucherSpins: (value) => `+${value} test spins`, voucherValueUnknown: 'value unavailable',
     redeemTitle: 'Redeem Pokémon vouchers — test', redeemNote: 'Redemption registers the normal variant. Rarities and costs are still being tested.', redeemSpecies: 'Kanto Pokémon', redeemPlaceholder: 'Choose a species', redeemButton: 'Redeem vouchers',
+    namesLoading: 'Loading names from PokéAPI…', namesUnavailable: 'Names are unavailable. You can still choose by number.', retryNames: 'Try loading names again',
     redeemStock: (count) => `Pokémon vouchers available: ${count}.`,
     redeemChoice: (id, rarity, cost, name) => `#${String(id).padStart(3, '0')}${name ? ` ${name}` : ''} · ${rarity} · ${cost} Pokémon ${cost === 1 ? 'voucher' : 'vouchers'}`,
     redeemOk: 'Redemption complete and registered in the collection.', redeemOwned: 'You already own the normal variant of this species.', redeemInsufficient: 'You do not have enough Pokémon vouchers.', redeemFailure: 'Could not confirm the redemption. Retry with the same number to recover the operation.',
@@ -231,22 +234,29 @@ function speciesLabel(id) {
   return `#${String(id).padStart(3, '0')}${name ? ` ${name}` : ''}`;
 }
 
+const redemptionNamesLoader = createRedemptionNamesLoader({
+  expectedIds: demoRedemptionSpecies,
+  onChange: () => render(),
+  fetchNames: () => {
+    const signal = AbortSignal.timeout(10000);
+    return createPokeApiClient((url, options) => fetch(url, { ...options, signal })).listKantoSpecies();
+  },
+  applyNames: (entries) => {
+    redeemNames = new Map(entries.map(({ id, name }) => [id, name.replaceAll('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())]));
+    for (const option of redeemSpecies.options) {
+      const name = redeemNames.get(Number(option.value));
+      if (name) option.textContent = `${name} · #${String(option.value).padStart(3, '0')}`;
+    }
+  },
+});
+
 function setupRedemptionPicker() {
   redeemSpecies.append(new Option('', '', true, true));
   for (const id of demoRedemptionSpecies) {
     redeemSpecies.append(new Option(`#${String(id).padStart(3, '0')}`, id));
   }
 
-  const signal = AbortSignal.timeout(10000);
-  const client = createPokeApiClient((url, options) => fetch(url, { ...options, signal }));
-  client.listKantoSpecies().then((entries) => {
-    redeemNames = new Map(entries.map(({ id, name }) => [id, name.replaceAll('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())]));
-    for (const option of redeemSpecies.options) {
-      const name = redeemNames.get(Number(option.value));
-      if (name) option.textContent = `${name} · ${option.textContent}`;
-    }
-    render();
-  }, () => {}); // Os números de Kanto continuam disponíveis sem a PokéAPI.
+  redemptionNamesLoader.load();
 }
 
 function showPendingLocalAction(operation) {
@@ -321,6 +331,8 @@ function renderRedemption(text) {
   const selected = Number(redeemSpecies.value);
   const stock = demoVouchers.find(({ type }) => type === 'pokemon')?.amount ?? 0;
   const choice = document.querySelector('#redeem-choice');
+  document.querySelector('#redeem-names-status').textContent = redemptionNamesLoader.state === 'loading' ? text.namesLoading : redemptionNamesLoader.state === 'error' ? text.namesUnavailable : '';
+  document.querySelector('#retry-redeem-names').hidden = redemptionNamesLoader.state !== 'error';
   redeemSpecies.options[0].textContent = text.redeemPlaceholder;
   choice.textContent = text.redeemStock(stock);
   if (selected) {
@@ -728,6 +740,7 @@ async function performStoneAction(action, payload) {
   } finally { pending = false; render(); }
 }
 redeemSpecies.addEventListener('change', () => { redeemStatus = ''; render(); });
+document.querySelector('#retry-redeem-names').addEventListener('click', () => redemptionNamesLoader.load());
 document.querySelector('#demo-redeem').addEventListener('submit', async (event) => {
   event.preventDefault();
   if (pending || !pendingDb) return;
