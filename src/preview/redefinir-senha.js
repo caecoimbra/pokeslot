@@ -4,9 +4,10 @@ import { createPasswordRecovery, takePasswordRecoveryLink } from './password-rec
 const messages = {
   pt: {
     title: 'Redefinir senha', back: 'Voltar à máquina', testInbox: 'Use o endereço da conta de teste que recebe e-mail.',
+    createTestAccount: 'Criar conta com uma caixa de teste',
     email: 'E-mail', send: 'Solicitar link', password: 'Nova senha (8 caracteres ou mais)', confirm: 'Repita a nova senha', save: 'Salvar nova senha',
     working: 'Aguarde…', unavailable: 'A recuperação de conta está indisponível nesta prévia.',
-    requestAccepted: 'Se a conta puder receber mensagens, o link chegará por e-mail. Verifique a caixa de entrada e o spam.',
+    requestAccepted: 'Se houver uma conta cadastrada com esse e-mail, você receberá um link. Verifique a caixa de entrada e o spam.',
     requestFailed: 'Não foi possível confirmar a solicitação. Tente novamente em instantes.',
     invalidLink: 'Este link está inválido, foi usado ou expirou. Solicite um novo.',
     passwordsDiffer: 'As senhas precisam ser iguais.',
@@ -15,9 +16,10 @@ const messages = {
   },
   en: {
     title: 'Reset password', back: 'Back to the machine', testInbox: 'Use the address of the test account that can receive email.',
+    createTestAccount: 'Create an account with a test inbox',
     email: 'Email', send: 'Request reset link', password: 'New password (8 characters or more)', confirm: 'Repeat your new password', save: 'Save new password',
     working: 'Please wait…', unavailable: 'Account recovery is unavailable in this preview.',
-    requestAccepted: 'If the account can receive messages, the link will arrive by email. Check your inbox and spam folder.',
+    requestAccepted: 'If an account is registered with that email, you will receive a link. Check your inbox and spam folder.',
     requestFailed: 'Could not confirm the request. Please try again shortly.',
     invalidLink: 'This link is invalid, has been used, or has expired. Request a new one.',
     passwordsDiffer: 'The passwords must match.',
@@ -40,6 +42,8 @@ const reset = document.querySelector('#reset-password');
 const feedback = document.querySelector('#recovery-status');
 const languageButton = document.querySelector('#language');
 const back = document.querySelector('#return-to-machine');
+const createTestAccount = document.querySelector('#create-recovery-test-account');
+const localTest = import.meta.env.DEV && location.hostname === 'localhost';
 
 function render() {
   const text = messages[language];
@@ -51,6 +55,8 @@ function render() {
   back.href = `./previa-maquina.html?backend=neon&lang=${language}`;
   request.hidden = !recovery || !!token || status === 'passwordChanged';
   reset.hidden = !recovery || !token;
+  createTestAccount.hidden = !localTest || request.hidden;
+  if (localTest) createTestAccount.href = `${back.href}&recovery-test=1`;
   request.querySelector('button').disabled = busy;
   reset.querySelector('button').disabled = busy;
   feedback.textContent = text[busy ? 'working' : status] ?? '';
