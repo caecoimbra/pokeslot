@@ -40,14 +40,19 @@ export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, {
     if (!isCurrent() || confirmed?.id !== userId) throw new Error('session_changed');
     return token;
   }
-  async function request(route, userId, isCurrent, operationId) {
+  async function request(route, userId, isCurrent, operationId, payload = {}) {
+    // Congele a intenção antes das verificações assíncronas de sessão.
+    // Identidade e ID não podem ser sobrescritos por parâmetros adicionais.
+    const body = JSON.stringify({ ...payload, expectedUserId: userId, ...(operationId ? { operationId } : {}) });
     const token = await ensureSession(userId, isCurrent);
     if (!isCurrent()) throw new Error('session_changed');
     return timedJson(`${apiUrl}/${route}`, { method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ expectedUserId: userId, ...(operationId ? { operationId } : {}) }),
+      body,
     });
   }
-  return { user, ensureSession, request, signIn: (email, password) => client.auth.signIn.email({ email, password }),
+  const inventoryAction = (userId, isCurrent, operationId, action, args) =>
+    request('inventory/action', userId, isCurrent, operationId, { action, args });
+  return { user, ensureSession, request, inventoryAction, signIn: (email, password) => client.auth.signIn.email({ email, password }),
     signOut: () => client.auth.signOut() };
 }

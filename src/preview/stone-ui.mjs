@@ -72,7 +72,7 @@ export function setupStoneUI({ getState, performAction }) {
     const count = (type) => inventory.find((entry) => entry.type === type)?.amount ?? 0;
     const voucherCount = vouchers.find((entry) => entry.type === 'stone')?.amount ?? 0;
     const setText = (id, value) => { element(id).textContent = value; };
-    setText('stone-title', text.title);
+    setText('stone-title', state.authenticated ? (state.language === 'en' ? 'Stones and evolutions — authenticated test' : 'Pedras e evoluções — prova autenticada') : text.title);
     setText('stone-note', text.note);
     setText('stone-stock', text.stock(voucherCount));
     const pendingAction = state.pendingAction;

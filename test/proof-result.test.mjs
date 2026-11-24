@@ -21,3 +21,25 @@ test('recusa grade, linhas, capturas e estado incoerentes', () => {
   assert.throws(() => validateProofState({ balance: -1, ownedVariants: [] }));
   assert.throws(() => validateProofState({ balance: 3, ownedVariants: [{ speciesId: 152, isShiny: false }] }));
 });
+
+test('valida estoques sem aceitar tipo, quantidade ou entradas duplicadas', () => {
+  const base = { balance: 20, ownedVariants: [] };
+  assert.doesNotThrow(() => validateProofState({ ...base, vouchers: [{ type: 'pokemon', amount: 2 }], stones: [{ type: 'moon', amount: 1 }] }));
+  assert.throws(() => validateProofState({ ...base, vouchers: [{ type: 'spins', amount: 1 }] }));
+  assert.throws(() => validateProofState({ ...base, stones: [{ type: 'moon', amount: 0 }] }));
+  assert.throws(() => validateProofState({ ...base, stones: [{ type: 'moon', amount: 1 }, { type: 'moon', amount: 2 }] }));
+  assert.throws(() => validateProofState({ ...base, vouchers: null }));
+});
+
+test('valida prêmios de vale contra a grade e conserva rodadas antigas', () => {
+  const base = { status: 'ok', replayed: false,
+    grid: [['voucher', 'voucher', 'voucher'], ['spin', 'pokeball', 'spin'], ['pokeball', 'spin', 'pokeball']],
+    winningLines: [{ line: 'top', symbol: 'voucher' }], captures: [] };
+  assert.doesNotThrow(() => validateProofRound(base));
+  assert.doesNotThrow(() => validateProofRound({ ...base, vouchers: [{ line: 'top', type: 'stone' }], voucherSpins: 0 }));
+  assert.doesNotThrow(() => validateProofRound({ ...base, vouchers: [{ line: 'top', type: 'spins', spinsAwarded: 2 }], voucherSpins: 2 }));
+  assert.throws(() => validateProofRound({ ...base, vouchers: [{ line: 'bottom', type: 'stone' }], voucherSpins: 0 }));
+  assert.throws(() => validateProofRound({ ...base, vouchers: [{ line: 'top', type: 'spins', spinsAwarded: 2 }], voucherSpins: 4 }));
+  assert.throws(() => validateProofRound({ ...base, vouchers: [{ line: 'top', type: 'unknown' }], voucherSpins: 0 }));
+  assert.throws(() => validateProofRound({ ...base, vouchers: [], voucherSpins: 0 }));
+});

@@ -5,12 +5,14 @@ export function setupProofTestControls({ signOut }) {
   section.innerHTML = `
     <h2>Controles locais de teste</h2>
     <label><input type="checkbox" id="test-discard"> Simular resposta perdida após a rodada</label><br>
-    <label><input type="checkbox" id="test-pause"> Pausar rodada para trocar de conta</label>
+    <label><input type="checkbox" id="test-pause"> Pausar rodada para trocar de conta</label><br>
+    <label><input type="checkbox" id="test-discard-inventory"> Simular resposta perdida após uma ação de inventário</label>
     <p id="test-status" role="status"></p>
     <button type="button" id="test-switch" hidden>Trocar conta durante pausa</button>
     <button type="button" id="test-resume" hidden>Continuar rodada pausada</button>`;
   document.querySelector('#proof-auth').after(section);
   const discard = section.querySelector('#test-discard');
+  const discardInventory = section.querySelector('#test-discard-inventory');
   const pause = section.querySelector('#test-pause');
   const status = section.querySelector('#test-status');
   const switchButton = section.querySelector('#test-switch');
@@ -20,7 +22,7 @@ export function setupProofTestControls({ signOut }) {
     try { await signOut(); status.textContent = 'Entre em outra conta nesta aba e continue a rodada pausada.'; }
     catch { status.textContent = 'Não foi possível sair; a rodada continua pausada.'; switchButton.disabled = false; }
   });
-  return async function afterRound() {
+  async function afterRound() {
     if (discard.checked) {
       discard.checked = false;
       status.textContent = 'Resposta recebida e descartada para simular perda.';
@@ -36,5 +38,13 @@ export function setupProofTestControls({ signOut }) {
     switchButton.hidden = true;
     resumeButton.hidden = true;
     status.textContent = 'Pausa encerrada.';
+  }
+  // Chamar somente após receber a resposta do servidor, antes de apresentá-la.
+  afterRound.afterInventory = async () => {
+    if (!discardInventory.checked) return;
+    discardInventory.checked = false;
+    status.textContent = 'Resposta de inventário recebida e descartada para simular perda.';
+    throw new Error('simulated_lost_response');
   };
+  return afterRound;
 }

@@ -83,3 +83,35 @@ test('consulta de sessão que não retorna também expira', async () => {
   });
   await assert.rejects(client.user(), /session_timeout/);
 });
+
+test('envia a ação de inventário com identidade e parâmetros da intenção original', async () => {
+  const started = Promise.withResolvers();
+  const resume = Promise.withResolvers();
+  let sent;
+  const parameters = { source: { speciesId: 25, isShiny: true }, targetId: 26, stone: 'thunder' };
+  const client = createNeonProofClient(base, api, async (url, options) => {
+    if (url.endsWith('/token')) { started.resolve(); await resume.promise; return json({ token: 'token-ficticio' }); }
+    sent = { url, options, body: JSON.parse(options.body) };
+    return json({ status: 'ok', replayed: false });
+  }, { client: auth });
+  const pending = client.inventoryAction('A', () => true, 'operacao-ficticia', 'evolve', parameters);
+  await started.promise;
+  parameters.targetId = 27;
+  resume.resolve();
+  assert.equal((await pending).status, 'ok');
+  assert.equal(sent.url, `${api}/inventory/action`);
+  assert.equal(sent.options.headers.Authorization, 'Bearer token-ficticio');
+  assert.deepEqual(sent.body, { expectedUserId: 'A', operationId: 'operacao-ficticia', action: 'evolve',
+    args: { source: { speciesId: 25, isShiny: true }, targetId: 26, stone: 'thunder' } });
+});
+
+test('não envia ação de inventário se a conta mudar durante a obtenção do token', async () => {
+  let user = { id: 'A' }, sent = false;
+  const client = createNeonProofClient(base, api, async (url) => {
+    if (url.endsWith('/token')) { user = { id: 'B' }; return json({ token: 'token-ficticio' }); }
+    sent = true;
+    return json({});
+  }, { client: { auth: { getSession: async () => ({ data: { user } }) } } });
+  await assert.rejects(client.inventoryAction('A', () => true, 'operacao-ficticia', 'stone', { stone: 'moon' }), /session_changed/);
+  assert.equal(sent, false);
+});
