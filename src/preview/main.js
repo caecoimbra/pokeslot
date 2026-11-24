@@ -90,6 +90,14 @@ const messages = {
     missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal',
     authTitle: 'Conta fictícia da prova Neon', emailLabel: 'E-mail de teste', passwordLabel: 'Senha de teste', loginButton: 'Entrar', logoutButton: 'Sair',
     authSignedOut: 'Entre com uma conta fictícia para recuperar seu progresso.', authFailed: 'Não foi possível confirmar a sessão ou o progresso. Tente novamente.',
+    showSignup: 'Criar conta de teste', showLogin: 'Voltar para entrar', signupButton: 'Criar conta',
+    signupNote: 'Use um nome fictício, um endereço @example.test e uma senha exclusiva para esta prova.',
+    signupName: 'Nome fictício', signupPassword: 'Senha de teste (8 caracteres ou mais)',
+    signupEmailRequired: 'Para esta prova, use um endereço fictício terminado em @example.test.',
+    signupNameRequired: 'Informe um nome fictício.',
+    signupFailed: 'Não foi possível confirmar o cadastro. Se você já criou a conta, volte para entrar.',
+    signupNeedsEntry: 'A conta ainda não está conectada. Volte para entrar.',
+    authWorking: 'Confirmando com o serviço de conta…',
     recoverPending: 'Há uma rodada pendente de confirmação. Recupere-a antes de iniciar outra.', recoverButton: 'Recuperar rodada pendente',
     earned: (lines, duplicates) => `Giros de teste: +${lines} por linhas e +${duplicates} por repetidos.`,
     earnedUnavailable: 'Detalhes totais de giros indisponíveis para esta rodada.',
@@ -146,6 +154,14 @@ const messages = {
     missingSprite: 'Image unavailable.', spriteAlt: 'Normal sprite',
     authTitle: 'Fictional Neon proof account', emailLabel: 'Test email', passwordLabel: 'Test password', loginButton: 'Sign in', logoutButton: 'Sign out',
     authSignedOut: 'Sign in with a fictional account to recover your progress.', authFailed: 'Could not confirm the session or progress. Try again.',
+    showSignup: 'Create test account', showLogin: 'Back to sign in', signupButton: 'Create account',
+    signupNote: 'Use a fictional name, an @example.test address, and a password unique to this test.',
+    signupName: 'Fictional name', signupPassword: 'Test password (8 characters or more)',
+    signupEmailRequired: 'For this test, use a fictional address ending in @example.test.',
+    signupNameRequired: 'Enter a fictional name.',
+    signupFailed: 'Could not confirm registration. If you already created the account, go back to sign in.',
+    signupNeedsEntry: 'The account is not signed in yet. Go back to sign in.',
+    authWorking: 'Confirming with the account service…',
     recoverPending: 'A round is awaiting confirmation. Recover it before starting another.', recoverButton: 'Recover pending round',
     earned: (lines, duplicates) => `Test spins: +${lines} from lines and +${duplicates} from duplicates.`,
     earnedUnavailable: 'Total spin details are unavailable for this round.',
@@ -200,6 +216,8 @@ let proofClient = null;
 let proofUser = null;
 let proofGeneration = 0;
 let signingOut = false;
+let authSubmitting = false;
+let authMode = 'login';
 const proofSessions = neonProof && typeof BroadcastChannel === 'function'
   ? new BroadcastChannel('pokeslot-proof-session') : null;
 let authStatus = '';
@@ -549,7 +567,11 @@ function render() {
   document.querySelector('#proof-logout').disabled = pending;
   document.querySelector('#proof-rewards').textContent = spinning || !lastProofReward ? ''
     : lastProofReward.available ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : text.earnedUnavailable;
-  if (neonProof) document.querySelector('#proof-auth-status').textContent = authStatus ? text[authStatus] : '';
+  if (neonProof) {
+    const busy = authSubmitting || signingOut;
+    document.querySelector('#proof-auth-status').textContent = busy ? text.authWorking : text[authStatus] ?? '';
+    for (const button of document.querySelectorAll('#proof-login button, #proof-signup button')) button.disabled = busy;
+  }
 }
 
 async function refreshDemoState() {
@@ -627,7 +649,8 @@ function resetProofSession(nextAuthStatus = '') {
   return version;
 }
 function showProofIdentity(user) {
-  document.querySelector('#proof-login').hidden = !!user;
+  document.querySelector('#proof-login').hidden = !!user || authMode !== 'login';
+  document.querySelector('#proof-signup').hidden = !!user || authMode !== 'signup';
   document.querySelector('#proof-logout').hidden = !user;
   document.querySelector('#proof-user').textContent = user?.name || '';
 }
@@ -648,12 +671,13 @@ async function startNeonProof() {
     await recoverProofSession();
   } catch { clearProofDisplay(); authStatus = 'authFailed'; pending = true; render(); }
 }
-async function recoverProofSession() {
+async function recoverProofSession(expectedUserId) {
   if (!proofClient || !pendingDb) return;
   const version = resetProofSession();
   try {
     const user = await proofClient.user();
     if (version !== proofGeneration) return;
+    if (expectedUserId && user?.id !== expectedUserId) throw new Error('session_changed');
     if (!user) { authStatus = 'authSignedOut'; return; }
     proofUser = user;
     const current = () => version === proofGeneration && proofUser?.id === user.id;
@@ -741,21 +765,52 @@ async function spinNeonProof() {
   } finally { if (current()) { pending = false; spinning = false; render(); } }
 }
 
-document.querySelector('#proof-login').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  if (!neonProof || !proofClient || signingOut) return;
-  const form = event.currentTarget;
-  const button = form.querySelector('button');
-  button.disabled = true;
-  try {
-    const result = await proofClient.signIn(form.elements.email.value.trim(), form.elements.password.value);
-    if (result.error || !result.data?.user) throw new Error('login_failed');
+function showAuthForm(mode) {
+  if (authSubmitting || signingOut || proofUser) return;
+  authMode = mode;
+  authStatus = '';
+  for (const form of document.querySelectorAll('#proof-login, #proof-signup')) {
     form.elements.password.value = '';
+  }
+  showProofIdentity(null);
+  render();
+  document.querySelector(mode === 'signup' ? '#proof-signup [name=name]' : '#proof-login [name=email]').focus();
+}
+document.querySelector('#open-proof-signup').addEventListener('click', () => showAuthForm('signup'));
+document.querySelector('#open-proof-login').addEventListener('click', () => showAuthForm('login'));
+
+async function submitProofAuth(event, registering) {
+  event.preventDefault();
+  if (!neonProof || !proofClient || !pendingDb || signingOut || authSubmitting || proofUser) return;
+  const form = event.currentTarget;
+  const email = form.elements.email.value.trim();
+  const password = form.elements.password.value;
+  const name = registering ? form.elements.name.value.trim() : '';
+  if (registering && (!name || !email.toLowerCase().endsWith('@example.test'))) {
+    authStatus = name ? 'signupEmailRequired' : 'signupNameRequired';
+    render();
+    return;
+  }
+  authSubmitting = true;
+  render();
+  try {
+    const result = registering ? await proofClient.signUp({ name, email, password })
+      : await proofClient.signIn(email, password);
+    if (result.error || !result.data?.user?.id) throw new Error('login_failed');
+    form.elements.password.value = '';
+    if (registering && result.data.token === null) {
+      authStatus = 'signupNeedsEntry';
+      return;
+    }
+    form.reset();
+    authMode = 'login';
     proofSessions?.postMessage('session-changed');
-    await recoverProofSession();
-  } catch { authStatus = 'authFailed'; render(); }
-  finally { button.disabled = false; }
-});
+    await recoverProofSession(result.data.user.id);
+  } catch { authStatus = registering ? 'signupFailed' : 'authFailed'; }
+  finally { authSubmitting = false; render(); }
+}
+document.querySelector('#proof-login').addEventListener('submit', (event) => submitProofAuth(event, false));
+document.querySelector('#proof-signup').addEventListener('submit', (event) => submitProofAuth(event, true));
 document.querySelector('#proof-logout').addEventListener('click', async () => {
   if (!neonProof || !proofClient || pending) return;
   signingOut = true;
@@ -766,7 +821,7 @@ document.querySelector('#proof-logout').addEventListener('click', async () => {
     proofSessions?.postMessage('session-changed');
     await recoverProofSession();
   } catch { resetProofSession('authFailed'); }
-  finally { signingOut = false; }
+  finally { signingOut = false; render(); }
 });
 proofSessions?.addEventListener('message', ({ data }) => {
   if (data === 'session-changed') recoverProofSession();

@@ -62,5 +62,6 @@ export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, {
   const inventoryAction = (userId, isCurrent, operationId, action, args) =>
     request('inventory/action', userId, isCurrent, operationId, { action, args });
   return { user, ensureSession, request, inventoryAction, signIn: (email, password) => client.auth.signIn.email({ email, password }),
+    signUp: ({ name, email, password }) => client.auth.signUp.email({ name, email, password }),
     signOut: () => client.auth.signOut() };
 }

@@ -20,10 +20,19 @@
       </section>
       <section id="proof-auth" class="proof-auth" hidden>
         <h2 data-text="authTitle"></h2>
-        <form id="proof-login">
+        <form id="proof-login" method="post">
           <label><span data-text="emailLabel"></span><input name="email" type="email" autocomplete="username" required></label>
           <label><span data-text="passwordLabel"></span><input name="password" type="password" autocomplete="current-password" required></label>
           <button type="submit" data-text="loginButton"></button>
+          <button id="open-proof-signup" type="button" data-text="showSignup"></button>
+        </form>
+        <form id="proof-signup" method="post" hidden>
+          <p data-text="signupNote"></p>
+          <label><span data-text="signupName"></span><input name="name" type="text" maxlength="60" autocomplete="off" required></label>
+          <label><span data-text="emailLabel"></span><input name="email" type="email" autocomplete="username" placeholder="jogador@example.test" required></label>
+          <label><span data-text="signupPassword"></span><input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+          <button type="submit" data-text="signupButton"></button>
+          <button id="open-proof-login" type="button" data-text="showLogin"></button>
         </form>
         <p id="proof-user"></p><button id="proof-logout" type="button" data-text="logoutButton" hidden></button>
         <p id="proof-auth-status" role="status"></p>
