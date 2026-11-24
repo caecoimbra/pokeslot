@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { completeGameOperation } from '../src/identity/game-operation.mjs';
+import { requirePendingOperation } from '../src/identity/pending-operations.mjs';
 
 test('resposta perdida mantém operação e a próxima tentativa recupera o mesmo resultado', async () => {
   const operation = { operationId: 'id-ficticio' };
@@ -38,4 +39,16 @@ test('troca de conta durante a espera impede apresentação e preserva operaçã
   await assert.rejects(completeGameOperation(deps), /session_changed/);
   assert.equal(presented, false);
   assert.equal(cleared, false);
+});
+
+test('recuperação desatualizada não envia rodada nova nem pendência de outro clique', async () => {
+  for (const stored of [null, { operationId: 'outra-rodada' }]) {
+    let sent = false;
+    await assert.rejects(completeGameOperation({
+      ensureSession: async () => {},
+      claim: async () => requirePendingOperation(stored, 'rodada-exibida'),
+      send: async () => { sent = true; },
+    }), /pending_changed/);
+    assert.equal(sent, false);
+  }
 });

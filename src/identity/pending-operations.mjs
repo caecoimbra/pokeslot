@@ -20,6 +20,12 @@ export function readPendingOperation(db, userId) {
   });
 }
 
+// Recuperar uma ação exibida não autoriza criar ou retomar outra ação.
+export function requirePendingOperation(operation, expectedId) {
+  if (!operation || operation.operationId !== expectedId) throw new Error('pending_changed');
+  return operation;
+}
+
 const LOCAL_ACTION_KEY = 'local-action';
 const LEGACY_REDEMPTION = /^local-redeem:([1-9]\d{0,2})$/;
 

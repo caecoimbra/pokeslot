@@ -1,7 +1,7 @@
 import { findWinningLines } from '../domain/paylines.mjs';
 import { rewardTypesForLines } from '../domain/rewards.mjs';
 import { getKantoCollectionProgress } from '../domain/collection-progress.mjs';
-import { openPendingOperations, readPendingOperation, readPendingLocalAction, claimPendingLocalAction, claimPendingOperation, clearPendingOperation } from '../identity/pending-operations.mjs';
+import { openPendingOperations, readPendingOperation, readPendingLocalAction, claimPendingLocalAction, claimPendingOperation, clearPendingOperation, requirePendingOperation } from '../identity/pending-operations.mjs';
 import { createPokeApiClient } from '../pokeapi/client.mjs';
 import { preparePokedexData } from '../pokeapi/pokedex-data.mjs';
 import { createSpeciesDetailsStore } from './species-details.mjs';
@@ -21,6 +21,16 @@ import { createRedemptionNamesLoader } from './redemption-names.mjs';
 
 const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
 const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
+// Permite verificar uma falha de cada consulta no navegador de desenvolvimento.
+const failNextPokeApi = new Set(import.meta.env.DEV && new URLSearchParams(location.search).get('test') === 'pokeapi'
+  ? ['details', 'names'] : []);
+
+function previewPokeApiClient(signal, purpose) {
+  return createPokeApiClient((url, options) => {
+    if (import.meta.env.DEV && failNextPokeApi.delete(purpose)) throw new Error('Simulated PokéAPI failure');
+    return fetch(url, { ...options, signal });
+  });
+}
 
 // A grade inicial é fixa; as rodadas demonstrativas vêm do servidor local.
 let grid = [
@@ -177,10 +187,10 @@ let proofUser = null;
 let proofGeneration = 0;
 let authStatus = '';
 let lastProofReward = null;
-let proofHasPending = false;
+let proofPendingRoundId = null;
 let afterProofRound = null;
 const stoneUI = setupStoneUI({
-  getState: () => ({ visible: !neonProof || !!proofUser, authenticated: neonProof, enabled: !!pendingDb && (!neonProof || (!!proofUser && (!proofHasPending || !!pendingLocalAction))), language, ownedVariants,
+  getState: () => ({ visible: !neonProof || !!proofUser, authenticated: neonProof, enabled: !!pendingDb && (!neonProof || (!!proofUser && (!proofPendingRoundId || !!pendingLocalAction))), language, ownedVariants,
     vouchers: demoVouchers, stones: demoStones, recipes: knownEvolutionOptions(), pending,
     pendingAction: pendingLocalAction, actionMessage: stoneActionMessage }),
   performAction: performStoneAction,
@@ -189,7 +199,7 @@ const detailsStore = createSpeciesDetailsStore(async (speciesId) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
   try {
-    const client = createPokeApiClient((url, options) => fetch(url, { ...options, signal: controller.signal }));
+    const client = previewPokeApiClient(controller.signal, 'details');
     return preparePokedexData(await client.getKantoPokemon(speciesId));
   } finally {
     clearTimeout(timeout);
@@ -239,7 +249,7 @@ const redemptionNamesLoader = createRedemptionNamesLoader({
   onChange: () => render(),
   fetchNames: () => {
     const signal = AbortSignal.timeout(10000);
-    return createPokeApiClient((url, options) => fetch(url, { ...options, signal })).listKantoSpecies();
+    return previewPokeApiClient(signal, 'names').listKantoSpecies();
   },
   applyNames: (entries) => {
     redeemNames = new Map(entries.map(({ id, name }) => [id, name.replaceAll('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())]));
@@ -275,6 +285,7 @@ async function performProofInventoryAction(action, payload) {
   const userId = proofUser.id, version = proofGeneration;
   const current = () => version === proofGeneration && proofUser?.id === userId;
   const recover = action === 'recover';
+  const expectedId = pendingLocalAction?.operationId;
   pending = true;
   redeemStatus = '';
   stoneActionMessage = '';
@@ -283,7 +294,7 @@ async function performProofInventoryAction(action, payload) {
     await completeProofInventoryOperation({
       ensureSession: () => proofClient.ensureSession(userId, current),
       claim: async () => {
-        const operation = recover ? await readProofInventoryOperation(pendingDb, userId)
+        const operation = recover ? requirePendingOperation(await readProofInventoryOperation(pendingDb, userId), expectedId)
           : await claimProofInventoryOperation(pendingDb, userId, action, payload);
         if (current()) showProofInventoryPending(operation);
         return operation;
@@ -316,7 +327,7 @@ async function performProofInventoryAction(action, payload) {
     }, recover ? null : { action, args: payload });
   } catch (error) {
     if (current()) {
-      if (error?.message === 'other_operation_pending') { await recoverProofSession(); return; }
+      if (['other_operation_pending', 'pending_changed'].includes(error?.message)) { await recoverProofSession(); return; }
       if (error?.message === 'session_changed') {
         clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authSignedOut';
       } else if (error?.message !== 'different_pending') {
@@ -332,7 +343,7 @@ function renderRedemption(text) {
   const stock = demoVouchers.find(({ type }) => type === 'pokemon')?.amount ?? 0;
   const choice = document.querySelector('#redeem-choice');
   document.querySelector('#redeem-names-status').textContent = redemptionNamesLoader.state === 'loading' ? text.namesLoading : redemptionNamesLoader.state === 'error' ? text.namesUnavailable : '';
-  document.querySelector('#retry-redeem-names').hidden = redemptionNamesLoader.state !== 'error';
+  if (redemptionNamesLoader.state === 'error') document.querySelector('#retry-redeem-names').hidden = false;
   redeemSpecies.options[0].textContent = text.redeemPlaceholder;
   choice.textContent = text.redeemStock(stock);
   if (selected) {
@@ -342,11 +353,17 @@ function renderRedemption(text) {
     choice.textContent += ` ${text.redeemChoice(selected, text.rarities[rarity], cost, name)}.`;
     if (!redeemStatus && normalVariantOwned(ownedVariants, selected)) choice.textContent += ` ${text.redeemOwned}`;
   }
-  redeemSpecies.disabled = pending || !!pendingLocalAction || (neonProof && (!proofUser || proofHasPending));
+  redeemSpecies.disabled = pending || !!pendingLocalAction || (neonProof && (!proofUser || !!proofPendingRoundId));
   const recoverable = pendingLocalAction?.action === 'redeem-pokemon' && demoRedemptionSpecies.includes(pendingLocalAction.payload?.speciesId);
   const submit = document.querySelector('#redeem-submit');
-  submit.disabled = pending || !selected || (neonProof && (!proofUser || (proofHasPending && !recoverable))) || (!!pendingLocalAction && !recoverable);
+  submit.disabled = pending || !selected || (neonProof && (!proofUser || (!!proofPendingRoundId && !recoverable))) || (!!pendingLocalAction && !recoverable);
   submit.textContent = recoverable ? text.redeemRecover : text.redeemButton;
+  const retry = document.querySelector('#retry-redeem-names');
+  retry.setAttribute('aria-disabled', String(redemptionNamesLoader.state === 'loading'));
+  if (redemptionNamesLoader.state === 'ready' && !retry.hidden) {
+    if (document.activeElement === retry && !redeemSpecies.disabled) redeemSpecies.focus();
+    retry.hidden = true;
+  }
   document.querySelector('#redeem-status').textContent = redeemStatus ? text[redeemStatus]
     : pendingLocalAction ? text[recoverable ? 'redeemPending' : 'localActionOtherPending'] : '';
 }
@@ -472,8 +489,8 @@ function render() {
   } else document.querySelector('#demo-vouchers').hidden = true;
   stoneUI.render();
   const spin = document.querySelector('#spin');
-  spin.disabled = pending || (neonProof && (!proofUser || (!!pendingLocalAction && !proofHasPending)));
-  spin.textContent = spinning ? text.spinning : neonProof && proofHasPending ? text.recoverButton : text.spinButton;
+  spin.disabled = pending || (neonProof && (!proofUser || (!!pendingLocalAction && !proofPendingRoundId)));
+  spin.textContent = spinning ? text.spinning : neonProof && proofPendingRoundId ? text.recoverButton : text.spinButton;
   document.querySelector('#status').textContent = status ? text[status] : '';
   document.querySelector('#demo-balance').textContent = balance === null ? '' : text.balance(balance);
   document.querySelector('#next-refill').textContent = nextRefill === null ? '' : text.nextRefill(formatNextRefill(nextRefill, language));
@@ -503,7 +520,7 @@ async function refreshDemoState() {
 
 function clearProofDisplay() {
   spinning = false;
-  proofHasPending = false;
+  proofPendingRoundId = null;
   balance = null;
   nextRefill = null;
   ownedVariants = [];
@@ -568,8 +585,8 @@ async function recoverProofSession() {
     if (!current()) return;
     setProofState(state);
     showProofInventoryPending(inventoryOperation);
-    proofHasPending = !!savedOperation;
-    if (proofHasPending) status = 'recoverPending';
+    proofPendingRoundId = savedOperation?.operationId ?? null;
+    if (proofPendingRoundId) status = 'recoverPending';
     authStatus = '';
     if (ownedVariants.length) {
       const last = ownedVariants.at(-1);
@@ -585,6 +602,7 @@ async function recoverProofSession() {
 async function spinNeonProof() {
   if (!proofUser || !pendingDb) return;
   const userId = proofUser.id, version = proofGeneration;
+  const expectedId = proofPendingRoundId;
   const current = () => version === proofGeneration && proofUser?.id === userId;
   pending = true;
   spinning = true;
@@ -594,8 +612,10 @@ async function spinNeonProof() {
     await completeGameOperation({
       ensureSession: () => proofClient.ensureSession(userId, current),
       claim: async () => {
-        const operation = await claimProofGameOperation(pendingDb, userId);
-        if (current()) proofHasPending = true;
+        const operation = expectedId
+          ? requirePendingOperation(await readPendingOperation(pendingDb, `game-proof:${userId}`), expectedId)
+          : await claimProofGameOperation(pendingDb, userId);
+        if (current()) proofPendingRoundId = operation.operationId;
         return operation;
       },
       send: async (operation) => {
@@ -628,12 +648,13 @@ async function spinNeonProof() {
       },
       clear: async (operation) => {
         await clearPendingOperation(pendingDb, `game-proof:${userId}`, operation.operationId);
-        if (current()) proofHasPending = false;
+        const remaining = await readPendingOperation(pendingDb, `game-proof:${userId}`);
+        if (current()) proofPendingRoundId = remaining?.operationId ?? null;
       },
     });
   } catch (error) {
     if (current()) {
-      if (error?.message === 'other_operation_pending') { await recoverProofSession(); return; }
+      if (['other_operation_pending', 'pending_changed'].includes(error?.message)) { await recoverProofSession(); return; }
       if (error?.message === 'session_changed') { clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authSignedOut'; pending = true; render(); }
       else status = 'failure';
     }
@@ -682,10 +703,16 @@ document.querySelector('#refresh-balance').addEventListener('click', async () =>
     render();
     try {
       const state = validateProofState(await proofClient.request('state', userId, current));
+      const [round, inventory] = await Promise.all([
+        readPendingOperation(pendingDb, `game-proof:${userId}`),
+        readProofInventoryOperation(pendingDb, userId),
+      ]);
       await proofClient.ensureSession(userId, current);
       if (!current()) return;
       setProofState(state);
-      status = proofHasPending ? 'recoverPending' : 'balanceRefreshed';
+      proofPendingRoundId = round?.operationId ?? null;
+      showProofInventoryPending(inventory);
+      status = proofPendingRoundId ? 'recoverPending' : 'balanceRefreshed';
     } catch (error) {
       if (current() && error?.message === 'session_changed') {
         clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authSignedOut';
@@ -695,7 +722,11 @@ document.querySelector('#refresh-balance').addEventListener('click', async () =>
   }
   pending = true;
   render();
-  try { await refreshDemoState(); status = 'balanceRefreshed'; }
+  try {
+    await refreshDemoState();
+    if (pendingDb) showPendingLocalAction(await readPendingLocalAction(pendingDb));
+    status = 'balanceRefreshed';
+  }
   catch { status = 'failure'; }
   finally { pending = false; render(); }
 });
@@ -703,12 +734,13 @@ document.querySelector('#retry-detail').addEventListener('click', loadPokemon);
 async function performStoneAction(action, payload) {
   if (neonProof) return performProofInventoryAction(action, payload);
   if (pending || !pendingDb) return;
+  const expectedId = pendingLocalAction?.operationId;
   pending = true;
   stoneActionMessage = '';
   render();
   try {
     const operation = action === 'recover'
-      ? await readPendingLocalAction(pendingDb)
+      ? requirePendingOperation(await readPendingLocalAction(pendingDb), expectedId)
       : await claimPendingLocalAction(pendingDb, action, payload);
     showPendingLocalAction(operation);
     if (!operation || !['stone', 'evolve'].includes(operation.action)) return;
@@ -735,6 +767,13 @@ async function performStoneAction(action, payload) {
     await clearPendingOperation(pendingDb, operation.userId, operation.operationId);
     showPendingLocalAction(await readPendingLocalAction(pendingDb));
   } catch (error) {
+    if (error?.message === 'pending_changed') {
+      try {
+        showPendingLocalAction(await readPendingLocalAction(pendingDb));
+        await refreshDemoState();
+        return;
+      } catch { /* A atualização também pode falhar. */ }
+    }
     stoneActionMessage = 'failure';
     throw error;
   } finally { pending = false; render(); }
@@ -746,12 +785,18 @@ document.querySelector('#demo-redeem').addEventListener('submit', async (event) 
   if (pending || !pendingDb) return;
   const speciesId = Number(redeemSpecies.value);
   if (!demoRedemptionSpecies.includes(speciesId)) return;
-  if (neonProof) { await performProofInventoryAction('pokemon', { speciesId }); return; }
+  const expectedId = pendingLocalAction?.action === 'redeem-pokemon' ? pendingLocalAction.operationId : null;
+  if (neonProof) {
+    await performProofInventoryAction(expectedId ? 'recover' : 'pokemon', { speciesId });
+    return;
+  }
   pending = true;
   redeemStatus = '';
   render();
   try {
-    const operation = await claimPendingLocalAction(pendingDb, 'redeem-pokemon', { speciesId });
+    const operation = expectedId
+      ? requirePendingOperation(await readPendingLocalAction(pendingDb), expectedId)
+      : await claimPendingLocalAction(pendingDb, 'redeem-pokemon', { speciesId });
     showPendingLocalAction(operation);
     if (operation.action !== 'redeem-pokemon' || operation.payload?.speciesId !== speciesId) {
       redeemStatus = '';
@@ -768,7 +813,16 @@ document.querySelector('#demo-redeem').addEventListener('submit', async (event) 
     await clearPendingOperation(pendingDb, operation.userId, operation.operationId);
     showPendingLocalAction(await readPendingLocalAction(pendingDb));
     if (pendingLocalAction) redeemStatus = '';
-  } catch { redeemStatus = 'redeemFailure'; }
+  } catch (error) {
+    if (error?.message === 'pending_changed') {
+      try {
+        showPendingLocalAction(await readPendingLocalAction(pendingDb));
+        await refreshDemoState();
+        return;
+      } catch { /* A atualização também pode falhar. */ }
+    }
+    redeemStatus = 'redeemFailure';
+  }
   finally { pending = false; render(); }
 });
 document.querySelector('#collection-number').addEventListener('input', render);
