@@ -3,40 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PokéSlot — comparação de conexão</title>
+  <title>PokéSlot — comparação encerrada</title>
+  <link rel="stylesheet" href="/src/identity/style.css">
 </head>
 <body>
   <main class="page-shell">
     <p class="eyebrow">PROVA TÉCNICA · BRANCH ISOLADO</p>
-    <h1>Comparar conexões</h1>
-    <p>Use as contas fictícias já criadas para a prova. Os valores pertencem a uma cópia de teste.</p>
-    <section id="auth" class="card">
-      <h2>Entrar na conta fictícia</h2>
-      <form id="login">
-        <label>E-mail fictício<input name="email" type="email" autocomplete="username" required></label>
-        <label>Senha de teste<input name="password" type="password" autocomplete="current-password" required></label>
-        <button class="primary" type="submit">Entrar</button>
-      </form>
-    </section>
-    <section id="player" class="card hidden">
-      <div class="player-heading"><div><p class="eyebrow">SESSÃO FICTÍCIA</p><h2 id="name"></h2></div><button id="logout" class="quiet">Sair</button></div>
-      <p>ID da conta: <code id="user-id"></code></p>
-      <div class="balance-panel"><span>Saldo de teste</span><strong id="balance">—</strong><small>giros</small></div>
-      <label>Caminho de acesso<select id="path"><option value="data">Data API</option><option value="function" disabled>Neon Functions (aguardando publicação)</option></select></label>
-      <div class="actions">
-        <button class="quiet" id="refresh">Recuperar saldo</button>
-        <button class="primary" id="spend">Gastar 1 giro de teste</button>
-      </div>
-      <p class="fine-print">Se uma resposta não chegar, a próxima tentativa usa o identificador pendente dessa conta.</p>
-      <label id="simulate-label" class="hidden"><input id="simulate-lost" type="checkbox"> Descartar a próxima resposta bem-sucedida de gasto (teste local)</label>
-      <label id="pause-label" class="hidden"><input id="pause-spend" type="checkbox"> Pausar o próximo gasto antes de enviar (teste local)</label>
-      <label id="pause-after-label" class="hidden"><input id="pause-after" type="checkbox"> Pausar após a resposta do gasto (teste local)</label>
-      <button id="concurrent-spend" class="quiet hidden" type="button">Enviar o mesmo gasto duas vezes simultaneamente</button>
-      <button id="resume-spend" class="quiet hidden" type="button">Continuar gasto pausado</button>
-      <button id="switch-paused" class="quiet hidden" type="button">Trocar conta durante a pausa</button>
-    </section>
-    <div id="result" class="result" role="status">Informe uma conta fictícia para começar.</div>
+    <h1>Comparação encerrada</h1>
+    <p>As rotas antigas da prova estão desativadas no branch isolado.</p>
+    <p><a href="/previa-maquina.html?backend=neon">Abrir a prévia da máquina</a></p>
   </main>
-  <script type="module" src="/src/identity/compare.js"></script>
 </body>
 </html>

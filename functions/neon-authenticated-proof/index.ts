@@ -1,4 +1,5 @@
-// Prova isolada baseada no modelo authenticated-api da Neon. Não publicar como jogo.
+// Código histórico da prova. A função pública foi encerrada no branch isolado;
+// não republicar este endpoint. O jogo utiliza neon-game-proof.
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { createMiddleware } from 'hono/factory';

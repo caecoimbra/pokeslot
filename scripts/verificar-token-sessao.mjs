@@ -69,8 +69,13 @@ try {
     method: 'POST', headers: { ...jsonHeaders, Authorization: `Bearer ${token}` },
     body: JSON.stringify({ p_expected_user_id: session.user.id }),
   });
+  const readLegacyTable = () => fetch(`${dataApiUrl}/proof_player_state?select=user_id,balance`, {
+    headers: { Origin: origin, Authorization: `Bearer ${token}` },
+  });
   const legacyBefore = await readLegacy();
   const dataBefore = await refreshLegacy();
+  const tableBefore = await readLegacyTable();
+  if (legacyBefore.status !== 410 || dataBefore.ok || tableBefore.ok) throw new Error('rota legada ainda acessível');
   if ((await readState()).status !== 401) throw new Error('JWT sem sessão não foi recusado');
   if ((await readState('invalid-session-test')).status !== 401) throw new Error('sessão incorreta não foi recusada');
   const logout = await fetch(`${authUrl}/sign-out`, { method: 'POST', headers: { ...jsonHeaders, Cookie: cookie }, body: '{}' });
@@ -89,10 +94,13 @@ try {
   const replay = await readState(sessionToken);
   const legacyAfter = await readLegacy();
   const dataAfter = await refreshLegacy();
+  const tableAfter = await readLegacyTable();
+  if (legacyAfter.status !== 410 || dataAfter.ok || tableAfter.ok) throw new Error('rota legada acessível após logout');
   if (Date.now() / 1000 >= claims.exp) throw new Error('token expirou durante a prova');
   console.log(`Sessão encerrada confirmada. Reutilização do token: HTTP ${replay.status}.`);
   console.log(`Função legada antes/depois da saída: HTTP ${legacyBefore.status}/${legacyAfter.status}.`);
   console.log(`Data API legada antes/depois da saída: HTTP ${dataBefore.status}/${dataAfter.status}.`);
+  console.log(`Tabela legada antes/depois da saída: HTTP ${tableBefore.status}/${tableAfter.status}.`);
   if (replay.status === 401) console.log('A função recusou o token depois do encerramento da sessão.');
   else { console.log('A função não recusou a sessão encerrada.'); process.exitCode = 1; }
 } catch (error) {
