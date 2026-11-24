@@ -12,7 +12,7 @@ export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, {
         (async () => {
           const response = await fetchImpl(url, { ...options, signal: controller.signal });
           if (!response.ok) {
-            if (gameRequest && response.status === 401) throw new Error('session_changed');
+            if (response.status === 401) throw new Error('session_changed');
             if (gameRequest && response.status === 409) {
               let error;
               try { ({ error } = await response.json()); } catch { /* A resposta também pode não ser JSON. */ }

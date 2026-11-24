@@ -130,11 +130,22 @@ test('não confunde troca de conta com conflito de operação, falha da API ou f
     { game: Response.json({ error: 'invalid_operation' }, { status: 409 }) },
     { game: new Response('Bad gateway', { status: 503 }) },
     { game: new Response('Conflict', { status: 409 }) },
-    { token: Response.json({ error: 'unauthorized' }, { status: 401 }) },
+    { token: new Response('Bad gateway', { status: 503 }) },
   ];
   for (const { game, token = json({ token: 'token-ficticio' }) } of scenarios) {
     const client = createNeonProofClient(base, api, async (url) => url.endsWith('/token') ? token : game, { client: auth });
     await assert.rejects(client.inventoryAction('A', () => true, 'operacao-ficticia', 'stone', { stone: 'moon' }),
       { message: 'request_failed' });
   }
+});
+
+test('uma recusa de autenticação ao obter o token encerra a sessão sem consultar a função', async () => {
+  let functionCalled = false;
+  const client = createNeonProofClient(base, api, async (url) => {
+    if (url.endsWith('/token')) return Response.json({ error: 'unauthorized' }, { status: 401 });
+    functionCalled = true;
+    return json({});
+  }, { client: auth });
+  await assert.rejects(client.request('state', 'A', () => true), { message: 'session_changed' });
+  assert.equal(functionCalled, false);
 });
