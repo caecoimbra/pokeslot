@@ -54,6 +54,7 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         preview: fileURLToPath(new URL('./previa-maquina.html', import.meta.url)),
+        passwordRecovery: fileURLToPath(new URL('./redefinir-senha.html', import.meta.url)),
         gameProof: fileURLToPath(new URL('./prova-jogo.html', import.meta.url)),
       },
     },

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PokéSlot — redefinir senha</title>
+    <link rel="stylesheet" href="/src/preview/style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <span class="brand">POKÉ<span>SLOT</span></span>
+        <button id="language" class="language" type="button" aria-label="Switch to English">EN</button>
+      </header>
+      <section class="proof-auth" aria-labelledby="recovery-title">
+        <h1 id="recovery-title" data-text="title">Redefinir senha</h1>
+        <form id="request-link" method="post" hidden>
+          <p data-text="testInbox"></p>
+          <label><span data-text="email"></span><input name="email" type="email" autocomplete="email" required></label>
+          <button type="submit" data-text="send"></button>
+        </form>
+        <form id="reset-password" method="post" hidden>
+          <label><span data-text="password"></span><input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+          <label><span data-text="confirm"></span><input name="confirmation" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+          <button type="submit" data-text="save"></button>
+        </form>
+        <p id="recovery-status" role="status"></p>
+        <a id="return-to-machine" href="./previa-maquina.html?backend=neon" data-text="back">Voltar à máquina</a>
+      </section>
+    </main>
+    <script type="module" src="/src/preview/redefinir-senha.js"></script>
+  </body>
+</html>

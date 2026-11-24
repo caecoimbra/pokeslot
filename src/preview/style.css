@@ -16,6 +16,7 @@ h1 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; margin: 10px 0; }
 .proof-auth label { display: block; margin: 10px 0; }
 .proof-auth input { display: block; width: 100%; margin-top: 4px; padding: 9px; font: inherit; }
 .proof-auth button { padding: 8px 14px; font: inherit; cursor: pointer; }
+.proof-auth a { display: inline-block; margin: 8px 4px; color: #ffdf91; }
 .machine { background: #243657; border: 2px solid #d89441; border-radius: 20px; padding: clamp(18px, 5vw, 32px); box-shadow: 0 14px 0 #a95c35, 0 22px 38px #080e1c88; }
 .machine-header { display: flex; justify-content: space-between; color: #ffdf91; font-size: .72rem; letter-spacing: .13em; font-weight: 800; }
 .light { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #71e7b5; margin-right: 8px; }

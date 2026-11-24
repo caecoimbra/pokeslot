@@ -19,7 +19,9 @@ import { setupStoneUI } from './stone-ui.mjs';
 import { knownEvolutionOptions, kantoEvolutionOptions, DEMO_STONES } from '../server/evolution.mjs';
 import { createRedemptionNamesLoader } from './redemption-names.mjs';
 
-const neonProof = new URLSearchParams(location.search).get('backend') === 'neon';
+const previewParams = new URLSearchParams(location.search);
+const neonProof = previewParams.get('backend') === 'neon';
+const recoveryTest = import.meta.env.DEV && location.hostname === 'localhost' && previewParams.get('recovery-test') === '1';
 const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
 // Permite verificar uma falha de cada consulta no navegador de desenvolvimento.
 const failNextPokeApi = new Set(import.meta.env.DEV && new URLSearchParams(location.search).get('test') === 'pokeapi'
@@ -91,7 +93,9 @@ const messages = {
     authTitle: 'Conta fictícia da prova Neon', emailLabel: 'E-mail de teste', passwordLabel: 'Senha de teste', loginButton: 'Entrar', logoutButton: 'Sair',
     authSignedOut: 'Entre com uma conta fictícia para recuperar seu progresso.', authFailed: 'Não foi possível confirmar a sessão ou o progresso. Tente novamente.',
     showSignup: 'Criar conta de teste', showLogin: 'Voltar para entrar', signupButton: 'Criar conta',
+    passwordRecovery: 'Esqueci a senha',
     signupNote: 'Use um nome fictício, um endereço @example.test e uma senha exclusiva para esta prova.',
+    recoveryTestNote: 'Use um nome fictício, um endereço de teste privado que receba e-mail e uma senha exclusiva para esta prova.',
     signupName: 'Nome fictício', signupPassword: 'Senha de teste (8 caracteres ou mais)',
     signupEmailRequired: 'Para esta prova, use um endereço fictício terminado em @example.test.',
     signupNameRequired: 'Informe um nome fictício.',
@@ -155,7 +159,9 @@ const messages = {
     authTitle: 'Fictional Neon proof account', emailLabel: 'Test email', passwordLabel: 'Test password', loginButton: 'Sign in', logoutButton: 'Sign out',
     authSignedOut: 'Sign in with a fictional account to recover your progress.', authFailed: 'Could not confirm the session or progress. Try again.',
     showSignup: 'Create test account', showLogin: 'Back to sign in', signupButton: 'Create account',
+    passwordRecovery: 'Forgot password',
     signupNote: 'Use a fictional name, an @example.test address, and a password unique to this test.',
+    recoveryTestNote: 'Use a fictional name, a private test inbox that can receive email, and a password unique to this test.',
     signupName: 'Fictional name', signupPassword: 'Test password (8 characters or more)',
     signupEmailRequired: 'For this test, use a fictional address ending in @example.test.',
     signupNameRequired: 'Enter a fictional name.',
@@ -189,7 +195,7 @@ const positions = {
   diagonal_down: [0, 4, 8], diagonal_up: [6, 4, 2],
 };
 let wins = findWinningLines(grid);
-let language = 'pt';
+let language = previewParams.get('lang') === 'en' ? 'en' : 'pt';
 let status = 'initial';
 let pending = true;
 let spinning = false;
@@ -569,6 +575,7 @@ function render() {
     : lastProofReward.available ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : text.earnedUnavailable;
   if (neonProof) {
     const busy = authSubmitting || signingOut;
+    document.querySelector('#open-password-recovery').href = `./redefinir-senha.html?lang=${language}`;
     document.querySelector('#proof-auth-status').textContent = busy ? text.authWorking : text[authStatus] ?? '';
     for (const button of document.querySelectorAll('#proof-login button, #proof-signup button')) button.disabled = busy;
   }
@@ -665,6 +672,10 @@ function setProofState(state) {
 }
 async function startNeonProof() {
   document.querySelector('#proof-auth').hidden = false;
+  if (recoveryTest) {
+    document.querySelector('#proof-signup-note').dataset.text = 'recoveryTestNote';
+    document.querySelector('#proof-signup [name=email]').removeAttribute('placeholder');
+  }
   try {
     proofClient = createNeonProofClient(import.meta.env.VITE_NEON_PROOF_DATABASE_URL, proofUrl);
     pendingDb = await openPendingOperations();
@@ -786,7 +797,7 @@ async function submitProofAuth(event, registering) {
   const email = form.elements.email.value.trim();
   const password = form.elements.password.value;
   const name = registering ? form.elements.name.value.trim() : '';
-  if (registering && (!name || !email.toLowerCase().endsWith('@example.test'))) {
+  if (registering && (!name || (!recoveryTest && !email.toLowerCase().endsWith('@example.test')))) {
     authStatus = name ? 'signupEmailRequired' : 'signupNameRequired';
     render();
     return;
