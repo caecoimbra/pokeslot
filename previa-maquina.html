@@ -90,35 +90,44 @@
         </form>
         <p id="stone-action-status" role="status"></p>
       </section>
-      <section class="pokedex" aria-labelledby="pokedex-title">
+      <section id="kanto-pokedex" class="pokedex" aria-labelledby="pokedex-title" hidden>
         <p class="eyebrow" data-text="pokedexEyebrow"></p>
         <h2 id="pokedex-title" data-text="pokedexTitle"></h2>
         <p class="pokedex-note" data-text="pokedexNote"></p>
         <div class="collection-progress">
           <label for="kanto-progress" id="progress-label"></label>
           <progress id="kanto-progress" max="151" value="0"></progress>
-          <p id="shiny-progress"></p>
+          <p id="variant-progress"></p>
+          <p id="kanto-complete" role="status"></p>
         </div>
-        <div class="pokedex-content" aria-live="polite">
+        <div class="pokedex-content">
           <h3 data-text="lastCaptures"></h3>
           <ul id="capture-results"></ul>
           <p id="no-captures"></p>
           <h3 data-text="collectionTitle"></h3>
           <div class="collection-filters">
-            <label><span data-text="numberFilter"></span><input id="collection-number" type="text" inputmode="numeric" maxlength="4" placeholder="#025" autocomplete="off"></label>
+            <label><span data-text="numberFilter"></span><input id="collection-number" type="search" maxlength="40" placeholder="#025" autocomplete="off"></label>
             <label><span data-text="variantFilter"></span><select id="collection-variant"><option value="all" data-text="allVariants"></option><option value="normal" data-text="normal"></option><option value="shiny" data-text="shiny"></option></select></label>
+            <label><span data-text="registrationFilter"></span><select id="collection-registration"><option value="all" data-text="allRegistrations"></option><option value="owned" data-text="registered"></option><option value="missing" data-text="missing"></option></select></label>
           </div>
           <p id="filter-count" role="status"></p>
           <ul id="collection"></ul>
           <p id="empty-collection"></p>
         </div>
         <div id="pokemon-detail" class="pokemon-detail" hidden>
-          <h3 data-text="detailsTitle"></h3>
+          <h3 id="selected-pokemon" tabindex="-1"></h3>
+          <div id="detail-variants" class="detail-variants" role="group">
+            <button type="button" data-variant="normal" aria-pressed="false"></button>
+            <button type="button" data-variant="shiny" aria-pressed="false"></button>
+          </div>
+          <p id="capture-rarity"></p>
+          <p id="variant-path"></p>
+          <p id="evolution-path"></p>
+          <button id="open-redemption" type="button" class="retry-detail" data-text="viewRedemption" hidden></button>
           <p id="detail-status" role="status"></p>
           <div id="detail-content" hidden>
             <img id="pokemon-sprite" width="96" height="96" alt="" hidden />
             <p id="sprite-status"></p>
-            <p id="pokemon-name"></p>
             <p id="pokemon-types"></p>
             <p id="pokemon-description"></p>
             <p id="description-source" class="description-source"></p>

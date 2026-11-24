@@ -27,8 +27,24 @@ async function createUser() {
   const password = randomBytes(24).toString('base64url');
   const response = await fetch(`${authUrl}/sign-up/email`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify({ name: 'Inventário de teste', email, password }) });
   if (!response.ok) throw new Error(`signup_${response.status}`);
+  return { email, password, ...await sessionFrom(response) };
+}
+
+async function reopenSession({ email, password, userId }) {
+  const response = await fetch(`${authUrl}/sign-in/email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: origin },
+    body: JSON.stringify({ email, password }),
+  });
+  assert.equal(response.status, 200, 'nova entrada com a conta fictícia');
+  const session = await sessionFrom(response);
+  assert.ok(session.userId === userId, 'a nova sessão pertence à conta esperada');
+  return session;
+}
+
+async function sessionFrom(response) {
   const cookies = response.headers.getSetCookie().map((value) => value.split(';')[0]).join('; ');
-  if (!cookies) throw new Error('signup_cookie_missing');
+  if (!cookies) throw new Error('session_cookie_missing');
   const sessionResponse = await fetch(`${authUrl}/get-session`, { headers: { Origin: origin, Cookie: cookies } });
   if (!sessionResponse.ok) throw new Error(`session_${sessionResponse.status}`);
   const session = await sessionResponse.json();
@@ -40,26 +56,46 @@ async function createUser() {
   return { userId: session.user.id, token: access.token };
 }
 async function request(user, path, body) {
-  const response = await fetch(`${functionUrl}/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user.token}`, Origin: origin }, body: JSON.stringify(body) });
+  const headers = { 'Content-Type': 'application/json', Origin: origin };
+  if (user) headers.Authorization = `Bearer ${user.token}`;
+  const response = await fetch(`${functionUrl}/${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
   let payload;
   try { payload = await response.json(); } catch { payload = {}; }
   return { status: response.status, payload };
 }
 const inventoryAction = (user, operationId, action, args, expectedUserId = user.userId) => request(user, 'inventory/action', { expectedUserId, operationId, action, args });
 const getState = (user) => request(user, 'state', { expectedUserId: user.userId });
+async function readState(user) {
+  const response = await getState(user);
+  assert.equal(response.status, 200);
+  return response.payload;
+}
 const amount = (entries, type) => entries.find((entry) => entry.type === type)?.amount ?? 0;
 
 try {
   const a = await createUser();
   const b = await createUser();
-  assert.equal((await getState(a)).status, 200);
-  assert.equal((await getState(b)).status, 200);
+  assert.ok(a.userId !== b.userId);
+  await Promise.all([readState(a), readState(b)]);
   await pool.query("INSERT INTO pokeslot_proof.vouchers (user_id, type, amount) VALUES ($1, 'pokemon', 4), ($1, 'stone', 2), ($1, 'type', 1)", [a.userId]);
   await pool.query('INSERT INTO pokeslot_proof.variants (user_id, species_id, shiny) VALUES ($1, 25, true), ($1, 148, false)', [a.userId]);
+  await pool.query("INSERT INTO pokeslot_proof.vouchers (user_id, type, amount) VALUES ($1, 'pokemon', 2)", [b.userId]);
+  await pool.query("INSERT INTO pokeslot_proof.stones (user_id, type, amount) VALUES ($1, 'water', 2)", [b.userId]);
+  await pool.query('UPDATE pokeslot_proof.players SET balance = 0 WHERE user_id = $1', [b.userId]);
+  const beforeB = await readState(b);
+  const spinId = randomUUID();
 
   const pokemonId = randomUUID();
-  const mismatched = await inventoryAction(b, pokemonId, 'pokemon', { speciesId: 25 }, a.userId);
-  assert.equal(mismatched.status, 409);
+  const endpoints = [
+    ['state', {}],
+    ['spin', { operationId: spinId }],
+    ['inventory/action', { operationId: pokemonId, action: 'pokemon', args: { speciesId: 25 } }],
+  ];
+  for (const [path, payload] of endpoints) {
+    const body = { ...payload, expectedUserId: a.userId };
+    assert.equal((await request(null, path, body)).status, 401);
+    assert.equal((await request(b, path, body)).status, 409);
+  }
   const [p1, p2] = await Promise.all([
     inventoryAction(a, pokemonId, 'pokemon', { speciesId: 25 }),
     inventoryAction(a, pokemonId, 'pokemon', { speciesId: 25 }),
@@ -111,16 +147,48 @@ try {
   assert.equal(amount(finalA.payload.stones, 'dragon'), 0);
   assert.equal(amount(finalA.payload.vouchers, 'type'), 1);
   assert.equal(amount(finalA.payload.vouchers, 'stone'), 0);
+  assert.equal(amount(finalA.payload.vouchers, 'pokemon'), 3);
   for (const [speciesId, isShiny] of [[25, true], [25, false], [26, true], [148, false], [149, false]]) {
     assert.ok(finalA.payload.ownedVariants.some((v) => v.speciesId === speciesId && v.isShiny === isShiny));
   }
-  assert.deepEqual(finalB.payload.ownedVariants, []);
-  assert.deepEqual(finalB.payload.vouchers, []);
-  assert.deepEqual(finalB.payload.stones, []);
+  assert.deepEqual(finalB.payload, beforeB);
+  assert.equal(beforeB.balance, 0);
+  assert.deepEqual(beforeB.ownedVariants, []);
+  assert.deepEqual(beforeB.vouchers, [{ type: 'pokemon', amount: 2 }]);
+  assert.deepEqual(beforeB.stones, [{ type: 'water', amount: 2 }]);
   const wrongSession = await inventoryAction(b, evolveId, 'evolve', evolveArgs, a.userId);
   assert.equal(wrongSession.status, 409);
-  assert.deepEqual((await getState(b)).payload.ownedVariants, []);
-  console.log('Duas contas fictícias: resgate, retomada, isolamento, Pikachu shiny → Raichu shiny e Dragonair → Dragonite passaram. Estoque inicial inserido administrativamente.');
+
+  // IDs iguais em contas diferentes correspondem a operações independentes.
+  const redemptionB = await inventoryAction(b, pokemonId, 'pokemon', { speciesId: 1 });
+  assert.equal(redemptionB.status, 200);
+  assert.equal(redemptionB.payload.status, 'ok');
+  assert.equal(redemptionB.payload.replayed, false);
+  assert.equal(redemptionB.payload.speciesId, 1);
+  const afterRedemptionB = await readState(b);
+  assert.deepEqual(afterRedemptionB, {
+    ...beforeB,
+    ownedVariants: [{ speciesId: 1, isShiny: false }],
+    vouchers: [{ type: 'pokemon', amount: 1 }],
+  });
+  assert.deepEqual(await readState(a), finalA.payload);
+
+  const spinA = await request(a, 'spin', { expectedUserId: a.userId, operationId: spinId });
+  assert.equal(spinA.status, 200);
+  assert.equal(spinA.payload.status, 'ok');
+  assert.equal(spinA.payload.replayed, false);
+  const { lineSpins, duplicateSpins, voucherSpins } = spinA.payload;
+  assert.equal(spinA.payload.balance, finalA.payload.balance - 1 + lineSpins + duplicateSpins + voucherSpins);
+  const afterSpinA = await readState(a);
+  assert.equal(afterSpinA.balance, spinA.payload.balance);
+  assert.deepEqual(await readState(b), afterRedemptionB);
+  const spinB = await request(b, 'spin', { expectedUserId: b.userId, operationId: spinId });
+  assert.equal(spinB.status, 200);
+  assert.deepEqual(spinB.payload, { status: 'no_balance', balance: 0, replayed: false });
+  const [aReopened, bReopened] = await Promise.all([reopenSession(a), reopenSession(b)]);
+  assert.deepEqual(await readState(aReopened), afterSpinA);
+  assert.deepEqual(await readState(bReopened), afterRedemptionB);
+  console.log('Duas contas fictícias: saldo, coleção, vales e pedras separados após resgate, evolução, rodada e nova entrada. IDs repetidos foram isolados por conta. Estoque inicial inserido administrativamente.');
 } catch (error) {
   const line = error.stack?.match(/verify-inventory-auth-flow\.mjs:(\d+):/)?.[1];
   const location = line ? ` na linha ${line}` : '';

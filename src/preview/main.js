@@ -12,7 +12,7 @@ import { claimProofGameOperation, claimProofInventoryOperation, readProofInvento
 import { validateProofState, validateProofRound } from './proof-result.mjs';
 import { nextRefillAt, formatNextRefill } from './next-refill.mjs';
 import { capturePresentationMessages, formatCaptureResult } from './capture-result.mjs';
-import { filterCollection } from './collection-filter.mjs';
+import { buildKantoCatalog, filterKantoCatalog } from './kanto-catalog.mjs';
 import { DEMO_VOUCHER_TYPES } from '../domain/demo-vouchers.mjs';
 import { demoRedemptionSpecies, demoRedemptionDetails, normalVariantOwned } from '../domain/demo-redemption.mjs';
 import { setupStoneUI } from './stone-ui.mjs';
@@ -57,13 +57,20 @@ const messages = {
     success: 'Rodada demonstrativa concluída.', failure: 'Não foi possível confirmar a operação. Verifique o servidor local e tente novamente; uma rodada pendente será recuperada.',
     pokedexEyebrow: 'Coleção local de teste', pokedexTitle: 'Pokédex de teste',
     progressLabel: (count, total) => `Kanto: ${count} de ${total} espécies registradas`,
-    shinyProgress: (count) => `Variantes shiny: ${count} (opcionais)`,
+    variantProgress: ({ normal, shiny }) => `Normais: ${normal} · Shiny: ${shiny} (opcionais)`,
+    completedKanto: 'Kanto completo! Você registrou as 151 espécies.',
     pokedexNote: 'Nesta prévia local, as 151 espécies têm chances iguais apenas para teste. O saldo e a coleção ficam no computador, sem login.',
-    lastCaptures: 'Capturas da última rodada', collectionTitle: 'Variantes registradas',
+    lastCaptures: 'Capturas da última rodada', collectionTitle: 'Catálogo de Kanto',
     beforeRound: 'Gire para ver as capturas de teste.', noCaptures: 'Nenhuma captura nesta rodada.',
-    emptyCollection: 'Sua coleção de teste está vazia.', normal: 'Normal', shiny: 'Shiny',
-    numberFilter: 'Número da espécie', variantFilter: 'Variante', allVariants: 'Todas',
-    filterCount: (count) => `${count} ${count === 1 ? 'variante encontrada' : 'variantes encontradas'}.`, noFilterMatches: 'Nenhuma variante corresponde aos filtros.',
+    normal: 'Normal', shiny: 'Shiny', registered: 'Registrada', missing: 'Faltante',
+    numberFilter: 'Nome ou número', variantFilter: 'Variante', allVariants: 'Todas',
+    registrationFilter: 'Registro', allRegistrations: 'Todos',
+    filterCount: (count) => `${count} ${count === 1 ? 'espécie encontrada' : 'espécies encontradas'}.`, noFilterMatches: 'Nenhuma espécie corresponde aos filtros.',
+    captureTier: (rarity) => `Raridade na captura: ${rarity}.`,
+    shinyPath: 'Shiny pode vir em uma captura ou ao evoluir uma origem shiny compatível.',
+    normalPath: (cost) => `Você pode capturar esta espécie ou resgatar a variante normal por ${cost} ${cost === 1 ? 'vale Pokémon' : 'vales Pokémon'}.`,
+    evolveFrom: (names) => `Você já tem uma origem compatível: ${names}. Confira as pedras necessárias no painel de evolução.`,
+    viewRedemption: 'Ver no resgate',
     vouchersTitle: 'Vales — demonstração local', vouchersNote: 'Cinco tipos equiprováveis são uma hipótese de teste. O vale de giros concede 2 giros; os vales Pokémon e pedra podem ser trocados abaixo. Tipo e amuleto ficam guardados sem uso implementado. Nesta prévia, linhas de giro e repetidos ainda não concedem giros.',
     voucherRoundTitle: 'Vales da última rodada', voucherInventoryTitle: 'Vales guardados', voucherBefore: 'Gire para ver os vales sorteados.', voucherNone: 'Nenhum vale nesta rodada.', voucherInventoryEmpty: 'Nenhum vale guardado.', voucherUnknown: 'Detalhes dos vales indisponíveis para esta rodada antiga.',
     voucherNames: { pokemon: 'Vale Pokémon', stone: 'Vale pedra', spins: 'Vale de giros', type: 'Vale de tipo', shiny_charm: 'Amuleto shiny' }, voucherSpins: (value) => `+${value} giros de teste`, voucherValueUnknown: 'valor indisponível',
@@ -106,13 +113,20 @@ const messages = {
     success: 'Demonstration round complete.', failure: 'Could not confirm the operation. Check the local server and try again; a pending round will be recovered.',
     pokedexEyebrow: 'Local test collection', pokedexTitle: 'Test Pokédex',
     progressLabel: (count, total) => `Kanto: ${count} of ${total} registered species`,
-    shinyProgress: (count) => `Shiny variants: ${count} (optional)`,
+    variantProgress: ({ normal, shiny }) => `Normal: ${normal} · Shiny: ${shiny} (optional)`,
+    completedKanto: 'Kanto complete! You registered all 151 species.',
     pokedexNote: 'In this local preview, all 151 species have equal odds for testing only. Balance and collection stay on this computer without a login.',
-    lastCaptures: 'Last round captures', collectionTitle: 'Registered variants',
+    lastCaptures: 'Last round captures', collectionTitle: 'Kanto catalog',
     beforeRound: 'Spin to see test captures.', noCaptures: 'No captures this round.',
-    emptyCollection: 'Your test collection is empty.', normal: 'Normal', shiny: 'Shiny',
-    numberFilter: 'Species number', variantFilter: 'Variant', allVariants: 'All',
-    filterCount: (count) => `${count} ${count === 1 ? 'variant found' : 'variants found'}.`, noFilterMatches: 'No variants match these filters.',
+    normal: 'Normal', shiny: 'Shiny', registered: 'Registered', missing: 'Missing',
+    numberFilter: 'Name or number', variantFilter: 'Variant', allVariants: 'All',
+    registrationFilter: 'Registration', allRegistrations: 'All',
+    filterCount: (count) => `${count} species found.`, noFilterMatches: 'No species match these filters.',
+    captureTier: (rarity) => `Capture rarity: ${rarity}.`,
+    shinyPath: 'Shiny variants can be captured or evolved from a compatible shiny Pokémon.',
+    normalPath: (cost) => `You can capture this species or redeem the normal variant for ${cost} Pokémon ${cost === 1 ? 'voucher' : 'vouchers'}.`,
+    evolveFrom: (names) => `You have a compatible Pokémon: ${names}. Check the evolution panel for compatible stones.`,
+    viewRedemption: 'View redemption',
     vouchersTitle: 'Vouchers — local demonstration', vouchersNote: 'Five equally likely types are a test assumption. The spin voucher grants 2 spins; Pokémon and stone vouchers can be redeemed below. Type and charm are saved but cannot be used yet. Spin lines and duplicates do not grant spins in this preview yet.',
     voucherRoundTitle: 'Last round vouchers', voucherInventoryTitle: 'Saved vouchers', voucherBefore: 'Spin to see drawn vouchers.', voucherNone: 'No vouchers this round.', voucherInventoryEmpty: 'No vouchers saved.', voucherUnknown: 'Voucher details unavailable for this older round.',
     voucherNames: { pokemon: 'Pokémon voucher', stone: 'Stone voucher', spins: 'Spin voucher', type: 'Type voucher', shiny_charm: 'Shiny charm' }, voucherSpins: (value) => `+${value} test spins`, voucherValueUnknown: 'value unavailable',
@@ -143,12 +157,12 @@ Object.assign(messages.pt, capturePresentationMessages.pt);
 Object.assign(messages.en, capturePresentationMessages.en);
 if (neonProof) {
   Object.assign(messages.pt, { intro: 'Rodadas autenticadas no branch isolado da Neon, com valores de teste.', footnote: 'Prova isolada: contas fictícias, probabilidades e recompensas provisórias; não é o jogo publicado.',
-    pokedexEyebrow: 'Coleção da conta de teste', pokedexNote: 'O saldo e as variantes são recuperados da conta fictícia. Shiny e raridades usam valores provisórios.',
+    pokedexEyebrow: 'Coleção da conta de teste', pokedexNote: 'Qualquer variante registra a espécie para o progresso de Kanto. Você pode acompanhar as duas separadamente.',
     vouchersTitle: 'Vales — prova autenticada', vouchersNote: 'Vales Pokémon, pedra e giros têm a mesma chance. Cada vale de giros credita 2 giros ao sair na rodada. Itens de tipo e amuletos de testes anteriores podem aparecer no estoque.',
     failure: 'Não foi possível confirmar a rodada. Entre na mesma conta e tente novamente para recuperar uma operação pendente.',
     captureStatus: { new: 'Nova captura', duplicate: 'Repetida' } });
   Object.assign(messages.en, { intro: 'Authenticated rounds on the isolated Neon branch, using test values.', footnote: 'Isolated proof: fictional accounts and provisional odds and rewards; not the published game.',
-    pokedexEyebrow: 'Test account collection', pokedexNote: 'Balance and variants are recovered from the fictional account. Shiny odds and rarities are provisional.',
+    pokedexEyebrow: 'Test account collection', pokedexNote: 'Either variant registers the species for Kanto progress. You can track both separately.',
     vouchersTitle: 'Vouchers — authenticated proof', vouchersNote: 'Pokémon, stone and spin vouchers have equal odds. Each spin voucher credits 2 spins when awarded. Type vouchers and charms from earlier tests may appear in the inventory.',
     failure: 'Could not confirm the round. Sign in to the same account and retry to recover a pending operation.',
     captureStatus: { new: 'New capture', duplicate: 'Duplicate' } });
@@ -185,13 +199,16 @@ let selectedShiny = false;
 let proofClient = null;
 let proofUser = null;
 let proofGeneration = 0;
+let signingOut = false;
+const proofSessions = neonProof && typeof BroadcastChannel === 'function'
+  ? new BroadcastChannel('pokeslot-proof-session') : null;
 let authStatus = '';
 let lastProofReward = null;
 let proofPendingRoundId = null;
 let afterProofRound = null;
 const evolutionRecipes = neonProof ? kantoEvolutionOptions() : knownEvolutionOptions();
 const stoneUI = setupStoneUI({
-  getState: () => ({ visible: !neonProof || !!proofUser, authenticated: neonProof, enabled: !!pendingDb && (!neonProof || (!!proofUser && (!proofPendingRoundId || !!pendingLocalAction))), language, ownedVariants,
+  getState: () => ({ visible: !neonProof || (!!proofUser && balance !== null), authenticated: neonProof, enabled: !!pendingDb && (!neonProof || (!!proofUser && (!proofPendingRoundId || !!pendingLocalAction))), language, ownedVariants,
     vouchers: demoVouchers, stones: demoStones, recipes: evolutionRecipes, pending,
     pendingAction: pendingLocalAction, actionMessage: stoneActionMessage }),
   performAction: performStoneAction,
@@ -241,7 +258,7 @@ async function loadPokemon() {
 
 function speciesLabel(id) {
   const data = detailsStore.get(id);
-  const name = data?.names[language] || data?.names.en;
+  const name = data?.names[language] || data?.names.en || redeemNames.get(id);
   return `#${String(id).padStart(3, '0')}${name ? ` ${name}` : ''}`;
 }
 
@@ -330,7 +347,7 @@ async function performProofInventoryAction(action, payload) {
     if (current()) {
       if (['other_operation_pending', 'pending_changed'].includes(error?.message)) { await recoverProofSession(); return; }
       if (error?.message === 'session_changed') {
-        clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authSignedOut';
+        resetProofSession('authSignedOut');
       } else if (error?.message !== 'different_pending') {
         if (action === 'pokemon' || pendingLocalAction?.action === 'redeem-pokemon') redeemStatus = 'redeemFailure';
         else stoneActionMessage = 'failure';
@@ -369,33 +386,64 @@ function renderRedemption(text) {
     : pendingLocalAction ? text[recoverable ? 'redeemPending' : 'localActionOtherPending'] : '';
 }
 
-function renderCollection(text) {
+function variantLabel(text, shiny, owned) {
+  return `${shiny ? text.shiny : text.normal}: ${owned ? text.registered : text.missing}`;
+}
+
+function renderCollection(text, catalog) {
   const list = document.querySelector('#collection');
-  const visible = filterCollection(ownedVariants, document.querySelector('#collection-number').value, document.querySelector('#collection-variant').value);
-  const visibleKeys = new Set(visible.map(({ speciesId, isShiny }) => `${speciesId}:${isShiny}`));
-  for (const entry of ownedVariants) {
-    let button = list.querySelector(`button[data-species-id="${entry.speciesId}"][data-shiny="${entry.isShiny}"]`);
-    if (!button) {
+  const visible = filterKantoCatalog(catalog, document.querySelector('#collection-number').value,
+    document.querySelector('#collection-variant').value, document.querySelector('#collection-registration').value, speciesLabel);
+  const visibleIds = new Set(visible.map(({ speciesId }) => speciesId));
+  if (list.children.length !== catalog.length) {
+    const rows = catalog.map(({ speciesId }) => {
       const item = document.createElement('li');
-      button = document.createElement('button');
+      const button = document.createElement('button');
       button.type = 'button';
       button.className = 'collection-entry';
-      button.dataset.speciesId = entry.speciesId;
-      button.dataset.shiny = String(entry.isShiny);
+      button.dataset.speciesId = speciesId;
       item.append(button);
-      list.append(item);
-    }
-    button.textContent = `${speciesLabel(entry.speciesId)} — ${entry.isShiny ? text.shiny : text.normal}`;
-    button.parentElement.hidden = !visibleKeys.has(`${entry.speciesId}:${entry.isShiny}`);
-    button.setAttribute('aria-pressed', String(entry.speciesId === selectedSpeciesId && entry.isShiny === selectedShiny));
+      return item;
+    });
+    list.replaceChildren(...rows);
   }
-  document.querySelector('#filter-count').textContent = ownedVariants.length ? text.filterCount(visible.length) : '';
+  catalog.forEach(({ speciesId, normal, shiny }, index) => {
+    const row = list.children[index];
+    const button = row.firstElementChild;
+    const label = `${speciesLabel(speciesId)} · ${variantLabel(text, false, normal)} · ${variantLabel(text, true, shiny)}`;
+    if (button.textContent !== label) button.textContent = label;
+    row.hidden = !visibleIds.has(speciesId);
+    button.setAttribute('aria-pressed', String(speciesId === selectedSpeciesId));
+  });
+  document.querySelector('#filter-count').textContent = text.filterCount(visible.length);
   return visible;
 }
 
 function renderPokemonDetails(text, visible) {
   const detail = document.querySelector('#pokemon-detail');
-  detail.hidden = !visible.some((entry) => entry.speciesId === selectedSpeciesId && entry.isShiny === selectedShiny);
+  const record = visible.find(({ speciesId }) => speciesId === selectedSpeciesId);
+  detail.hidden = !record;
+  if (!record) return;
+  const selectedOwned = selectedShiny ? record.shiny : record.normal;
+  document.querySelector('#selected-pokemon').textContent = speciesLabel(record.speciesId);
+  document.querySelector('#detail-variants').setAttribute('aria-label', text.variantFilter);
+  for (const button of detail.querySelectorAll('#detail-variants button')) {
+    const shiny = button.dataset.variant === 'shiny';
+    button.textContent = variantLabel(text, shiny, shiny ? record.shiny : record.normal);
+    button.setAttribute('aria-pressed', String(shiny === selectedShiny));
+  }
+  const { rarity, cost } = demoRedemptionDetails(record.speciesId);
+  document.querySelector('#capture-rarity').textContent = neonProof ? text.captureTier(text.rarities[rarity]) : '';
+  document.querySelector('#variant-path').textContent = selectedOwned ? ''
+    : selectedShiny ? text.shinyPath : text.normalPath(cost);
+  const origins = selectedOwned ? [] : evolutionRecipes
+    .filter(({ sourceId, targetId }) => targetId === record.speciesId &&
+      ownedVariants.some(({ speciesId, isShiny }) => speciesId === sourceId && isShiny === selectedShiny))
+    .map(({ sourceId }) => speciesLabel(sourceId));
+  document.querySelector('#evolution-path').textContent = origins.length ? text.evolveFrom(origins.join(', ')) : '';
+  const redemption = document.querySelector('#open-redemption');
+  redemption.hidden = selectedShiny || record.normal;
+  redemption.disabled = pending || !!pendingLocalAction || !!proofPendingRoundId;
   const content = document.querySelector('#detail-content');
   content.hidden = detailStatus !== 'ready';
   document.querySelector('#detail-status').textContent = detailStatus === 'loading' ? text.loadingDetails
@@ -404,7 +452,6 @@ function renderPokemonDetails(text, visible) {
   if (!pokemonData) return;
 
   const name = pokemonData.names[language] || pokemonData.names.en || `#${selectedSpeciesId}`;
-  document.querySelector('#pokemon-name').textContent = `#${String(selectedSpeciesId).padStart(3, '0')} ${name}`;
   const types = pokemonData.types.map(({ key }) => language === 'pt' ? (portugueseTypes[key] || key) : key);
   document.querySelector('#pokemon-types').textContent = `${text.typeLabel}: ${types.join(', ') || text.unknownType}`;
   const description = selectDescription(pokemonData.descriptions, language);
@@ -466,19 +513,22 @@ function render() {
   });
   document.querySelector('#rewards').replaceChildren(...rewardItems);
   document.querySelector('#no-rewards').textContent = rewards.length ? '' : text.noRewards;
+  const ready = !neonProof || (!!proofUser && balance !== null);
+  document.querySelector('#kanto-pokedex').hidden = !ready;
   const progress = getKantoCollectionProgress(ownedVariants);
   document.querySelector('#progress-label').textContent = text.progressLabel(progress.species, progress.total);
   document.querySelector('#kanto-progress').value = progress.species;
-  document.querySelector('#shiny-progress').textContent = text.shinyProgress(progress.shiny);
+  document.querySelector('#variant-progress').textContent = text.variantProgress(progress);
+  document.querySelector('#kanto-complete').textContent = progress.species === progress.total ? text.completedKanto : '';
   renderList('#capture-results', (lastCaptures ?? []).map((entry) =>
     formatCaptureResult(entry, text, speciesLabel(entry.capture.speciesId), { authenticated: neonProof })
   ));
   document.querySelector('#no-captures').textContent = lastCaptures === null
     ? text.beforeRound : lastCaptures.length === 0 ? text.noCaptures : '';
-  const visible = renderCollection(text);
-  document.querySelector('#empty-collection').textContent = !ownedVariants.length ? text.emptyCollection : !visible.length ? text.noFilterMatches : '';
+  const visible = ready ? renderCollection(text, buildKantoCatalog(ownedVariants)) : [];
+  document.querySelector('#empty-collection').textContent = ready && !visible.length ? text.noFilterMatches : '';
   renderPokemonDetails(text, visible);
-  if (!neonProof || proofUser) {
+  if (ready) {
     document.querySelector('#demo-vouchers').hidden = false;
     renderList('#voucher-inventory', demoVouchers.map(({ type, amount }) => `${text.voucherNames[type]}: ${amount}`));
     document.querySelector('#voucher-inventory-empty').textContent = demoVouchers.length ? '' : text.voucherInventoryEmpty;
@@ -496,6 +546,7 @@ function render() {
   document.querySelector('#demo-balance').textContent = balance === null ? '' : text.balance(balance);
   document.querySelector('#next-refill').textContent = nextRefill === null ? '' : text.nextRefill(formatNextRefill(nextRefill, language));
   document.querySelector('#refresh-balance').disabled = pending || (neonProof && !proofUser);
+  document.querySelector('#proof-logout').disabled = pending;
   document.querySelector('#proof-rewards').textContent = spinning || !lastProofReward ? ''
     : lastProofReward.available ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : text.earnedUnavailable;
   if (neonProof) document.querySelector('#proof-auth-status').textContent = authStatus ? text[authStatus] : '';
@@ -541,7 +592,39 @@ function clearProofDisplay() {
   grid = initialGrid;
   wins = findWinningLines(grid);
   document.querySelector('#collection').replaceChildren();
+  document.querySelector('#collection-number').value = '';
+  document.querySelector('#collection-variant').value = 'all';
+  document.querySelector('#collection-registration').value = 'all';
+  redeemSpecies.value = '';
+  document.querySelector('#stone-choice').value = '';
+  document.querySelector('#stone-evolution-choice').replaceChildren();
+  for (const id of ['voucher-inventory', 'voucher-results', 'stone-inventory']) {
+    document.getElementById(id).replaceChildren();
+  }
+  for (const id of ['voucher-inventory-empty', 'voucher-results-empty', 'redeem-choice', 'redeem-status',
+    'stone-stock', 'stone-recovery-message', 'stone-evolution-info', 'stone-action-status',
+    'selected-pokemon', 'capture-rarity', 'variant-path', 'evolution-path', 'detail-status',
+    'pokemon-types', 'pokemon-description', 'description-source', 'sprite-status', 'filter-count']) {
+    document.getElementById(id).textContent = '';
+  }
+  for (const button of document.querySelectorAll('#detail-variants button')) {
+    button.textContent = '';
+    button.setAttribute('aria-pressed', 'false');
+  }
+  const sprite = document.querySelector('#pokemon-sprite');
+  sprite.removeAttribute('src');
+  sprite.alt = '';
   status = 'initial';
+}
+function resetProofSession(nextAuthStatus = '') {
+  const version = ++proofGeneration;
+  pending = true;
+  authStatus = nextAuthStatus;
+  proofUser = null;
+  clearProofDisplay();
+  showProofIdentity(null);
+  render();
+  return version;
 }
 function showProofIdentity(user) {
   document.querySelector('#proof-login').hidden = !!user;
@@ -566,18 +649,13 @@ async function startNeonProof() {
   } catch { clearProofDisplay(); authStatus = 'authFailed'; pending = true; render(); }
 }
 async function recoverProofSession() {
-  const version = ++proofGeneration;
-  pending = true;
-  clearProofDisplay();
-  proofUser = null;
-  showProofIdentity(null);
-  render();
+  if (!proofClient || !pendingDb) return;
+  const version = resetProofSession();
   try {
     const user = await proofClient.user();
     if (version !== proofGeneration) return;
     if (!user) { authStatus = 'authSignedOut'; return; }
     proofUser = user;
-    showProofIdentity(user);
     const current = () => version === proofGeneration && proofUser?.id === user.id;
     const state = validateProofState(await proofClient.request('state', user.id, current));
     const savedOperation = await readPendingOperation(pendingDb, `game-proof:${user.id}`);
@@ -585,6 +663,7 @@ async function recoverProofSession() {
     await proofClient.ensureSession(user.id, current);
     if (!current()) return;
     setProofState(state);
+    showProofIdentity(user);
     showProofInventoryPending(inventoryOperation);
     proofPendingRoundId = savedOperation?.operationId ?? null;
     if (proofPendingRoundId) status = 'recoverPending';
@@ -597,7 +676,7 @@ async function recoverProofSession() {
     }
     pending = false;
   } catch {
-    if (version === proofGeneration) { clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authFailed'; }
+    if (version === proofGeneration) resetProofSession('authFailed');
   } finally { if (version === proofGeneration) render(); }
 }
 async function spinNeonProof() {
@@ -656,7 +735,7 @@ async function spinNeonProof() {
   } catch (error) {
     if (current()) {
       if (['other_operation_pending', 'pending_changed'].includes(error?.message)) { await recoverProofSession(); return; }
-      if (error?.message === 'session_changed') { clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authSignedOut'; pending = true; render(); }
+      if (error?.message === 'session_changed') resetProofSession('authSignedOut');
       else status = 'failure';
     }
   } finally { if (current()) { pending = false; spinning = false; render(); } }
@@ -664,7 +743,7 @@ async function spinNeonProof() {
 
 document.querySelector('#proof-login').addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (!neonProof || !proofClient) return;
+  if (!neonProof || !proofClient || signingOut) return;
   const form = event.currentTarget;
   const button = form.querySelector('button');
   button.disabled = true;
@@ -672,22 +751,31 @@ document.querySelector('#proof-login').addEventListener('submit', async (event) 
     const result = await proofClient.signIn(form.elements.email.value.trim(), form.elements.password.value);
     if (result.error || !result.data?.user) throw new Error('login_failed');
     form.elements.password.value = '';
+    proofSessions?.postMessage('session-changed');
     await recoverProofSession();
   } catch { authStatus = 'authFailed'; render(); }
   finally { button.disabled = false; }
 });
 document.querySelector('#proof-logout').addEventListener('click', async () => {
   if (!neonProof || !proofClient || pending) return;
-  pending = true;
-  render();
+  signingOut = true;
+  resetProofSession();
   try {
     const result = await proofClient.signOut();
     if (result.error) throw new Error('logout_failed');
+    proofSessions?.postMessage('session-changed');
     await recoverProofSession();
-  } catch { authStatus = 'authFailed'; pending = false; render(); }
+  } catch { resetProofSession('authFailed'); }
+  finally { signingOut = false; }
+});
+proofSessions?.addEventListener('message', ({ data }) => {
+  if (data === 'session-changed') recoverProofSession();
 });
 document.addEventListener('visibilitychange', () => {
   if (neonProof && proofClient && document.visibilityState === 'visible') recoverProofSession();
+});
+window.addEventListener('pageshow', (event) => {
+  if (neonProof && event.persisted) recoverProofSession();
 });
 
 document.querySelector('#language').addEventListener('click', () => {
@@ -716,7 +804,7 @@ document.querySelector('#refresh-balance').addEventListener('click', async () =>
       status = proofPendingRoundId ? 'recoverPending' : 'balanceRefreshed';
     } catch (error) {
       if (current() && error?.message === 'session_changed') {
-        clearProofDisplay(); proofUser = null; showProofIdentity(null); authStatus = 'authSignedOut';
+        resetProofSession('authSignedOut');
       } else if (current()) status = 'failure';
     } finally { if (current()) pending = false; render(); }
     return;
@@ -828,13 +916,32 @@ document.querySelector('#demo-redeem').addEventListener('submit', async (event) 
 });
 document.querySelector('#collection-number').addEventListener('input', render);
 document.querySelector('#collection-variant').addEventListener('change', render);
+document.querySelector('#collection-registration').addEventListener('change', render);
 document.querySelector('#collection').addEventListener('click', (event) => {
   const button = event.target.closest('button[data-species-id]');
   if (!button) return;
   selectedSpeciesId = Number(button.dataset.speciesId);
-  selectedShiny = button.dataset.shiny === 'true';
+  const variant = document.querySelector('#collection-variant').value;
+  selectedShiny = variant === 'shiny' || (variant === 'all' &&
+    ownedVariants.some(({ speciesId, isShiny }) => speciesId === selectedSpeciesId && isShiny) &&
+    !normalVariantOwned(ownedVariants, selectedSpeciesId));
   pokemonData = null;
   loadPokemon();
+  document.querySelector('#selected-pokemon').focus();
+});
+document.querySelector('#detail-variants').addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-variant]');
+  if (!button || selectedSpeciesId === null) return;
+  selectedShiny = button.dataset.variant === 'shiny';
+  spriteFailed = false;
+  render();
+});
+document.querySelector('#open-redemption').addEventListener('click', () => {
+  if (redeemSpecies.disabled || pending || pendingLocalAction || selectedSpeciesId === null || selectedShiny) return;
+  redeemSpecies.value = String(selectedSpeciesId);
+  redeemStatus = '';
+  render();
+  redeemSpecies.focus();
 });
 document.querySelector('#pokemon-sprite').addEventListener('error', () => {
   spriteFailed = true;

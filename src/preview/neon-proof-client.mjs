@@ -4,14 +4,22 @@ import { createClient, defaultDeriveNeonUrls } from '@neon/neon-js';
 export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, { client = createClient(baseUrl), timeoutMs = 15000 } = {}) {
   const authUrl = defaultDeriveNeonUrls(baseUrl).auth.replace(/\/$/, '');
   const apiUrl = functionUrl.replace(/\/$/, '');
-  async function timedJson(url, options) {
+  async function timedJson(url, options, gameRequest = false) {
     const controller = new AbortController();
     let timer;
     try {
       return await Promise.race([
         (async () => {
           const response = await fetchImpl(url, { ...options, signal: controller.signal });
-          if (!response.ok) throw new Error('request_failed');
+          if (!response.ok) {
+            if (gameRequest && response.status === 401) throw new Error('session_changed');
+            if (gameRequest && response.status === 409) {
+              let error;
+              try { ({ error } = await response.json()); } catch { /* A resposta também pode não ser JSON. */ }
+              if (error === 'session_changed') throw new Error('session_changed');
+            }
+            throw new Error('request_failed');
+          }
           return response.json();
         })(),
         new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('request_timeout')); }, timeoutMs); }),
@@ -49,7 +57,7 @@ export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, {
     return timedJson(`${apiUrl}/${route}`, { method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body,
-    });
+    }, true);
   }
   const inventoryAction = (userId, isCurrent, operationId, action, args) =>
     request('inventory/action', userId, isCurrent, operationId, { action, args });
