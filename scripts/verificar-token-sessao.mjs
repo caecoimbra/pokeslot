@@ -52,12 +52,15 @@ try {
   const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8'));
   if (!Number.isFinite(claims.exp)) throw new Error('prazo do token indisponível');
   console.log(`JWT contém identificador de sessão: ${typeof claims.sid === 'string' ? 'sim' : 'não'}.`);
-  const readState = () => fetch(`${functionUrl}/state`, {
-    method: 'POST', headers: { ...jsonHeaders, Authorization: `Bearer ${token}` },
+  const readState = credential => fetch(`${functionUrl}/state`, {
+    method: 'POST', headers: { ...jsonHeaders, Authorization: `Bearer ${token}`,
+      ...(credential ? { 'X-Session-Token': credential } : {}) },
     body: JSON.stringify({ expectedUserId: session.user.id }),
   });
-  const before = await readState();
+  const before = await readState(sessionToken);
   if (!before.ok) throw new Error(`consulta inicial HTTP ${before.status}`);
+  if ((await readState()).status !== 401) throw new Error('JWT sem sessão não foi recusado');
+  if ((await readState('invalid-session-test')).status !== 401) throw new Error('sessão incorreta não foi recusada');
   const logout = await fetch(`${authUrl}/sign-out`, { method: 'POST', headers: { ...jsonHeaders, Cookie: cookie }, body: '{}' });
   if (!logout.ok) throw new Error(`saída HTTP ${logout.status}`);
   const afterSession = await fetch(`${authUrl}/get-session`, { headers: sessionHeaders });
@@ -71,12 +74,11 @@ try {
   } else {
     console.log('Consulta por token de sessão: não confirmada nesse serviço.');
   }
-  const replay = await readState();
+  const replay = await readState(sessionToken);
   if (Date.now() / 1000 >= claims.exp) throw new Error('token expirou durante a prova');
   console.log(`Sessão encerrada confirmada. Reutilização do token: HTTP ${replay.status}.`);
-  if (replay.status === 200) console.log('A função aceitou o token depois do encerramento da sessão.');
-  else if (replay.status === 401) console.log('A função recusou o token depois do encerramento da sessão.');
-  else { console.log('Resultado inconclusivo.'); process.exitCode = 1; }
+  if (replay.status === 401) console.log('A função recusou o token depois do encerramento da sessão.');
+  else { console.log('A função não recusou a sessão encerrada.'); process.exitCode = 1; }
 } catch (error) {
   console.error(`Prova inconclusiva: ${error.message}`);
   process.exitCode = 1;

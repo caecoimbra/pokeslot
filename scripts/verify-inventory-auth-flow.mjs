@@ -48,16 +48,19 @@ async function sessionFrom(response) {
   const sessionResponse = await fetch(`${authUrl}/get-session`, { headers: { Origin: origin, Cookie: cookies } });
   if (!sessionResponse.ok) throw new Error(`session_${sessionResponse.status}`);
   const session = await sessionResponse.json();
-  if (!session.user?.id) throw new Error('session_incomplete');
+  if (!session.user?.id || !session.session?.token) throw new Error('session_incomplete');
   const tokenResponse = await fetch(`${authUrl}/token`, { headers: { Origin: origin, Cookie: cookies } });
   if (!tokenResponse.ok) throw new Error(`token_${tokenResponse.status}`);
   const access = await tokenResponse.json();
   if (typeof access.token !== 'string') throw new Error('token_missing');
-  return { userId: session.user.id, token: access.token };
+  return { userId: session.user.id, token: access.token, sessionToken: session.session.token };
 }
 async function request(user, path, body) {
   const headers = { 'Content-Type': 'application/json', Origin: origin };
-  if (user) headers.Authorization = `Bearer ${user.token}`;
+  if (user) {
+    headers.Authorization = `Bearer ${user.token}`;
+    headers['X-Session-Token'] = user.sessionToken;
+  }
   const response = await fetch(`${functionUrl}/${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
   let payload;
   try { payload = await response.json(); } catch { payload = {}; }

@@ -21,10 +21,20 @@ async function token(subject) {
     .setAudience('https://auth.example.test').setSubject(subject).setExpirationTime('5m').sign(privateKey);
 }
 function request(path, bearer, body) {
-  return app.request(path, { method: 'POST', headers: { ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  return app.request(path, { method: 'POST', headers: { ...(bearer ? { Authorization: `Bearer ${bearer}`, 'X-Session-Token': 'test-session' } : {}), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 }
 test('nega estado e rodada sem sessão antes de consultar banco', async () => {
   for (const path of ['/state', '/spin', '/inventory/action']) assert.equal((await request(path, null, {})).status, 401);
+  assert.equal(databaseCalls, 0);
+});
+test('nega JWT sem credencial de sessão antes de consultar banco', async () => {
+  const bearer = await token('A');
+  const response = await app.request('/state', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ expectedUserId: 'A' }),
+  });
+  assert.equal(response.status, 401);
   assert.equal(databaseCalls, 0);
 });
 test('não usa uma identidade diferente da sessão validada', async () => {

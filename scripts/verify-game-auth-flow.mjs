@@ -27,10 +27,10 @@ async function createUser() {
   if (!tokenResponse.ok) throw new Error(`token_${tokenResponse.status}`);
   const access = await tokenResponse.json();
   if (typeof access.token !== 'string') throw new Error('token_missing');
-  return { userId: session.user.id, token: access.token };
+  return { userId: session.user.id, token: access.token, sessionToken: session.session.token };
 }
 async function request(user, path, body) {
-  const response = await fetch(`${functionUrl}/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user.token}`, Origin: origin }, body: JSON.stringify(body) });
+  const response = await fetch(`${functionUrl}/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user.token}`, 'X-Session-Token': user.sessionToken, Origin: origin }, body: JSON.stringify(body) });
   let payload;
   try { payload = await response.json(); } catch { payload = {}; }
   return { status: response.status, payload };
@@ -43,6 +43,8 @@ try {
   console.log(`Estado inicial: HTTP ${initialA.status} e ${initialB.status}.`);
   assert.equal(initialA.status, 200);
   assert.equal(initialB.status, 200);
+  const mixedSession = await request({ ...a, sessionToken: b.sessionToken }, 'state', { expectedUserId: a.userId });
+  assert.equal(mixedSession.status, 401, 'sessão de outra conta deve ser recusada');
   assert.equal(initialA.payload.balance, 20);
   assert.equal(initialB.payload.balance, 20);
   const mismatch = await request(b, 'state', { expectedUserId: a.userId });

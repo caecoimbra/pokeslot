@@ -26,36 +26,39 @@ export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, {
       ]);
     } finally { clearTimeout(timer); }
   }
-  async function user() {
-    let timer;
-    let result;
+  async function session() {
     try {
-      result = await Promise.race([
-        client.auth.getSession(),
-        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('session_timeout')), timeoutMs); }),
-      ]);
-    } finally { clearTimeout(timer); }
-    if (result.error) throw new Error('session_unavailable');
-    return result.data?.user ?? null;
+      return await timedJson(`${authUrl}/get-session`, { credentials: 'include' });
+    } catch (error) {
+      if (error?.message === 'session_changed') throw error;
+      if (error?.message === 'request_timeout') throw new Error('session_timeout');
+      throw new Error('session_unavailable');
+    }
   }
+  async function user() { return (await session())?.user ?? null; }
   async function ensureSession(userId, isCurrent) {
     if (!isCurrent()) throw new Error('session_changed');
-    const initial = await user();
-    if (!isCurrent() || initial?.id !== userId) throw new Error('session_changed');
+    const initial = await session();
+    const sessionToken = initial?.session?.token;
+    if (!isCurrent() || initial?.user?.id !== userId || typeof sessionToken !== 'string' || !sessionToken) {
+      throw new Error('session_changed');
+    }
     const { token } = await timedJson(`${authUrl}/token`, { credentials: 'include' });
-    if (!isCurrent() || typeof token !== 'string') throw new Error('session_changed');
-    const confirmed = await user();
-    if (!isCurrent() || confirmed?.id !== userId) throw new Error('session_changed');
-    return token;
+    if (!isCurrent() || typeof token !== 'string' || !token) throw new Error('session_changed');
+    const confirmed = await session();
+    if (!isCurrent() || confirmed?.user?.id !== userId || confirmed?.session?.token !== sessionToken) {
+      throw new Error('session_changed');
+    }
+    return { token, sessionToken };
   }
   async function request(route, userId, isCurrent, operationId, payload = {}) {
     // Congele a intenção antes das verificações assíncronas de sessão.
     // Identidade e ID não podem ser sobrescritos por parâmetros adicionais.
     const body = JSON.stringify({ ...payload, expectedUserId: userId, ...(operationId ? { operationId } : {}) });
-    const token = await ensureSession(userId, isCurrent);
+    const { token, sessionToken } = await ensureSession(userId, isCurrent);
     if (!isCurrent()) throw new Error('session_changed');
     return timedJson(`${apiUrl}/${route}`, { method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'X-Session-Token': sessionToken },
       body,
     }, true);
   }
