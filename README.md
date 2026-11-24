@@ -2,6 +2,16 @@
 
 Projeto de aprendizagem para construir uma máquina de três rolos inspirada em jogos de Pokémon. O projeto é pessoal, sem finalidade de venda, e está em desenvolvimento.
 
+## Direção do projeto
+
+**Caetano Coimbra idealiza e dirige o PokéSlot.** Ele definiu a experiência do jogador, as regras de progressão e o escopo de Kanto. Conduz as decisões técnicas e de produto, organiza a implementação em entregas verificáveis e participa dos testes da máquina com contas fictícias.
+
+- **Produto e balanceamento.** Definiu o ciclo de 20 giros iniciais e reposição de 10 a cada 24 horas. Propôs os vales para dar ao jogador mais controle sobre o fim da coleção e orientou a comparação de cenários antes de definir os pesos finais.
+- **Arquitetura e critérios de qualidade.** Escolheu avançar com Neon após a prova de identidade e persistência. Priorizou que o progresso sobreviva à reabertura e que uma operação pendente possa ser retomada com segurança.
+- **Validação prática.** Participou do ensaio com duas contas na mesma máquina, entrando como C e B para verificar a recuperação da coleção e a separação do inventário.
+
+O trabalho usa IA como apoio em pesquisa, implementação, revisão e preparação dos testes, sob a direção de Caetano.
+
 ## Estado atual
 
 O código inclui uma **prova técnica de identidade e saldo** e versões experimentais da máquina e da Pokédex. O jogo completo ainda está em desenvolvimento. As provas usam dados fictícios; o saldo inicial e a reposição definidos para o jogo são aplicados na prévia local e no backend autenticado isolado.
@@ -12,11 +22,11 @@ A prévia local também experimenta cinco tipos de prêmio por linha de vales co
 
 Para o jogo, a regra em desenvolvimento prevê saldo inicial de 20 giros e reposição de 10 a cada período completo de 24 horas, acumulada durante a ausência. A prévia local e a prova autenticada isolada aplicam essa regra com o relógio de seus respectivos servidores. A máquina apresenta o próximo horário e permite atualizar o saldo; o horário apresentado não concede giros por si só.
 
-A primeira versão está planejada com as 151 espécies de Kanto e uma interface bilíngue em português e inglês, com alternância pelo jogador. A prévia local sorteia as espécies com chances iguais apenas para testes; a prova Neon usa uma distribuição provisória e persiste as variantes por conta fictícia. Ambas consultam a PokéAPI para mostrar detalhes, e uma falha nessa consulta não apaga a coleção. A solução autenticada ainda é experimental. Quando um texto não estiver disponível no idioma escolhido, sua origem e tratamento precisarão ser definidos. As chances finais e outras regras de recompensa permanecem em definição.
+A primeira versão está planejada com as 151 espécies de Kanto e uma interface bilíngue em português e inglês, com alternância pelo jogador. A prévia local sorteia as espécies com chances iguais para testes. A prova Neon aplica os parâmetros iniciais aprovados para a 1.0 e persiste as variantes por conta fictícia. Ambas consultam a PokéAPI para mostrar detalhes. A coleção continua disponível se essa consulta falhar. Veja as regras e os cenários comparados no [plano de vales, pedras e evolução](docs/vales-evolucao-integracao.md).
 
 Foram experimentados Neon Auth, PostgreSQL, Neon Data API e uma Neon Function em um branch de teste. A Data API apresentou falha intermitente de contexto de identidade; a causa não foi identificada. A função alternativa passou em cenários pontuais de recuperação de saldo, repetição e concorrência, mas a arquitetura para publicação e os privilégios de acesso ainda precisam de revisão. A comparação prática com Supabase foi interrompida por decisão do autor e não constitui resultado para aquela plataforma.
 
-Uma segunda prova em `proof-identity-safe` integra autenticação, rodada, débito e coleção no PostgreSQL isolado. A função gera a rodada no servidor e registra o resultado junto com o débito; uma operação repetida recupera o mesmo resultado. Ela usa, somente para teste, raridades 70/22/7/1, shiny 0,5%, 2 giros por linha e compensações 1/1/2/3 (dobradas para shiny). A prévia da máquina acessa essa prova em `http://localhost:5173/previa-maquina.html?backend=neon`, com as variáveis públicas de teste configuradas e contas fictícias. Sem o parâmetro, a prévia continua usando o ambiente local. Na prova autenticada, a rodada pode conceder vales, e o jogador pode resgatar Pokémon, trocar vale por pedra e realizar as 16 evoluções clássicas de teste. A prova ainda não está preparada para produção. Não publique o arquivo SQL nem a função como arquitetura definitiva sem revisar privilégios, retenção e recuperação.
+A prova em `proof-identity-safe` integra autenticação, rodada, débito e coleção no PostgreSQL isolado. A função gera a rodada no servidor e registra o resultado junto com o débito. Uma operação repetida recupera o mesmo resultado. A máquina autenticada sorteia três tipos de vale com chances iguais por linha premiada. O jogador pode resgatar Pokémon e trocar o vale pedra por uma das 14 pedras usadas nas 72 evoluções de Kanto. Abra a prova em `http://localhost:5173/previa-maquina.html?backend=neon`, com as variáveis públicas de teste e uma conta fictícia. Sem o parâmetro, a prévia usa o ambiente local. A publicação depende da revisão de privilégios, retenção e recuperação.
 
 ## Organização da prova
 
@@ -36,7 +46,3 @@ Para experimentar a rodada demonstrativa, abra `http://localhost:5173/previa-maq
 Os fluxos conectados também exigem infraestrutura Neon configurada. Copie `.env.example` para `.env.local` e informe os endereços públicos apropriados para cada branch. Variáveis `VITE_` são expostas ao navegador: nunca coloque senhas, tokens, chaves ou strings de conexão nelas. Os scripts SQL devem ser revisados antes de qualquer execução; não são migrações prontas para produção.
 
 As verificações locais existentes podem ser executadas com `node --test test/*.test.mjs`. Elas não substituem testes integrados de contas, rede, autorização e segurança.
-
-## Aprendizagem e participação
-
-O autor definiu a visão do projeto e a regra de ciclos, participou das decisões, orientou a diretriz de testes, escrita e revisão do código e operou contas fictícias durante as provas. A IA auxiliou na pesquisa, escrita e revisão de código, preparação de testes e documentação.
