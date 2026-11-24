@@ -4,10 +4,10 @@ Atualizado em 23/11/2026. Esta etapa prepara um fluxo que uma pessoa possa exper
 
 ## Escopo acordado
 
-- A 1.0 terá vale Pokémon, vale pedra e vale de giros. Vale de tipo e amuleto shiny ficam para depois. As cinco opções equiprováveis permanecem como cenário da prévia anterior para estudos. As chances entre os três tipos da 1.0 continuam abertas.
-- O vale Pokémon registra a variante normal escolhida. Possuir apenas a shiny permite a troca. O custo de 1 a 4 usa os grupos provisórios de raridade. O vale de giros continua com a referência de 2 giros para testes.
-- O jogador escolhe a pedra ao trocar o vale pedra. O primeiro protótipo de evolução cobre as 16 compatibilidades clássicas já mapeadas. Cada evolução bem-sucedida consome uma pedra, mantém a origem disponível e registra a variante correspondente no destino. Se essa variante já estiver registrada, a pedra é preservada. O Eevee pode evoluir por mais de uma ramificação.
-- As 56 adaptações propostas pelo tipo principal da origem ficam para revisão depois da fatia clássica. O catálogo e os valores finais serão fechados com os resultados do balanceamento.
+- A 1.0 começa com vale Pokémon, vale pedra e vale de giros, cada um com a mesma chance por linha vencedora de vale. Vale de tipo e amuleto shiny ficam para depois. A prévia local preserva o cenário anterior de cinco tipos e o histórico autenticado pode conter itens daquela fase.
+- O vale Pokémon registra a variante normal escolhida. Possuir apenas a shiny permite a troca. Os custos são 1/2/3/4 vales para comum, incomum, raro e lendário. O vale de giros credita 2 giros no ato.
+- O jogador escolhe a pedra ao trocar o vale pedra. Cada evolução bem-sucedida consome uma pedra, mantém a origem disponível e registra a variante correspondente no destino. Se essa variante já estiver registrada, a pedra é preservada. O Eevee pode evoluir por mais de uma ramificação.
+- Caetano aprovou as 56 adaptações pelo tipo principal da forma padrão de origem, somadas às 16 clássicas. Cada vínculo usa uma pedra, inclusive Dragonair → Dragonite com Pedra de Dragão.
 
 ## Como as três entregas se encaixam
 
@@ -32,4 +32,10 @@ SQLite e PostgreSQL continuam responsáveis por suas próprias transações. Com
 
 Para revisão de cada mudança, usar os testes do domínio e da persistência e uma verificação manual da ação apresentada. Separar o que foi observado em ambiente isolado, simulado e pendente. Mudanças de comportamento e correções independentes devem ter commits identificáveis. A IA apoiou a revisão e a implementação. Caetano definiu escopo e regras. Uma prática para a próxima etapa é acompanhar o caminho vale → estoque → registro de operação e explicar por que uma segunda tentativa devolve o resultado anterior.
 
-As partes 4, 5 e 6 do plano geral seguem após este bloco: balanceamento final, experiência completa e preparação da publicação. O trabalho local reutiliza dependências instaladas e o ambiente isolado existente. Reavaliar as condições gratuitas antes de novas alterações no serviço.
+## Economia inicial da 1.0
+
+Caetano aprovou 70% / 22% / 7% / 1% por captura para os tiers de 50 / 61 / 34 / 6 espécies. Shiny tem 0,5% por captura, independentemente da raridade. A tabela C paga 2 giros por linha de giro e compensa repetidos com 1/1/2/3 giros por raridade, dobrados para repetidos shiny. O saldo inicial é de 20 giros e a reposição é de 10 a cada 24 horas.
+
+O [simulador de progressão](../scripts/simular-progressao-v1.mjs) usa 1.500 trajetórias por cenário, semente fixa, saldo acumulado e estratégias de troca voltadas a espécies inéditas. Com três vales iguais e 72 receitas, a mediana para 75, 145 e 151 espécies foi de 9, 44 e 61 dias ao simular até 25 rodadas por dia. O percentil 90 para 151 foi de 77 dias. Com até 15 rodadas por dia, mediana e percentil 90 foram de 100 e 126 dias. Esses ritmos representam hábitos simulados. As regras permitem gastar o saldo disponível.
+
+O roteiro restante está no [plano da 1.0](roteiro-1.0.md). As probabilidades começam com esses valores e podem ser revistas após testes de jogo.
