@@ -10,7 +10,7 @@ body { margin: 0; background: radial-gradient(circle at top, #283657, #101829 65
 .intro { margin: 50px 0 26px; }
 .eyebrow { text-transform: uppercase; color: #ffca61; font-size: .75rem; font-weight: 800; letter-spacing: .16em; }
 h1 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; margin: 10px 0; }
-.intro > p:last-child, .caption, .footnote { color: #c0cce1; line-height: 1.6; }
+.intro > p:last-child, .footnote { color: #c0cce1; line-height: 1.6; }
 .proof-auth { margin: 20px 0; padding: 18px; border: 1px solid #7180a0; border-radius: 12px; background: #1d2d4a; }
 .proof-auth[hidden], .proof-auth [hidden] { display: none; }
 .proof-auth label { display: block; margin: 10px 0; }
@@ -18,20 +18,7 @@ h1 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; margin: 10px 0; }
 .proof-auth button { padding: 8px 14px; font: inherit; cursor: pointer; }
 .proof-auth a { display: inline-block; margin: 8px 4px; color: #ffdf91; }
 .machine { background: #243657; border: 2px solid #d89441; border-radius: 20px; padding: clamp(18px, 5vw, 32px); box-shadow: 0 14px 0 #a95c35, 0 22px 38px #080e1c88; }
-.machine-header { display: flex; justify-content: space-between; color: #ffdf91; font-size: .72rem; letter-spacing: .13em; font-weight: 800; }
-.light { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #71e7b5; margin-right: 8px; }
 h2 { font-size: 1.05rem; margin: 24px 0 14px; }
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 9px; background: #101a31; border-radius: 12px; }
-.cell { min-height: 105px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: #edf0ed; color: #26324a; border: 3px solid transparent; border-radius: 8px; font-size: .78rem; font-weight: 700; }
-.cell.winning { border-color: #ffc253; background: #fff8db; }
-.grid.spinning .cell.winning { border-color: transparent; background: #edf0ed; }
-.grid.spinning .symbol { animation: reel-motion .42s ease-in-out infinite alternate; }
-.grid.spinning .cell:nth-child(3n + 2) .symbol { animation-delay: -.14s; }
-.grid.spinning .cell:nth-child(3n) .symbol { animation-delay: -.28s; }
-@keyframes reel-motion { from { transform: translateY(-12px); opacity: .5; } to { transform: translateY(12px); opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .grid.spinning .symbol { animation: none; } }
-.symbol { font-size: clamp(2rem, 8vw, 3rem); line-height: 1; }
-.pokeball .symbol { color: #de5553; } .spin .symbol { color: #3869b7; } .voucher .symbol { color: #d59326; }
 .results { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
 .results[hidden], .reward-preview[hidden] { display: none; }
 .results > span { color: #ffdf91; letter-spacing: .1em; font-size: .68rem; font-weight: 800; }
@@ -46,7 +33,6 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .spin-button:disabled { cursor: wait; opacity: .65; }
 .spin-button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
 .status { min-height: 1.5em; margin: 10px 0 0; color: #ffe3a1; font-size: .9rem; }
-.caption { margin-bottom: 0; font-size: .85rem; }
 .pokedex { margin-top: 42px; padding: clamp(18px, 5vw, 28px); border: 1px solid #536683; border-radius: 16px; background: #1d2d4a; }
 .pokedex h2 { font-size: 1.35rem; margin: 8px 0; }
 .pokedex h3 { color: #ffdf91; font-size: .85rem; margin: 20px 0 8px; }
@@ -90,4 +76,4 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .retry-detail { color: #182641; background: #ffca61; border: 0; border-radius: 8px; padding: 9px 14px; font: inherit; font-weight: 700; cursor: pointer; }
 .retry-detail:focus-visible { outline: 3px solid white; outline-offset: 3px; }
 .footnote { margin-top: 35px; font-size: .85rem; }
-@media (max-width: 420px) { .cell { min-height: 78px; font-size: .67rem; } .intro { margin-top: 36px; } }
+@media (max-width: 420px) { .intro { margin-top: 36px; } }

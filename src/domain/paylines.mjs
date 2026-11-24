@@ -2,7 +2,7 @@ import { REEL } from './reels.mjs';
 import { matchingSymbol } from './round-result.mjs';
 
 // Cada entrada contém a linha da grade usada em cada um dos três rolos.
-const PAYLINES = [
+export const PAYLINES = [
   { line: 'top', rows: [0, 0, 0] },
   { line: 'middle', rows: [1, 1, 1] },
   { line: 'bottom', rows: [2, 2, 2] },

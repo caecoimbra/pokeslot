@@ -1,0 +1,120 @@
+.arcade {
+  isolation: isolate;
+}
+
+.arcade-scenery {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 85% 36%, #66465a63, transparent 27%),
+    linear-gradient(to bottom, #101625 0%, #1b2138 33%, #33304c 58%, #55445a 70%, #252f42 83%, #102327 100%);
+}
+
+.arcade-scenery::before,
+.arcade-scenery::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* O céu usa pontos em posições distintas para não formar um padrão de grade. */
+.arcade-scenery::before {
+  width: 2px;
+  height: 2px;
+  background: transparent;
+  box-shadow:
+    3vw 8vh #b1c6ce, 9vw 18vh #8591ad, 16vw 5vh #69798d,
+    22vw 24vh #b9aaaa, 27vw 13vh #7f9ca7, 38vw 3vh #8095a6,
+    47vw 12vh #899aa6, 54vw 7vh #c4c3b6, 59vw 28vh #9a93a8,
+    65vw 3vh #aeabb2, 73vw 19vh #8f9da5, 79vw 8vh #d5c4ac,
+    92vw 15vh #a5b2b9, 97vw 6vh #8598ab, 2vw 44vh #96a0a6,
+    14vw 39vh #a29bab, 26vw 47vh #8b8fa3, 33vw 30vh #9393a5,
+    42vw 41vh #abb4ac, 58vw 47vh #a09bad, 69vw 36vh #9794a7,
+    80vw 51vh #aba3ad, 94vw 45vh #7e8a99, 98vw 32vh #d6bcaf;
+}
+
+.arcade-scenery::after {
+  width: 100%;
+  height: 62%;
+  background:
+    linear-gradient(#cbd7cc, #cbd7cc) 7% 40% / 6px 2px,
+    linear-gradient(#cbd7cc, #cbd7cc) 7% 40% / 2px 6px,
+    linear-gradient(#c7adb1, #c7adb1) 95% 31% / 5px 2px,
+    linear-gradient(#c7adb1, #c7adb1) 95% 31% / 2px 5px;
+  background-repeat: no-repeat;
+}
+
+.arcade-moon {
+  position: absolute;
+  right: clamp(20px, 6vw, 138px);
+  top: 20%;
+  width: clamp(44px, 5.6vw, 88px);
+  aspect-ratio: 1;
+  background:
+    linear-gradient(90deg, #e0a091, #e0a091) 32% 36% / 13% 6% no-repeat,
+    linear-gradient(90deg, #efb3a0, #efb3a0) 24% 42% / 18% 8% no-repeat,
+    linear-gradient(90deg, #d6938e, #d6938e) 77% 70% / 17% 7% no-repeat,
+    linear-gradient(to bottom, #f5d5b3 0 52%, #edb8a0 52% 76%, #dda096 76%);
+  clip-path: polygon(30% 0, 70% 0, 70% 6%, 81% 6%, 81% 13%, 88% 13%, 88% 20%, 94% 20%, 94% 32%, 100% 32%, 100% 68%, 94% 68%, 94% 80%, 87% 80%, 87% 87%, 80% 87%, 80% 94%, 68% 94%, 68% 100%, 32% 100%, 32% 94%, 20% 94%, 20% 87%, 13% 87%, 13% 80%, 6% 80%, 6% 68%, 0 68%, 0 32%, 6% 32%, 6% 20%, 13% 20%, 13% 13%, 20% 13%, 20% 6%, 30% 6%);
+}
+
+.arcade-ridge,
+.arcade-woods {
+  position: absolute;
+  inset: auto 0 0;
+}
+
+.arcade-ridge {
+  height: 53%;
+  background: linear-gradient(#61506a, #393950 36%, #20303c 75%);
+  clip-path: polygon(0 29%, 4% 29%, 9% 17%, 10% 17%, 14% 8%, 16% 8%, 22% 23%, 25% 22%, 33% 44%, 37% 40%, 44% 54%, 50% 48%, 52% 48%, 59% 26%, 63% 33%, 70% 18%, 72% 18%, 78% 35%, 82% 26%, 85% 28%, 94% 5%, 96% 5%, 100% 16%, 100% 100%, 0 100%);
+}
+
+.arcade-ridge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #30354b;
+  clip-path: polygon(0 44%, 6% 36%, 10% 39%, 16% 8%, 15% 22%, 13% 30%, 20% 27%, 28% 47%, 36% 49%, 50% 64%, 59% 26%, 56% 49%, 72% 18%, 68% 42%, 77% 44%, 85% 40%, 96% 5%, 93% 25%, 96% 22%, 100% 31%, 100% 100%, 0 100%);
+}
+
+.arcade-woods {
+  height: 33%;
+  background: linear-gradient(to bottom, #233f49, #152e35 55%, #101f27);
+  clip-path: polygon(0 10%, 7% 20%, 15% 18%, 25% 31%, 34% 27%, 43% 41%, 56% 36%, 63% 27%, 76% 34%, 88% 16%, 94% 17%, 100% 8%, 100% 100%, 0 100%);
+}
+
+/* Fileiras de copas construídas em degraus. O segundo plano usa outra escala. */
+.arcade-woods::before,
+.arcade-woods::after {
+  content: "";
+  position: absolute;
+  inset: 42% 0 0;
+  background: #142e33;
+  mask:
+    linear-gradient(90deg, transparent 46%, black 46% 54%, transparent 54%) 0 0 / 38px 5px repeat-x,
+    linear-gradient(90deg, transparent 36%, black 36% 64%, transparent 64%) 0 5px / 38px 6px repeat-x,
+    linear-gradient(90deg, transparent 26%, black 26% 74%, transparent 74%) 0 11px / 38px 7px repeat-x,
+    linear-gradient(90deg, transparent 15%, black 15% 85%, transparent 85%) 0 18px / 38px 7px repeat-x,
+    linear-gradient(black, black) 0 25px / 100% 100% no-repeat;
+}
+
+.arcade-woods::after {
+  top: 71%;
+  left: -13px;
+  background: #0d2228;
+  transform: scale(1.35);
+  transform-origin: bottom;
+}
+
+@media (max-width: 600px) {
+  .arcade-moon { top: 12%; right: 12px; }
+}
+
+@media (forced-colors: active) {
+  .arcade-scenery { display: none; }
+}

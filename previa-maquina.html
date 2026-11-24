@@ -6,13 +6,22 @@
     <meta name="theme-color" content="#17233d" />
     <title>PokéSlot — prévia da máquina</title>
     <link rel="stylesheet" href="/src/preview/style.css" />
+    <link rel="stylesheet" href="/src/preview/arcade.css" />
+    <link rel="stylesheet" href="/src/preview/arcade-scenery.css" />
   </head>
-  <body>
+  <body class="arcade">
+    <div class="arcade-scenery" aria-hidden="true"><i class="arcade-moon"></i><i class="arcade-ridge"></i><i class="arcade-woods"></i></div>
     <main class="shell">
       <header class="topbar">
-        <span class="brand">POKÉ<span>SLOT</span></span>
+        <span class="brand"><i aria-hidden="true"></i>POKÉ<span>SLOT</span></span>
         <button id="language" class="language" type="button" aria-label="Switch to English">EN</button>
       </header>
+      <nav class="arcade-nav" aria-label="Áreas do jogo">
+        <a href="#maquina" data-screen-link="machine" aria-current="page"><span class="nav-icon" aria-hidden="true">▥</span><span data-text="navMachine">Máquina</span></a>
+        <a href="#pokedex" data-screen-link="pokedex"><span class="nav-icon" aria-hidden="true">▤</span><span data-text="navPokedex">Pokédex</span></a>
+        <a href="#vales" data-screen-link="vouchers"><span class="nav-icon" aria-hidden="true">★</span><span data-text="navVouchers">Vales</span></a>
+        <a href="#pedras" data-screen-link="stones"><span class="nav-icon" aria-hidden="true">◆</span><span data-text="navStones">Pedras</span></a>
+      </nav>
       <section class="intro">
         <p class="eyebrow" data-text="eyebrow"></p>
         <h1 data-text="title"></h1>
@@ -38,13 +47,25 @@
         <p id="proof-user"></p><button id="proof-logout" type="button" data-text="logoutButton" hidden></button>
         <p id="proof-auth-status" role="status"></p>
       </section>
-      <section class="machine" aria-labelledby="machine-title">
-        <div class="machine-header">
-          <div><span class="light"></span><span data-text="machineLabel"></span></div>
-          <span>03 × 03</span>
+      <section class="machine" data-screen="machine" aria-labelledby="machine-title">
+        <div class="cabinet">
+          <div class="marquee"><i aria-hidden="true"></i><h2 id="machine-title" data-text="machineTitle" tabindex="-1"></h2><i aria-hidden="true"></i></div>
+          <div class="grid" id="grid" role="group"></div>
+          <div class="control-deck">
+            <div class="credit-meter"><span data-text="credits"></span><strong id="demo-balance" role="status"></strong></div>
+            <button id="spin" class="spin-button" type="button" data-text="spinButton"></button>
+          </div>
+          <p id="status" class="status" role="status"></p>
         </div>
-        <h2 id="machine-title" data-text="machineTitle"></h2>
-        <div class="grid" id="grid" role="group"></div>
+        <aside class="console-side">
+        <section class="paytable"><h3 data-text="paytable"></h3>
+          <dl>
+            <div><dt><i class="reel-icon icon-pokeball" aria-hidden="true"><i class="icon-center"></i></i><span data-text="ballLine"></span></dt><dd data-text="ballPrize"></dd></div>
+            <div><dt><i class="reel-icon icon-spin" aria-hidden="true"><i class="icon-center"></i></i><span data-text="spinLine"></span></dt><dd data-text="spinPrize"></dd></div>
+            <div><dt><i class="reel-icon icon-voucher" aria-hidden="true"><i class="icon-center"></i></i><span data-text="ticketLine"></span></dt><dd data-text="ticketPrize"></dd></div>
+          </dl>
+        </section>
+        <div class="round-readout">
         <div class="results" aria-live="polite">
           <span data-text="results"></span>
           <strong id="lines"></strong>
@@ -54,16 +75,14 @@
           <ul id="rewards"></ul>
           <p id="no-rewards"></p>
         </div>
-        <p id="demo-balance" class="status" role="status"></p>
+        <p id="proof-rewards" class="status"></p>
+        </div>
         <p id="next-refill" class="status"></p>
         <button id="refresh-balance" type="button" data-text="refreshBalance"></button>
-        <p id="proof-rewards" class="status"></p>
-        <button id="spin" class="spin-button" type="button" data-text="spinButton"></button>
-        <p id="status" class="status" role="status"></p>
-        <p class="caption" data-text="caption"></p>
+        </aside>
       </section>
-      <section id="demo-vouchers" class="pokedex" hidden>
-        <h2 data-text="vouchersTitle"></h2>
+      <section id="demo-vouchers" class="pokedex" data-screen="vouchers" aria-labelledby="voucher-title" hidden>
+        <h2 id="voucher-title" data-text="vouchersTitle" tabindex="-1"></h2>
         <p class="pokedex-note" data-text="vouchersNote"></p>
         <h3 data-text="voucherRoundTitle"></h3>
         <ul id="voucher-results"></ul><p id="voucher-results-empty"></p>
@@ -80,8 +99,8 @@
           <p id="redeem-status" role="status"></p>
         </form>
       </section>
-      <section id="demo-stones" class="pokedex" aria-labelledby="stone-title" hidden>
-        <h2 id="stone-title"></h2>
+      <section id="demo-stones" class="pokedex" data-screen="stones" aria-labelledby="stone-title" hidden>
+        <h2 id="stone-title" tabindex="-1"></h2>
         <p id="stone-note" class="pokedex-note"></p>
         <p id="stone-stock"></p>
         <ul id="stone-inventory"></ul>
@@ -100,9 +119,9 @@
         </form>
         <p id="stone-action-status" role="status"></p>
       </section>
-      <section id="kanto-pokedex" class="pokedex" aria-labelledby="pokedex-title" hidden>
+      <section id="kanto-pokedex" class="pokedex" data-screen="pokedex" aria-labelledby="pokedex-title" hidden>
         <p class="eyebrow" data-text="pokedexEyebrow"></p>
-        <h2 id="pokedex-title" data-text="pokedexTitle"></h2>
+        <h2 id="pokedex-title" data-text="pokedexTitle" tabindex="-1"></h2>
         <p class="pokedex-note" data-text="pokedexNote"></p>
         <div class="collection-progress">
           <label for="kanto-progress" id="progress-label"></label>

@@ -1,0 +1,97 @@
+#grid.arcade-reels {
+  --row-height: clamp(62px, 11vw, 94px);
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 24px;
+  gap: 2px;
+  padding: 7px 0;
+  border: 1px solid #18211f;
+  border-radius: 12px;
+  background: linear-gradient(110deg, #344540, #172926 52%, #344540);
+  box-shadow: inset 0 2px 2px #72867a, 0 3px 0 #0c1c1a;
+}
+.reel-windows {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #28372f;
+}
+.reel-window {
+  position: relative;
+  overflow: hidden;
+  height: calc(3 * var(--row-height));
+  background: linear-gradient(90deg, #c8cdb9, #f4f1d9 8%, #fffbe7 52%, #e4e5cb 92%, #bbc3aa);
+}
+.reel-window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, #3443368a, transparent 19%, transparent 80%, #34433691);
+}
+.reel-tile {
+  height: var(--row-height);
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 -1px 0 #283f3b16;
+}
+.arcade-reels.is-spinning:not(.is-stopping) .reel-track {
+  animation: arcade-roll var(--speed) linear infinite;
+  will-change: transform;
+}
+@keyframes arcade-roll { from { transform: translateY(-50%); } to { transform: translateY(0); } }
+.reel-icon {
+  --size: clamp(35px, 6.9vw, 57px);
+  width: var(--size);
+  height: var(--size);
+  position: relative;
+  box-sizing: border-box;
+  filter: drop-shadow(0 3px 0 #303b303c);
+}
+.icon-pokeball {
+  border: 3px solid #20372f;
+  border-radius: 50%;
+  background: linear-gradient(158deg, #ffb38a 0 17%, #f06f51 18% 43%, #233d33 44% 52%, #fffcdb 53% 76%, #c0c9ad 77%);
+}
+.icon-pokeball .icon-center {
+  position: absolute; inset: 32%; border: 3px solid #293b30; border-radius: 50%;
+  background: #f4eed6; box-shadow: inset 0 -2px 0 #aeb9a6;
+}
+.icon-spin {
+  display: grid; place-items: center;
+  background: #107677; border: 3px solid #235153; border-radius: 30%; transform: rotate(-13deg);
+  box-shadow: inset 0 -4px 0 #11585d, inset 0 3px 0 #86e3ca;
+}
+.icon-spin .icon-center {
+  width: 61%; height: 76%; background: #eaffcd;
+  clip-path: polygon(51% 2%, 91% 2%, 67% 40%, 96% 40%, 23% 98%, 39% 56%, 9% 56%);
+}
+.icon-voucher {
+  width: calc(var(--size) * 1.12); height: calc(var(--size) * .76);
+  display: grid; place-items: center; transform: rotate(-16deg);
+  border: 3px solid #6c4c22; border-radius: 6px;
+  background: linear-gradient(160deg, #ffe7a5, #f2b851 75%);
+  box-shadow: inset 0 0 0 2px #ffedac, inset 0 -6px 0 #cd882d;
+}
+.icon-voucher::before {
+  content: ''; position: absolute; right: 19%; top: 8%; bottom: 8%; border-left: 2px dashed #8c642e;
+}
+.icon-voucher .icon-center {
+  width: 36%; aspect-ratio: 1; background: #835321; margin-right: 14%;
+  clip-path: polygon(50% 0, 61% 35%, 100% 50%, 61% 65%, 50% 100%, 37% 65%, 0 50%, 37% 35%);
+}
+.reel-rail { position: relative; }
+.lane-arrow {
+  position: absolute; transform: translateY(-50%); left: 0; right: 0;
+  color: #c7cfbd; font: 800 14px/1 system-ui, sans-serif; text-align: center;
+}
+.lane-arrow[data-lane=diagonal_down], .lane-arrow[data-lane=diagonal_up] { margin-top: 15px; color: #9ad5c6; }
+.lane-arrow.lane-won { color: #ffdf87; text-shadow: 0 0 6px #ffc559; }
+.reel-paylines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.reel-paylines polyline { fill: none; stroke: #b77718; stroke-width: 2; stroke-dasharray: 5 5; opacity: 0; }
+.reel-paylines .lane-won { opacity: .9; filter: drop-shadow(0 1px 0 #fff2c7); }
+@media (prefers-reduced-motion: reduce) {
+  .arcade-reels.is-spinning:not(.is-stopping) .reel-track { animation: none; }
+}
