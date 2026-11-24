@@ -26,6 +26,6 @@ export function filterKantoCatalog(catalog, query, variant, registration, labelF
     if (registration === 'owned' && !owned || registration === 'missing' && owned) return false;
     if (!search) return true;
     if (number !== null) return entry.speciesId === number;
-    return normalizeName(labelFor(entry.speciesId) ?? '').includes(name);
+    return (entry.normal || entry.shiny) && normalizeName(labelFor(entry.speciesId) ?? '').includes(name);
   });
 }

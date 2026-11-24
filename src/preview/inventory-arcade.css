@@ -1,0 +1,118 @@
+.inventory-console {
+  --metal: #3c8081;
+  --panel: #132f3a;
+  border: 2px solid #102a32;
+  border-radius: 20px;
+  background: #1c414a;
+  box-shadow: inset 0 0 0 1px #547c7a, 0 6px #0a1c26;
+  overflow: hidden;
+}
+.inventory-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(18px, 3.2vw, 38px);
+  border-bottom: 3px solid #0b2931;
+  box-shadow: inset 0 2px #76b3a6;
+  background: repeating-linear-gradient(0deg, transparent 0 4px, #092d3b19 4px 5px), linear-gradient(110deg, #153b45, #245b60 75%, #4c8f82);
+}
+.inventory-header h1 {
+  margin: 0 0 .25em;
+  color: #ffe7a8;
+  text-shadow: 2px 3px #153541;
+  font: italic 950 clamp(1.8rem, 4vw, 3.1rem)/1.06 system-ui, sans-serif;
+  letter-spacing: -.055em;
+}
+.inventory-header p { max-width: 58ch; margin: 0; color: #e2f3e2; line-height: 1.5; }
+.ticket-fan, .crystal-cluster { position: relative; width: 112px; height: 84px; flex: none; }
+.ticket-fan i {
+  --ticket-color: #ffc870;
+  position: absolute; width: 85px; height: 43px; right: 3px; top: 25px;
+  background: radial-gradient(circle at 0 50%, #224a51 0 5px, transparent 5.5px), radial-gradient(circle at 100% 50%, #224a51 0 5px, transparent 5.5px), var(--ticket-color);
+  border-radius: 5px; border: 2px solid #173c45; box-shadow: inset 0 2px #fff7c07a, 0 2px #112f38;
+  transform: rotate(-9deg);
+}
+.ticket-fan i::before { content: ""; position: absolute; inset: 6px 9px 6px 63%; border-left: 2px dashed #4d433f; background: repeating-linear-gradient(90deg, transparent 0 2px, #57483e 2px 3px); }
+.ticket-fan i::after { content: "✦"; position: absolute; inset: 3px 40% 0 0; text-align: center; color: #6c462a; font: 900 26px/1.2 system-ui, sans-serif; }
+.ticket-fan i:first-child { --ticket-color: #8dc4bb; transform: translate(-18px, -15px) rotate(-24deg); }
+.ticket-fan i:nth-child(2) { --ticket-color: #efaa9b; transform: translate(-11px, -8px) rotate(-15deg); }
+.inventory-body { display: grid; gap: 16px; padding: clamp(12px, 2.5vw, 26px); }
+.inventory-body h2 { margin: 0 0 14px; color: var(--paper); font: 800 1.08rem/1.3 system-ui,sans-serif; }
+.inventory-shelf, .inventory-console .inventory-action {
+  min-width: 0; margin: 0; padding: clamp(14px, 2vw, 23px); border: 1px solid #507373; border-radius: 10px;
+  background: var(--panel); box-shadow: inset 0 2px #ffffff0f;
+}
+.voucher-wallet, .stone-tray { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr)); gap: 10px; padding: 0; margin: 0; list-style: none; }
+.inventory-card { position: relative; display: grid; grid-template-columns: 37px minmax(0,1fr) auto; align-items: center; column-gap: 8px; padding: 12px; min-height: 58px; border: 1px solid; border-radius: 6px; }
+.inventory-card strong { font: 800 .94rem/1.25 system-ui,sans-serif; overflow-wrap: anywhere; }
+.inventory-card small { grid-column: 1 / -1; padding-top: 9px; font: 500 .8rem/1.35 system-ui,sans-serif; }
+.inventory-amount { font: 800 1rem/1.3 ui-monospace,monospace; white-space: nowrap; }
+.voucher-wallet .inventory-card {
+  --ticket-color: #f6cd85;
+  color: #2e332e; border-color: var(--ticket-color);
+  background: linear-gradient(110deg, color-mix(in srgb, var(--ticket-color), white 26%), var(--ticket-color));
+  box-shadow: inset 0 0 0 3px #ffffff37, 0 3px #071f29;
+}
+.voucher-wallet .inventory-card:has(.coupon-stone) { --ticket-color: #97d6cb; }
+.voucher-wallet .inventory-card:has(.coupon-spins) { --ticket-color: #bae2a2; }
+.voucher-wallet .inventory-card:has(.coupon-type,.coupon-shiny_charm) { --ticket-color: #c8b1d7; }
+.voucher-wallet .inventory-card::before, .voucher-wallet .inventory-card::after {
+  content: ""; position: absolute; top: 45%; width: 5px; height: 9px; background: var(--panel);
+}
+.voucher-wallet .inventory-card::before { left: -1px; border-radius: 0 8px 8px 0; }
+.voucher-wallet .inventory-card::after { right: -1px; border-radius: 8px 0 0 8px; }
+.voucher-wallet .inventory-amount { padding-left: 8px; border-left: 2px dashed #5264568c; }
+.coupon { width: 32px; height: 32px; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 50%; }
+.coupon::after { content: "✦"; font: 900 21px/1 system-ui,sans-serif; }
+.coupon-pokemon::after { content: ""; width: 15px; height: 15px; border: 2px solid currentColor; border-radius: 50%; background: radial-gradient(circle, var(--ticket-color) 0 14%, currentColor 16% 26%, transparent 28%),linear-gradient(0deg, transparent 42%,currentColor 43% 56%,transparent 57%); }
+.coupon-stone::after { content: "◆"; }
+.coupon-spins::after { content: "ϟ"; }
+.inventory-link { display: inline-block; margin-top: 13px; padding: .3em 0; color: var(--mint); font-weight: 700; text-underline-offset: .21em; }
+.inventory-workbench { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; align-items: start; }
+.voucher-workbench { grid-template-columns: minmax(0,1.45fr) minmax(0,1fr); }
+.inventory-console .inventory-action label { max-width: none; font-weight: 700; font-size: .9rem; }
+.inventory-console .inventory-action select { background: #f7f0d9; color: #20362e; min-width: 0; max-width: 100%; }
+.inventory-action p { color: #d1e1db; }
+.inventory-action p:empty, .voucher-receipt :is(p,ul):empty, #stone-action-status:empty { display: none; }
+.arcade .inventory-console .inventory-action button[type="submit"] { color: #20322e; background: var(--gold); border: 1px solid #6b5636; box-shadow: inset 0 2px #fff2b2, 0 2px #665432; font-weight: 750; }
+.arcade .inventory-console .inventory-action button:disabled { opacity: .6; cursor: not-allowed; }
+.voucher-receipt {
+  position: relative; padding: 18px 19px 23px; margin: 3px 4px 0; color: #264139; background: #f0e7ce;
+  background-image: repeating-linear-gradient(0deg,transparent 0 4px,#584d2410 4px 5px);
+  clip-path: polygon(0 0,100% 0,100% 96%,96% 100%,92% 96%,88% 100%,84% 96%,80% 100%,76% 96%,72% 100%,68% 96%,64% 100%,60% 96%,56% 100%,52% 96%,48% 100%,44% 96%,40% 100%,36% 96%,32% 100%,28% 96%,24% 100%,20% 96%,16% 100%,12% 96%,8% 100%,4% 96%,0 100%);
+}
+.voucher-receipt h2 { color: inherit; margin-bottom: 9px; padding-bottom: 9px; border-bottom: 1px dashed #687567; font: 800 .9rem/1.4 ui-monospace,monospace; text-transform: uppercase; letter-spacing: .06em; }
+.voucher-receipt p, .voucher-receipt ul { margin: 0; font: 600 .85rem/1.45 ui-monospace,monospace; }
+.voucher-receipt ul { padding-left: 1.2em; }
+.gem {
+  --gem: #55d7c4;
+  display: inline-block; width: 28px; height: 39px; flex: none;
+  clip-path: polygon(46% 0, 88% 19%, 100% 67%, 54% 100%, 9% 80%, 0 32%);
+  background: conic-gradient(from 25deg at 42% 58%, color-mix(in srgb,var(--gem),white 55%) 0 28deg,var(--gem) 29deg 79deg,color-mix(in srgb,var(--gem),#152235 40%) 80deg 150deg,color-mix(in srgb,var(--gem),#152235 55%) 151deg 202deg,var(--gem) 203deg 263deg,color-mix(in srgb,var(--gem),white 28%) 264deg);
+}
+.gem-water { --gem: #5bc7f6; } .gem-moon { --gem: #c9b6e7; } .gem-fire { --gem: #ff855d; }
+.gem-thunder { --gem: #f2d051; } .gem-leaf { --gem: #67cb82; } .gem-bug { --gem: #b1cb4c; }
+.gem-normal { --gem: #bdb7ae; } .gem-poison { --gem: #b16cd0; } .gem-ground { --gem: #d5a670; }
+.gem-fighting { --gem: #dc7868; } .gem-psychic { --gem: #ef8bb6; } .gem-rock { --gem: #bcb187; }
+.gem-ghost { --gem: #9c92cb; } .gem-dragon { --gem: #8495f2; }
+.crystal-cluster .gem { position: absolute; width: 42px; height: 63px; left: 16px; bottom: 5px; transform: rotate(-25deg); }
+.crystal-cluster .gem:nth-child(2) { width: 48px; height: 77px; left: 43px; transform: rotate(8deg); }
+.crystal-cluster .gem:last-child { width: 33px; height: 45px; left: 71px; transform: rotate(33deg); }
+.stone-tray .inventory-card, .empty-tray { border: 1px solid #54757b; background: #102832; box-shadow: inset 0 2px 5px #081e24; color: #e4f0de; }
+.stone-tray { grid-template-columns: repeat(auto-fill,minmax(min(100%,170px),1fr)); }
+.empty-tray { grid-column: 1/-1; padding: 16px 18px; border-style: dashed; border-radius: 7px; color: #bbd1ca; font-size: .9rem; }
+.stone-picker { display: grid; grid-template-columns: 42px minmax(0,1fr); align-items: end; gap: 9px; }
+.stone-picker .gem { margin: 0 auto 4px; }
+.inventory-body > [role="status"] { margin: 0; color: #ffe8a0; }
+@media(max-width:720px) {
+  .inventory-workbench { grid-template-columns: 1fr; }
+  .voucher-wallet { grid-template-columns: repeat(auto-fit,minmax(min(100%,172px),1fr)); }
+}
+@media(max-width:480px) {
+  .ticket-fan,.crystal-cluster { width: 67px; height: 64px; scale: .7; transform-origin: right center; }
+  .crystal-cluster { inset-inline-end: 15px; }
+  .inventory-header { gap: 3px; padding: 17px 12px; }
+  .inventory-header p { font-size: .85rem; }
+  .inventory-body { gap: 10px; }
+}

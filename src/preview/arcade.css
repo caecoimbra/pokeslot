@@ -13,7 +13,7 @@
   isolation: isolate;
 }
 .arcade .shell { position: relative; width: min(100% - 48px, 1060px); padding: 18px 0 30px; }
-.arcade .topbar { min-height: 50px; padding-bottom: 12px; border-bottom: 1px solid #a1b8b24d; }
+.arcade .topbar { display: grid; grid-template-columns: auto minmax(0, 620px) auto; align-items: center; justify-content: space-between; gap: 20px; min-height: 64px; margin-bottom: 22px; }
 .arcade .brand { display: flex; align-items: center; font: italic 950 1.46rem/1 "Arial Black", system-ui, sans-serif; letter-spacing: -.065em; }
 .arcade .brand span { color: var(--aqua); }
 .arcade .brand i { width: 22px; height: 22px; margin-right: 10px; border: 3px solid var(--aqua); border-radius: 6px; box-shadow: inset 0 0 0 3px #17313a; background: linear-gradient(135deg, var(--aqua) 0 45%, transparent 46% 53%, var(--aqua) 54%); transform: rotate(-10deg); }
@@ -22,11 +22,47 @@
 .arcade .eyebrow { margin: 0; font: 800 .73rem/1.4 ui-monospace, monospace; letter-spacing: .19em; color: var(--aqua); }
 .arcade .intro h1 { font: italic 950 clamp(2.3rem,5.8vw,4rem)/1.03 "Arial Black", system-ui, sans-serif; letter-spacing: -.07em; margin: 4px 0 8px; text-shadow: 2px 3px #12232c; }
 .arcade .intro > p:last-child { color: #e0e8df; margin: 0; font-size: .94rem; }
-.arcade-nav { display: flex; flex-wrap: wrap; gap: 5px; margin: 15px 0 20px; }
-.arcade-nav a { display: inline-flex; align-items: center; justify-content: center; gap: .55em; padding: .66em 1.15em; border: 1px solid #54777b; color: #f3f4e3; background: #102c38; border-radius: 5px; text-decoration: none; font-weight: 700; }
-.arcade-nav a[aria-current="page"] { background: var(--aqua); color: var(--ink); border-color: #c5ffe6; box-shadow: inset 0 -3px #4da58c; }
-.arcade-nav a[aria-disabled="true"] { color: #acbec2; }
-.arcade-nav .nav-icon { font-family: ui-monospace, monospace; }
+.arcade-nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 4px;
+  border: 1px solid #477378;
+  border-radius: 14px;
+  background: linear-gradient(#253d47, #142934);
+  box-shadow: inset 0 1px #729293, 0 3px #09151e;
+}
+.arcade-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 46px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #d5e6df;
+  font: 700 .94rem/1.1 "Segoe UI", system-ui, sans-serif;
+  text-decoration: none;
+}
+.arcade-nav a:hover:not([aria-disabled="true"]) { background: #294851; color: #fff8df; }
+.arcade-nav a[aria-current="page"] {
+  background: #10252c;
+  border-color: #567878;
+  box-shadow: inset 0 2px 4px #07171c, inset 0 -3px #83ddba;
+  color: #caffdf;
+}
+.arcade-nav .nav-icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  background: url('./arcade-nav.png') no-repeat 0 0 / 400% 100%;
+  image-rendering: pixelated;
+}
+.arcade-nav [data-screen-link="pokedex"] .nav-icon { background-position-x: 33.3333%; }
+.arcade-nav [data-screen-link="vouchers"] .nav-icon { background-position-x: 66.6667%; }
+.arcade-nav [data-screen-link="stones"] .nav-icon { background-position-x: 100%; }
+.arcade-nav a[aria-disabled="true"] { color: #a6b6bb; }
+.arcade-nav a[aria-disabled="true"] .nav-icon { filter: grayscale(1); opacity: .65; }
+@media (forced-colors: active) { .arcade-nav a[aria-current="page"] { outline: 2px solid Highlight; } }
 .arcade .machine { display: grid; grid-template-columns: minmax(0, 2.25fr) minmax(215px,1fr); gap: clamp(12px, 2.3vw, 28px); margin: 0; align-items: start; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
 .arcade .shell [data-screen][hidden], .arcade [hidden] { display: none !important; }
 .cabinet { position: relative; padding: clamp(10px,2.5vw,24px); border: 3px solid #101c22; border-radius: 24px 24px 17px 17px; background: linear-gradient(110deg,#68bcaa 0%,#326d70 26%,#275f69 70%,#4d9b90); box-shadow: inset 0 4px #ade7ca, inset 5px 0 #489a91, inset -5px 0 #24535a, inset 0 -7px #184651, 0 7px #101e2b, 0 18px 26px #05111e75; min-width: 0; }
@@ -74,13 +110,15 @@
 .arcade .detail-variants [aria-pressed="true"] { color: var(--ink) !important; background: var(--aqua) !important; }
 .arcade .footnote { margin: 22px 0; }
 @media(max-width:760px) {
+  .arcade .topbar { grid-template-columns: 1fr auto; gap: 12px; }
+  .arcade .language { grid-column: 2; grid-row: 1; }
+  .arcade-nav { grid-column: 1 / -1; }
   .arcade .machine { grid-template-columns: minmax(0,1fr); }
   .arcade .shell { width: min(100% - 24px,610px); }
   .arcade .intro { margin-top: 20px; }
 }
 @media(max-width:480px) {
-  .arcade-nav { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 3px; }
-  .arcade-nav a { flex-direction: column; gap: 4px; font-size: .8rem; padding: 7px 2px; }
+  .arcade-nav a { flex-direction: column; gap: 2px; padding: 3px 1px 7px; font-size: .8rem; }
   .arcade .shell { width: calc(100% - 20px); }
   .marquee { min-height: 47px; margin-bottom: 9px; }
   .control-deck { gap: 7px; margin-top: 10px; }

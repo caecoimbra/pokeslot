@@ -24,7 +24,9 @@ test('busca números exatos e nomes sem diferenciar acentos nem maiúsculas', ()
   const labelFor = (id) => ({ 25: '#025 Pikachu', 29: '#029 Nidorán♀' })[id];
   assert.deepEqual(filterKantoCatalog(catalog, ' #025 ', 'all', 'all', labelFor), [catalog[24]]);
   assert.deepEqual(filterKantoCatalog(catalog, 'PÍKA', 'all', 'all', labelFor), [catalog[24]]);
-  assert.deepEqual(filterKantoCatalog(catalog, 'nidoran', 'all', 'missing', labelFor), [catalog[28]]);
+  assert.deepEqual(filterKantoCatalog(catalog, 'nidoran', 'all', 'missing', labelFor), []);
+  assert.deepEqual(filterKantoCatalog(catalog, '029', 'all', 'missing', labelFor), [catalog[28]]);
+  assert.deepEqual(filterKantoCatalog(catalog, 'pika', 'normal', 'missing', labelFor), [catalog[24]]);
   for (const query of ['0', '152', '#', '#Pikachu']) assert.deepEqual(filterKantoCatalog(catalog, query, 'all', 'all', labelFor), []);
 });
 

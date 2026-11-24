@@ -8,20 +8,22 @@
     <link rel="stylesheet" href="/src/preview/style.css" />
     <link rel="stylesheet" href="/src/preview/arcade.css" />
     <link rel="stylesheet" href="/src/preview/arcade-scenery.css" />
+    <link rel="stylesheet" href="/src/preview/dex-cards.css" />
+    <link rel="stylesheet" href="/src/preview/inventory-arcade.css" />
   </head>
   <body class="arcade">
     <div class="arcade-scenery" aria-hidden="true"><i class="arcade-moon"></i><i class="arcade-ridge"></i><i class="arcade-woods"></i></div>
     <main class="shell">
       <header class="topbar">
         <span class="brand"><i aria-hidden="true"></i>POKÉ<span>SLOT</span></span>
+        <nav class="arcade-nav" aria-label="Áreas do jogo">
+          <a href="#maquina" data-screen-link="machine" aria-current="page"><span class="nav-icon" aria-hidden="true"></span><span data-text="navMachine">Máquina</span></a>
+          <a href="#pokedex" data-screen-link="pokedex"><span class="nav-icon" aria-hidden="true"></span><span data-text="navPokedex">Pokédex</span></a>
+          <a href="#vales" data-screen-link="vouchers"><span class="nav-icon" aria-hidden="true"></span><span data-text="navVouchers">Vales</span></a>
+          <a href="#pedras" data-screen-link="stones"><span class="nav-icon" aria-hidden="true"></span><span data-text="navStones">Pedras</span></a>
+        </nav>
         <button id="language" class="language" type="button" aria-label="Switch to English">EN</button>
       </header>
-      <nav class="arcade-nav" aria-label="Áreas do jogo">
-        <a href="#maquina" data-screen-link="machine" aria-current="page"><span class="nav-icon" aria-hidden="true">▥</span><span data-text="navMachine">Máquina</span></a>
-        <a href="#pokedex" data-screen-link="pokedex"><span class="nav-icon" aria-hidden="true">▤</span><span data-text="navPokedex">Pokédex</span></a>
-        <a href="#vales" data-screen-link="vouchers"><span class="nav-icon" aria-hidden="true">★</span><span data-text="navVouchers">Vales</span></a>
-        <a href="#pedras" data-screen-link="stones"><span class="nav-icon" aria-hidden="true">◆</span><span data-text="navStones">Pedras</span></a>
-      </nav>
       <section class="intro">
         <p class="eyebrow" data-text="eyebrow"></p>
         <h1 data-text="title"></h1>
@@ -81,70 +83,90 @@
         <button id="refresh-balance" type="button" data-text="refreshBalance"></button>
         </aside>
       </section>
-      <section id="demo-vouchers" class="pokedex" data-screen="vouchers" aria-labelledby="voucher-title" hidden>
-        <h2 id="voucher-title" data-text="vouchersTitle" tabindex="-1"></h2>
-        <p class="pokedex-note" data-text="vouchersNote"></p>
-        <h3 data-text="voucherRoundTitle"></h3>
-        <ul id="voucher-results"></ul><p id="voucher-results-empty"></p>
-        <h3 data-text="voucherInventoryTitle"></h3>
-        <ul id="voucher-inventory"></ul><p id="voucher-inventory-empty"></p>
-        <form id="demo-redeem" class="demo-redeem">
-          <h3 data-text="redeemTitle"></h3>
-          <p data-text="redeemNote"></p>
-          <label><span data-text="redeemSpecies"></span><select name="speciesId" id="redeem-species" required aria-describedby="redeem-choice"></select></label>
-          <p id="redeem-names-status" role="status"></p>
-          <button id="retry-redeem-names" type="button" data-text="retryNames" hidden></button>
-          <p id="redeem-choice" aria-live="polite"></p>
-          <button id="redeem-submit" type="submit" data-text="redeemButton"></button>
-          <p id="redeem-status" role="status"></p>
-        </form>
+      <section id="demo-vouchers" class="inventory-console" data-screen="vouchers" aria-labelledby="voucher-title" hidden>
+        <header class="inventory-header">
+          <div><h1 id="voucher-title" data-text="vouchersTitle" tabindex="-1"></h1><p data-text="vouchersNote"></p></div>
+          <div class="ticket-fan" aria-hidden="true"><i></i><i></i><i></i></div>
+        </header>
+        <div class="inventory-body">
+          <section class="inventory-shelf"><h2 data-text="voucherInventoryTitle"></h2>
+            <ul id="voucher-inventory" class="voucher-wallet"></ul>
+            <a class="inventory-link" href="#pedras" data-text="visitStones"></a>
+          </section>
+          <div class="inventory-workbench voucher-workbench">
+            <form id="demo-redeem" class="demo-redeem inventory-action">
+              <h2 data-text="redeemTitle"></h2>
+              <p data-text="redeemNote"></p>
+              <label><span data-text="redeemSpecies"></span><select name="speciesId" id="redeem-species" required aria-describedby="redeem-choice"></select></label>
+              <p id="redeem-names-status" role="status"></p>
+              <button id="retry-redeem-names" type="button" data-text="retryNames" hidden></button>
+              <p id="redeem-choice" aria-live="polite"></p>
+              <button id="redeem-submit" type="submit" data-text="redeemButton"></button>
+              <p id="redeem-status" role="status"></p>
+            </form>
+            <section class="voucher-receipt">
+              <h2 data-text="voucherRoundTitle"></h2>
+              <ul id="voucher-results"></ul><p id="voucher-results-empty"></p>
+            </section>
+          </div>
+        </div>
       </section>
-      <section id="demo-stones" class="pokedex" data-screen="stones" aria-labelledby="stone-title" hidden>
-        <h2 id="stone-title" tabindex="-1"></h2>
-        <p id="stone-note" class="pokedex-note"></p>
-        <p id="stone-stock"></p>
-        <ul id="stone-inventory"></ul>
-        <p id="stone-recovery-message" role="status" hidden></p>
-        <button id="stone-recover-button" type="button" hidden></button>
-        <form id="stone-exchange" class="demo-redeem">
-          <h3 id="stone-exchange-title"></h3>
-          <label><span id="stone-choice-label"></span><select id="stone-choice" required aria-describedby="stone-stock"></select></label>
-          <button id="stone-exchange-button" type="submit" aria-describedby="stone-stock"></button>
-        </form>
-        <form id="stone-evolve" class="demo-redeem">
-          <h3 id="stone-evolve-title"></h3>
-          <label><span id="stone-evolution-label"></span><select id="stone-evolution-choice" required aria-describedby="stone-evolution-info"></select></label>
-          <p id="stone-evolution-info"></p>
-          <button id="stone-evolve-button" type="submit" aria-describedby="stone-evolution-info"></button>
-        </form>
-        <p id="stone-action-status" role="status"></p>
+      <section id="demo-stones" class="inventory-console" data-screen="stones" aria-labelledby="stone-title" hidden>
+        <header class="inventory-header">
+          <div><h1 id="stone-title" tabindex="-1"></h1><p id="stone-note"></p></div>
+          <div class="crystal-cluster" aria-hidden="true"><i class="gem gem-water"></i><i class="gem gem-moon"></i><i class="gem gem-leaf"></i></div>
+        </header>
+        <div class="inventory-body">
+          <section class="inventory-shelf"><h2 id="stone-inventory-title"></h2>
+            <ul id="stone-inventory" class="stone-tray"></ul>
+          </section>
+          <p id="stone-recovery-message" role="status" hidden></p>
+          <button id="stone-recover-button" type="button" hidden></button>
+          <div class="inventory-workbench">
+            <form id="stone-exchange" class="demo-redeem inventory-action">
+              <h2 id="stone-exchange-title"></h2>
+              <p id="stone-stock"></p>
+              <div class="stone-picker"><i id="stone-preview" class="gem" aria-hidden="true"></i>
+                <label><span id="stone-choice-label"></span><select id="stone-choice" required aria-describedby="stone-stock"></select></label>
+              </div>
+              <button id="stone-exchange-button" type="submit" aria-describedby="stone-stock"></button>
+            </form>
+            <form id="stone-evolve" class="demo-redeem inventory-action">
+              <h2 id="stone-evolve-title"></h2>
+              <label><span id="stone-evolution-label"></span><select id="stone-evolution-choice" required aria-describedby="stone-evolution-info"></select></label>
+              <p id="stone-evolution-info"></p>
+              <button id="stone-evolve-button" type="submit" aria-describedby="stone-evolution-info"></button>
+            </form>
+          </div>
+          <p id="stone-action-status" role="status"></p>
+        </div>
       </section>
       <section id="kanto-pokedex" class="pokedex" data-screen="pokedex" aria-labelledby="pokedex-title" hidden>
-        <p class="eyebrow" data-text="pokedexEyebrow"></p>
-        <h2 id="pokedex-title" data-text="pokedexTitle" tabindex="-1"></h2>
-        <p class="pokedex-note" data-text="pokedexNote"></p>
+        <header class="dex-head">
+          <div class="dex-headline"><span class="dex-lens" aria-hidden="true"></span>
+            <h1 id="pokedex-title" data-text="pokedexTitle" tabindex="-1"></h1>
+          </div>
+          <p class="pokedex-note" data-text="pokedexNote"></p>
         <div class="collection-progress">
           <label for="kanto-progress" id="progress-label"></label>
           <progress id="kanto-progress" max="151" value="0"></progress>
           <p id="variant-progress"></p>
           <p id="kanto-complete" role="status"></p>
         </div>
+        </header>
         <div class="pokedex-content">
-          <h3 data-text="lastCaptures"></h3>
-          <ul id="capture-results"></ul>
-          <p id="no-captures"></p>
-          <h3 data-text="collectionTitle"></h3>
-          <div class="collection-filters">
+          <h2 class="dex-catalog-title" data-text="collectionTitle"></h2>
+          <div class="collection-filters" role="search">
             <label><span data-text="numberFilter"></span><input id="collection-number" type="search" maxlength="40" placeholder="#025" autocomplete="off"></label>
             <label><span data-text="variantFilter"></span><select id="collection-variant"><option value="all" data-text="allVariants"></option><option value="normal" data-text="normal"></option><option value="shiny" data-text="shiny"></option></select></label>
             <label><span data-text="registrationFilter"></span><select id="collection-registration"><option value="all" data-text="allRegistrations"></option><option value="owned" data-text="registered"></option><option value="missing" data-text="missing"></option></select></label>
           </div>
           <p id="filter-count" role="status"></p>
-          <ul id="collection"></ul>
-          <p id="empty-collection"></p>
-        </div>
-        <div id="pokemon-detail" class="pokemon-detail" hidden>
+        <section id="pokemon-detail" class="pokemon-detail" aria-labelledby="selected-pokemon" hidden>
           <h3 id="selected-pokemon" tabindex="-1"></h3>
+          <button id="back-to-card" type="button" data-text="backToCatalog"></button>
+          <img id="pokemon-sprite" width="96" height="96" alt="" hidden />
+          <p id="sprite-status"></p>
           <div id="detail-variants" class="detail-variants" role="group">
             <button type="button" data-variant="normal" aria-pressed="false"></button>
             <button type="button" data-variant="shiny" aria-pressed="false"></button>
@@ -155,14 +177,27 @@
           <button id="open-redemption" type="button" class="retry-detail" data-text="viewRedemption" hidden></button>
           <p id="detail-status" role="status"></p>
           <div id="detail-content" hidden>
-            <img id="pokemon-sprite" width="96" height="96" alt="" hidden />
-            <p id="sprite-status"></p>
             <p id="pokemon-types"></p>
             <p id="pokemon-description"></p>
             <p id="description-source" class="description-source"></p>
           </div>
           <button id="retry-detail" class="retry-detail" type="button" data-text="retry" hidden></button>
+        </section>
+          <ul id="collection"></ul>
+          <p id="empty-collection"></p>
+          <details class="dex-captures">
+            <summary data-text="lastCaptures"></summary>
+            <ul id="capture-results"></ul>
+            <p id="no-captures"></p>
+          </details>
         </div>
+        <template id="dex-card">
+          <li><button type="button" class="collection-entry">
+            <span class="dex-number"></span>
+            <span class="dex-display" aria-hidden="true"><img width="96" height="96" alt=""></span>
+            <span class="dex-name"></span><span class="dex-variants"></span>
+          </button></li>
+        </template>
       </section>
       <p class="footnote" data-text="footnote"></p>
     </main>

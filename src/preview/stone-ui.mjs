@@ -1,10 +1,10 @@
 import { DEMO_STONES, KANTO_STONES } from '../server/evolution.mjs';
+import { inventoryCard } from './inventory-card.mjs';
 
 const translations = {
   pt: {
-    title: 'Pedras e evoluções — teste local',
-    proofTitle: 'Pedras e evoluções — prova autenticada',
-    note: 'Um vale pedra dá direito a uma pedra à sua escolha. Aqui estão disponíveis as evoluções clássicas por pedra de Kanto.',
+    title: 'Oficina de evolução', inventoryTitle: 'Estojo de pedras',
+    note: 'Troque um vale pela pedra de sua escolha. Nesta demonstração, ela ativa as evoluções clássicas por pedra de Kanto.',
     proofNote: 'Um vale pedra dá direito a uma pedra à sua escolha. Cada evolução usa uma pedra compatível e mantém a variante de origem na Pokédex.',
     stock: (n) => `Vales pedra disponíveis: ${n}.`, emptyInventory: 'Nenhuma pedra guardada.',
     recoverStone: (stone) => `Troca pendente: 1 vale pedra por ${stone}.`,
@@ -15,7 +15,7 @@ const translations = {
       bug: 'Pedra de Inseto', normal: 'Pedra Normal', poison: 'Pedra de Veneno', ground: 'Pedra de Terra',
       fighting: 'Pedra de Luta', psychic: 'Pedra Psíquica', rock: 'Pedra de Rocha', ghost: 'Pedra Fantasma', dragon: 'Pedra de Dragão',
     },
-    exchangeTitle: 'Trocar um vale pedra', chooseStone: 'Escolha a pedra', exchange: 'Trocar vale',
+    exchangeTitle: 'Resgatar uma pedra', chooseStone: 'Escolha a pedra', exchange: 'Trocar vale',
     evolveTitle: 'Evoluir Pokémon registrado', chooseEvolution: 'Evolução e variante', choosePlaceholder: 'Escolha uma evolução',
     noOptions: 'Nenhuma evolução disponível na coleção.',
     evolutionInfo: (n) => `Pedras compatíveis disponíveis: ${n}.`, evolve: 'Evoluir',
@@ -26,9 +26,8 @@ const translations = {
       missing_stone: 'Você não possui a pedra necessária.', failure: 'Não foi possível confirmar a operação; recupere a ação pendente antes de iniciar outra.' },
   },
   en: {
-    title: 'Stones and evolutions — local test',
-    proofTitle: 'Stones and evolutions — authenticated test',
-    note: 'One stone voucher gives you a stone of your choice. Classic Kanto stone evolutions are available here.',
+    title: 'Evolution workshop', inventoryTitle: 'Stone case',
+    note: 'Exchange one voucher for a stone of your choice. This demo supports the classic Kanto stone evolutions.',
     proofNote: 'One stone voucher gives you a stone of your choice. Each evolution uses a compatible stone and keeps the source variant in the Pokédex.',
     stock: (n) => `Stone vouchers available: ${n}.`, emptyInventory: 'No stones saved.',
     recoverStone: (stone) => `Pending exchange: 1 stone voucher for ${stone}.`,
@@ -39,7 +38,7 @@ const translations = {
       bug: 'Bug Stone', normal: 'Normal Stone', poison: 'Poison Stone', ground: 'Ground Stone',
       fighting: 'Fighting Stone', psychic: 'Psychic Stone', rock: 'Rock Stone', ghost: 'Ghost Stone', dragon: 'Dragon Stone',
     },
-    exchangeTitle: 'Exchange one stone voucher', chooseStone: 'Choose a stone', exchange: 'Exchange voucher',
+    exchangeTitle: 'Redeem a stone', chooseStone: 'Choose a stone', exchange: 'Exchange voucher',
     evolveTitle: 'Evolve a registered Pokémon', chooseEvolution: 'Evolution and variant', choosePlaceholder: 'Choose an evolution',
     noOptions: 'No evolution available in the collection.',
     evolutionInfo: (n) => `Compatible stones available: ${n}.`, evolve: 'Evolve',
@@ -86,7 +85,8 @@ export function setupStoneUI({ getState, performAction }) {
     const count = (type) => inventory.find((entry) => entry.type === type)?.amount ?? 0;
     const voucherCount = vouchers.find((entry) => entry.type === 'stone')?.amount ?? 0;
     const setText = (id, value) => { element(id).textContent = value; };
-    setText('stone-title', state.authenticated ? text.proofTitle : text.title);
+    setText('stone-title', text.title);
+    setText('stone-inventory-title', text.inventoryTitle);
     setText('stone-note', state.authenticated ? text.proofNote : text.note);
     setText('stone-stock', text.stock(voucherCount));
     const pendingAction = state.pendingAction;
@@ -110,17 +110,17 @@ export function setupStoneUI({ getState, performAction }) {
     setText('stone-evolve-button', text.evolve);
     setText('stone-action-status', text.statuses[failure ? 'failure' : state.actionMessage] ?? '');
     const list = element('stone-inventory');
-    list.replaceChildren(...inventory.map(({ type, amount }) => {
-      const item = document.createElement('li');
-      item.textContent = `${text.names[type] ?? type}: ${amount}`;
-      return item;
-    }));
+    list.replaceChildren(...inventory.map(({ type, amount }) => inventoryCard(
+      'gem gem-' + type, text.names[type] ?? type, '× ' + amount
+    )));
     if (!inventory.length) {
       const item = document.createElement('li');
+      item.className = 'empty-tray';
       item.textContent = text.emptyInventory;
       list.append(item);
     }
     options(stoneChoice, stoneTypes.map((stone) => [stone, text.names[stone]]));
+    element('stone-preview').className = 'gem gem-' + stoneChoice.value;
     const choices = evolutionOptions(owned, state.recipes ?? [], stoneTypes);
     options(evolutionChoice, choices.map((option) => [JSON.stringify(option),
       `${number(option.source.speciesId)}${option.source.isShiny ? ' ✨ Shiny' : ''} → ${number(option.targetId)} · ${text.names[option.stone]}`]), text.choosePlaceholder);
