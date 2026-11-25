@@ -1,5 +1,6 @@
 import { createClient } from '@neon/neon-js';
 import { openPendingOperations, claimPendingOperation, clearPendingOperation } from './pending-operations.mjs';
+import { createOperationId } from './operation-id.mjs';
 import { completeGameOperation } from './game-operation.mjs';
 import { createNeonProofClient } from '../preview/neon-proof-client.mjs';
 import './style.css';
@@ -96,7 +97,7 @@ async function spin(concurrent) {
     const db = await dbPromise;
     await completeGameOperation({
       ensureSession: () => sessionFor(userId, version),
-      claim: () => claimPendingOperation(db, `game-proof:${userId}`),
+      claim: () => claimPendingOperation(db, `game-proof:${userId}`, createOperationId),
       send: (operation) => request('spin', userId, version, operation.operationId),
       readState: async () => {
         const state = await readState(userId, version);
@@ -106,6 +107,8 @@ async function spin(concurrent) {
       present: (responses, state) => {
         const row = responses[0];
         showState(state);
+        if (row.status === 'operation_expired') { message('O resultado expirou. O progresso atual foi consultado.'); return; }
+        if (row.status === 'operation_clock') { message('Confira o relógio do dispositivo antes de tentar novamente.'); return; }
         $('round').textContent = row.status === 'ok' ? `Rodada: ${row.winningLines.length} linha(s) vencedora(s); ${row.captures.length} captura(s). Giros por linhas: ${row.lineSpins ?? 0}; por repetidos: ${row.duplicateSpins ?? 0}. Valores de teste.` : 'Saldo insuficiente.';
         message(concurrent ? `Respostas: ${responses.filter((v) => !v.replayed).length} nova e ${responses.filter((v) => v.replayed).length} recuperada.` : row.replayed ? 'Resultado anterior recuperado.' : 'Operação confirmada.');
       },

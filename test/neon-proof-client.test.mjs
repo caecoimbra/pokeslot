@@ -23,6 +23,27 @@ function makeClient(baseUrl, functionUrl, fetchImpl, options = {}) {
   }, options);
 }
 
+test('limite temporário preserva a operação pendente para recuperação', async () => {
+  let limited = true, cleared = false;
+  const client = makeClient(base, api, async (url) => {
+    if (url.endsWith('/token')) return json({ token: 'token-ficticio' });
+    if (url.endsWith('/state')) return json({ balance: 19 });
+    return limited ? new Response('', { status: 429 }) : json({ status: 'ok', replayed: false });
+  }, { client: auth });
+  const deps = {
+    ensureSession: () => client.ensureSession('A', () => true),
+    claim: async () => ({ operationId: 'mesma-operacao' }),
+    send: (operation) => client.request('spin', 'A', () => true, operation.operationId),
+    readState: () => client.request('state', 'A', () => true),
+    present: () => {}, clear: async () => { cleared = true; },
+  };
+  await assert.rejects(completeGameOperation(deps), /rate_limited/);
+  assert.equal(cleared, false);
+  limited = false;
+  await completeGameOperation(deps);
+  assert.equal(cleared, true);
+});
+
 test('resposta da rodada que não chega expira e recuperação usa o mesmo identificador', async () => {
   let stored = null, calls = 0, cleared = false, presented = null;
   const client = makeClient(base, api, async (url, options) => {

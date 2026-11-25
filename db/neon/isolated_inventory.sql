@@ -25,6 +25,30 @@ CREATE TABLE IF NOT EXISTS pokeslot_proof.inventory_operations (
   operation_id uuid NOT NULL, action text NOT NULL, parameters jsonb NOT NULL,
   result jsonb NOT NULL, PRIMARY KEY (user_id, operation_id)
 );
+-- Uma linha por conta; somente IDs novos consomem a cota. O relógio é do banco.
+CREATE TABLE IF NOT EXISTS pokeslot_proof.operation_quota (
+  user_id text PRIMARY KEY REFERENCES pokeslot_proof.players(user_id),
+  window_started_at timestamptz NOT NULL,
+  used integer NOT NULL CHECK (used BETWEEN 0 AND 30)
+);
+REVOKE ALL ON pokeslot_proof.operation_quota FROM PUBLIC, authenticated, anonymous;
+
+-- Chamador deve possuir a trava da linha do jogador, obtida por refresh_locked.
+CREATE OR REPLACE FUNCTION pokeslot_proof.consume_operation_quota(p_user_id text)
+RETURNS boolean LANGUAGE plpgsql SET search_path = pg_catalog AS $f$
+DECLARE v_now timestamptz := clock_timestamp(); v_started timestamptz; v_used integer;
+BEGIN
+  INSERT INTO pokeslot_proof.operation_quota VALUES (p_user_id, v_now, 0) ON CONFLICT DO NOTHING;
+  SELECT window_started_at, used INTO v_started, v_used FROM pokeslot_proof.operation_quota WHERE user_id = p_user_id;
+  IF v_now < v_started OR v_now >= v_started + interval '1 minute' THEN
+    UPDATE pokeslot_proof.operation_quota SET window_started_at = v_now, used = 1 WHERE user_id = p_user_id;
+    RETURN true;
+  END IF;
+  IF v_used >= 30 THEN RETURN false; END IF;
+  UPDATE pokeslot_proof.operation_quota SET used = used + 1 WHERE user_id = p_user_id;
+  RETURN true;
+END;
+$f$;
 REVOKE ALL ON pokeslot_proof.vouchers, pokeslot_proof.stones, pokeslot_proof.inventory_operations,
   pokeslot_proof.stone_types, pokeslot_proof.evolution_recipes FROM PUBLIC, authenticated, anonymous;
 
@@ -91,6 +115,9 @@ BEGIN
   IF FOUND THEN
     IF v_previous.action <> p_action OR v_previous.parameters <> v_params THEN RAISE EXCEPTION 'operation id in use' USING ERRCODE = '22023'; END IF;
     RETURN v_previous.result || jsonb_build_object('replayed',true);
+  END IF;
+  IF NOT pokeslot_proof.consume_operation_quota(p_user_id) THEN
+    RETURN jsonb_build_object('status', 'rate_limited');
   END IF;
 
   IF p_action = 'pokemon' THEN

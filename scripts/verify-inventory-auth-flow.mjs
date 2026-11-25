@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { randomUUID, randomBytes } from 'node:crypto';
 import assert from 'node:assert/strict';
+import { createOperationId } from '../src/identity/operation-id.mjs';
 import { defaultDeriveNeonUrls } from '@neon/neon-js';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 
@@ -86,9 +87,9 @@ try {
   await pool.query("INSERT INTO pokeslot_proof.stones (user_id, type, amount) VALUES ($1, 'water', 2)", [b.userId]);
   await pool.query('UPDATE pokeslot_proof.players SET balance = 0 WHERE user_id = $1', [b.userId]);
   const beforeB = await readState(b);
-  const spinId = randomUUID();
+  const spinId = createOperationId();
 
-  const pokemonId = randomUUID();
+  const pokemonId = createOperationId();
   const endpoints = [
     ['state', {}],
     ['spin', { operationId: spinId }],
@@ -111,7 +112,7 @@ try {
   const conflict = await inventoryAction(a, pokemonId, 'pokemon', { speciesId: 26 });
   assert.equal(conflict.status, 409);
 
-  const stoneId = randomUUID();
+  const stoneId = createOperationId();
   const stoneArgs = { stone: 'thunder' };
   const first = await inventoryAction(a, stoneId, 'stone', stoneArgs);
   assert.equal(first.status, 200);
@@ -125,19 +126,19 @@ try {
   const { replayed: _secondFlag, ...secondResult } = recovered.payload;
   assert.deepEqual(secondResult, firstResult);
 
-  const evolveId = randomUUID();
+  const evolveId = createOperationId();
   const evolveArgs = { source: { speciesId: 25, isShiny: true }, targetId: 26, stone: 'thunder' };
   const evolved = await inventoryAction(a, evolveId, 'evolve', evolveArgs);
   assert.equal(evolved.status, 200);
   assert.equal(evolved.payload.status, 'ok');
   assert.equal((await inventoryAction(a, evolveId, 'evolve', evolveArgs)).payload.replayed, true);
 
-  const dragonExchange = await inventoryAction(a, randomUUID(), 'stone', { stone: 'dragon' });
+  const dragonExchange = await inventoryAction(a, createOperationId(), 'stone', { stone: 'dragon' });
   assert.equal(dragonExchange.status, 200);
   assert.equal(dragonExchange.payload.status, 'ok');
   assert.equal(amount((await getState(a)).payload.stones, 'dragon'), 1);
   const dragonEvolution = { source: { speciesId: 148, isShiny: false }, targetId: 149, stone: 'dragon' };
-  const newEvolutionId = randomUUID();
+  const newEvolutionId = createOperationId();
   const newest = await inventoryAction(a, newEvolutionId, 'evolve', dragonEvolution);
   assert.equal(newest.status, 200);
   assert.equal(newest.payload.status, 'ok');
@@ -191,6 +192,17 @@ try {
   const [aReopened, bReopened] = await Promise.all([reopenSession(a), reopenSession(b)]);
   assert.deepEqual(await readState(aReopened), afterSpinA);
   assert.deepEqual(await readState(bReopened), afterRedemptionB);
+  // Preenche a janela de forma controlada; duas ações novas disputam a última vaga.
+  await pool.query("UPDATE pokeslot_proof.operation_quota SET used = 29, window_started_at = clock_timestamp() WHERE user_id = $1", [b.userId]);
+  const candidates = [createOperationId(), createOperationId()];
+  const race = await Promise.all(candidates.map((operationId) => request(b, 'spin', { expectedUserId: b.userId, operationId })));
+  assert.deepEqual(race.map((result) => result.status).sort(), [200, 429]);
+  assert.equal((await request(b, 'spin', { expectedUserId: b.userId, operationId: spinId })).payload.replayed, true);
+  assert.equal((await inventoryAction(b, createOperationId(), 'stone', { stone: 'moon' })).status, 429);
+  const blocked = candidates[race.findIndex((result) => result.status === 429)];
+  await pool.query("UPDATE pokeslot_proof.operation_quota SET window_started_at = clock_timestamp() - interval '1 minute' WHERE user_id = $1", [b.userId]);
+  assert.equal((await request(b, 'spin', { expectedUserId: b.userId, operationId: blocked })).payload.status, 'no_balance');
+  console.log('Cota autenticada: concorrência, limite compartilhado, replay e retomada após a janela passaram.');
   console.log('Duas contas fictícias: saldo, coleção, vales e pedras separados após resgate, evolução, rodada e nova entrada. IDs repetidos foram isolados por conta. Estoque inicial inserido administrativamente.');
 } catch (error) {
   const line = error.stack?.match(/verify-inventory-auth-flow\.mjs:(\d+):/)?.[1];

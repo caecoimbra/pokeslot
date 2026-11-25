@@ -4,6 +4,7 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { defaultDeriveNeonUrls } from '@neon/neon-js';
 import { STUDY_TIERS } from './data/kanto-estudo.mjs';
 import assert from 'node:assert/strict';
+import { createOperationId } from '../src/identity/operation-id.mjs';
 
 const env = await readFile(new URL('../.env.local', import.meta.url), 'utf8');
 const baseUrl = env.match(/^VITE_NEON_PROOF_DATABASE_URL=(.+)$/m)?.[1]?.trim();
@@ -50,7 +51,7 @@ try {
   const mismatch = await request(b, 'state', { expectedUserId: a.userId });
   console.log(`Troca de identidade: HTTP ${mismatch.status}.`);
   assert.equal(mismatch.status, 409);
-  const operationId = randomUUID();
+  const operationId = createOperationId();
   const responses = await Promise.all([request(a, 'spin', { expectedUserId: a.userId, operationId }), request(a, 'spin', { expectedUserId: a.userId, operationId })]);
   console.log(`Rodadas simultâneas: HTTP ${responses.map((result) => result.status).join(' e ')}.`);
   assert.ok(responses.every((result) => result.status === 200 && result.payload.status === 'ok'));
@@ -62,7 +63,7 @@ try {
   assert.deepEqual(finalB.payload.ownedVariants, []);
   // Simula perda após confirmação do servidor: descarta a primeira resposta
   // e repete a mesma operação, comparando o resultado persistido.
-  const lostId = randomUUID();
+  const lostId = createOperationId();
   const lost = await request(a, 'spin', { expectedUserId: a.userId, operationId: lostId });
   assert.equal(lost.status, 200);
   assert.equal(lost.payload.replayed, false);
@@ -80,7 +81,7 @@ try {
   let captureResult = responses[0].payload.captures[0];
   let expectedBalance = lost.payload.balance;
   for (let attempt = 0; !captureResult && attempt < 12; attempt++) {
-    const result = await request(a, 'spin', { expectedUserId: a.userId, operationId: randomUUID() });
+    const result = await request(a, 'spin', { expectedUserId: a.userId, operationId: createOperationId() });
     assert.equal(result.status, 200);
     assert.equal(result.payload.status, 'ok');
     expectedBalance = result.payload.balance;
@@ -92,6 +93,15 @@ try {
   const afterCapture = await request(a, 'state', { expectedUserId: a.userId });
   assert.equal(afterCapture.payload.balance, expectedBalance);
   assert.ok(afterCapture.payload.ownedVariants.some((variant) => variant.speciesId === captureResult.capture.speciesId && variant.isShiny === captureResult.capture.isShiny));
+  for (const operationId of [randomUUID(), createOperationId(Date.now() - 8 * 86400000)]) {
+    const expired = await request(a, 'spin', { expectedUserId: a.userId, operationId });
+    assert.equal(expired.status, 410);
+    assert.equal(expired.payload.error, 'operation_expired');
+  }
+  const future = await request(a, 'spin', { expectedUserId: a.userId, operationId: createOperationId(Date.now() + 10 * 60000) });
+  assert.equal(future.status, 400);
+  assert.equal(future.payload.error, 'operation_clock');
+  assert.deepEqual((await request(a, 'state', { expectedUserId: a.userId })).payload, afterCapture.payload);
   console.log('Autenticação de duas contas fictícias, isolamento, rodada, captura persistida e repetição simultânea passaram.');
 } catch (error) {
   console.error(`Fluxo autenticado não concluído: ${error.message?.startsWith('signup_') || error.message?.startsWith('session_') ? error.message : error.code || error.name}.`);

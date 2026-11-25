@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
+import { createOperationId } from '../src/identity/operation-id.mjs';
 import { defaultDeriveNeonUrls } from '@neon/neon-js';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 
@@ -44,14 +45,58 @@ try {
   await client.query(await readFile(new URL('../db/neon/isolated_session_guard.sql', import.meta.url), 'utf8'));
   const state = await client.query('SELECT pokeslot_proof.session_state($1,$2) AS result', [id, token]);
   assert.equal(state.rows[0].result.balance, 20);
-  const operation = randomUUID();
+  const operation = createOperationId();
   const spin = await client.query('SELECT pokeslot_proof.session_spin($1,$2,$3,$4) AS result', [id, token, operation, round]);
   assert.equal(spin.rows[0].result.balance, 19);
   const retry = await client.query('SELECT pokeslot_proof.session_spin($1,$2,$3,$4) AS result', [id, token, operation, round]);
   assert.equal(retry.rows[0].result.replayed, true);
   const inventory = await client.query('SELECT pokeslot_proof.session_inventory_action($1,$2,$3,$4,$5) AS result',
-    [id, token, randomUUID(), 'stone', JSON.stringify({ stone: 'moon' })]);
+    [id, token, createOperationId(), 'stone', JSON.stringify({ stone: 'moon' })]);
   assert.equal(inventory.rows[0].result.status, 'insufficient_vouchers');
+
+  await client.query('SAVEPOINT runtime_permissions');
+  await client.query(await readFile(new URL('../db/neon/isolated_runtime_permissions.sql', import.meta.url), 'utf8'));
+  await client.query('GRANT pokeslot_runtime TO CURRENT_USER WITH SET TRUE');
+  await client.query('SET LOCAL ROLE pokeslot_runtime');
+  const { rows: permissions } = await client.query(`SELECT current_user AS role,
+    CASE WHEN has_schema_privilege('neon_auth', 'USAGE')
+      THEN has_table_privilege('neon_auth.session', 'SELECT,UPDATE') ELSE false END AS auth,
+    has_table_privilege('pokeslot_proof.players', 'SELECT,UPDATE') AS players,
+    has_function_privilege('pokeslot_proof.spin(text,uuid,jsonb)', 'EXECUTE') AS spin,
+    has_database_privilege(current_database(), 'CREATE') AS schema`);
+  assert.deepEqual(permissions, [{ role: 'pokeslot_runtime', auth: false, players: false, spin: false, schema: false }]);
+  const restrictedState = await client.query('SELECT pokeslot_proof.session_state($1,$2) AS result', [id, token]);
+  assert.equal(restrictedState.rows[0].result.balance, 19);
+  const restrictedSpin = await client.query('SELECT pokeslot_proof.session_spin($1,$2,$3,$4) AS result', [id, token, operation, round]);
+  assert.equal(restrictedSpin.rows[0].result.replayed, true);
+  const restrictedInventory = await client.query('SELECT pokeslot_proof.session_inventory_action($1,$2,$3,$4,$5) AS result',
+    [id, token, createOperationId(), 'stone', JSON.stringify({ stone: 'moon' })]);
+  assert.equal(restrictedInventory.rows[0].result.status, 'insufficient_vouchers');
+  await client.query('ROLLBACK TO SAVEPOINT runtime_permissions');
+  console.log('Papel restrito: as três entradas funcionam e o acesso direto permanece bloqueado. Permissões revertidas.');
+
+  const oldId = createOperationId(Date.now() - 9 * 86400000);
+  const legacy = randomUUID();
+  const future = createOperationId(Date.now() + 10 * 60000);
+  const play = async (operationId) => (await client.query('SELECT pokeslot_proof.session_spin($1,$2,$3,$4) AS result', [id, token, operationId, round])).rows[0].result;
+  for (const key of [oldId, legacy]) {
+    await client.query("INSERT INTO pokeslot_proof.operations (user_id, operation_id, result, recorded_at) VALUES ($1, $2, '{}', clock_timestamp() - interval '9 days')", [id, key]);
+  }
+  assert.equal((await play(legacy)).replayed, true);
+  assert.equal((await play(oldId)).status, 'operation_expired');
+  assert.equal((await play(future)).status, 'operation_clock');
+  await client.query('SELECT pokeslot_proof.prune_results()');
+  const pruned = await client.query('SELECT count(*)::int AS total FROM pokeslot_proof.operations WHERE user_id = $1 AND operation_id = ANY($2::uuid[])', [id, [legacy, oldId]]);
+  assert.equal(pruned.rows[0].total, 0);
+  for (const key of [oldId, legacy]) assert.equal((await play(key)).status, 'operation_expired');
+  assert.equal((await play(operation)).replayed, true);
+  assert.equal((await client.query('SELECT balance FROM pokeslot_proof.players WHERE user_id = $1', [id])).rows[0].balance, '19');
+  await client.query("UPDATE pokeslot_proof.request_budget SET bucket = floor(extract(epoch FROM clock_timestamp()) / 86400), used = 5000 WHERE scope = 'state_day'");
+  const capped = await client.query('SELECT pokeslot_proof.session_state($1,$2) AS result', [id, token]);
+  assert.equal(capped.rows[0].result.status, 'daily_limit');
+  await client.query("UPDATE pokeslot_proof.request_budget SET bucket = floor(extract(epoch FROM clock_timestamp()) / 86400), used = 1500 WHERE scope = 'mutation_day'");
+  assert.equal((await play(createOperationId())).status, 'daily_limit');
+  console.log('Retenção: replay legado antes da limpeza, exclusão em lote, recusa após limpeza e saldo preservado.');
 
   // Uma revogação concorrente não conclui enquanto a operação mantém a trava.
   const other = await pool.connect();

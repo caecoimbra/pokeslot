@@ -48,6 +48,9 @@ try {
   console.log('Inventário e catálogo de evolução aplicados ao branch isolado.');
   await pool.query(await readFile(new URL('../db/neon/isolated_voucher_spin.sql', import.meta.url), 'utf8'));
   console.log('Vales de rodada aplicados ao branch isolado.');
+  const guard = await readFile(new URL('../db/neon/isolated_session_guard.sql', import.meta.url), 'utf8');
+  await pool.query('BEGIN;\n' + guard + '\nCOMMIT;');
+  console.log('Retenção e limites agregados aplicados ao branch isolado.');
 } catch (error) {
   console.error(`Aplicação incompleta (código: ${error.code || 'desconhecido'}).`);
   process.exitCode = 1;

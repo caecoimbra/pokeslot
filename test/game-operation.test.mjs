@@ -3,6 +3,23 @@ import assert from 'node:assert/strict';
 import { completeGameOperation } from '../src/identity/game-operation.mjs';
 import { requirePendingOperation } from '../src/identity/pending-operations.mjs';
 
+test('resultado expirado reconcilia o progresso antes de liberar a ação pendente', async () => {
+  const events = [];
+  const dependencies = {
+    ensureSession: async () => { events.push('session'); },
+    claim: async () => ({ operationId: 'old' }),
+    send: async () => { throw new Error('operation_expired'); },
+    readState: async () => ({ balance: 12 }),
+    present: ([result], state) => { events.push([result.status, state.balance]); },
+    clear: async (operation) => { events.push(operation.operationId); },
+  };
+  await completeGameOperation(dependencies);
+  assert.deepEqual(events, ['session', 'session', ['operation_expired', 12], 'old']);
+  events.length = 0;
+  await assert.rejects(completeGameOperation({ ...dependencies, readState: async () => { throw new Error('offline'); } }), /offline/);
+  assert.deepEqual(events, ['session']);
+});
+
 test('resposta perdida mantém operação e a próxima tentativa recupera o mesmo resultado', async () => {
   const operation = { operationId: 'id-ficticio' };
   let stored = null, calls = 0, presented = null, cleared = 0;

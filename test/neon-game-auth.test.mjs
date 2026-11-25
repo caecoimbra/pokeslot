@@ -37,6 +37,14 @@ test('nega JWT sem credencial de sessão antes de consultar banco', async () => 
   assert.equal(response.status, 401);
   assert.equal(databaseCalls, 0);
 });
+test('recusa requisições maiores que o limite antes de consultar o banco', async () => {
+  const bearer = await token('A');
+  for (const path of ['/state', '/spin', '/inventory/action']) {
+    const response = await request(path, bearer, { expectedUserId: 'A', extra: 'x'.repeat(4096) });
+    assert.equal(response.status, 413);
+  }
+  assert.equal(databaseCalls, 0);
+});
 test('não usa uma identidade diferente da sessão validada', async () => {
   const bearer = await token('B');
   for (const path of ['/state', '/spin', '/inventory/action']) assert.equal((await request(path, bearer, { expectedUserId: 'A' })).status, 409);
@@ -58,5 +66,23 @@ test('recusa token expirado antes de consultar banco', async () => {
     .setSubject('A').setExpirationTime('1s ago').sign(privateKey);
   assert.equal((await request('/state', expired, { expectedUserId: 'A' })).status, 401);
   assert.equal(databaseCalls, 0);
+});
+test('prévia hospedada recusa uma conta autenticada fora da lista antes de consultar o banco', async () => {
+  process.env.POKESLOT_WEB_ORIGIN = 'https://preview.example.test';
+  process.env.POKESLOT_ALLOWED_PLAYERS = 'A';
+  try {
+    const { default: hostedApp } = await import('../functions/neon-game-proof/index.ts?hosted-test');
+    const bearer = await token('B');
+    const response = await hostedApp.request('/state', { method: 'POST', headers: {
+      Origin: 'https://preview.example.test',
+      Authorization: `Bearer ${bearer}`, 'X-Session-Token': 'test-session', 'Content-Type': 'application/json',
+    }, body: JSON.stringify({ expectedUserId: 'B' }) });
+    assert.equal(response.status, 403);
+    assert.equal(response.headers.get('access-control-allow-origin'), 'https://preview.example.test');
+    assert.equal(databaseCalls, 0);
+  } finally {
+    delete process.env.POKESLOT_WEB_ORIGIN;
+    delete process.env.POKESLOT_ALLOWED_PLAYERS;
+  }
 });
 test.after(() => { globalThis.fetch = originalFetch; });

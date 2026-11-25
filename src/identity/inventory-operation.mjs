@@ -1,5 +1,6 @@
 import { readPendingOperation, clearPendingOperation } from './pending-operations.mjs';
 import { validInventoryAction } from '../server/inventory-request.mjs';
+import { createOperationId } from './operation-id.mjs';
 
 const keyFor = (userId) => `inventory-proof:${userId}`;
 const gameKeyFor = (userId) => `game-proof:${userId}`;
@@ -31,7 +32,7 @@ function claimAcrossActions(db, key, otherKey, create) {
 }
 
 // A chave separada por conta mantém escolha e identificador juntos entre abas e recargas.
-export function claimProofInventoryOperation(db, userId, action, args, makeId = () => crypto.randomUUID()) {
+export function claimProofInventoryOperation(db, userId, action, args, makeId = createOperationId) {
   if (typeof userId !== 'string' || !userId || !validInventoryAction(action, args)) {
     return Promise.reject(new TypeError('invalid inventory operation'));
   }
@@ -41,7 +42,7 @@ export function claimProofInventoryOperation(db, userId, action, args, makeId = 
   }));
 }
 
-export function claimProofGameOperation(db, userId, makeId = () => crypto.randomUUID()) {
+export function claimProofGameOperation(db, userId, makeId = createOperationId) {
   if (typeof userId !== 'string' || !userId) return Promise.reject(new TypeError('user id required'));
   const userKey = gameKeyFor(userId);
   return claimAcrossActions(db, userKey, keyFor(userId), () => ({ userId: userKey, operationId: makeId() }));
@@ -82,8 +83,13 @@ export async function completeProofInventoryOperation({ ensureSession, claim, se
   if (!operation || !validInventoryAction(operation.action, operation.args)) throw new Error('invalid_pending');
   if (requested && !sameAction(operation, requested)) throw new Error('different_pending');
   await ensureSession();
-  const result = await send(operation);
-  if (!validResult(operation, result)) throw new Error('invalid_result');
+  let result;
+  try { result = await send(operation); }
+  catch (error) {
+    if (!['operation_expired', 'operation_clock'].includes(error?.message)) throw error;
+    result = { status: error.message };
+  }
+  if (!['operation_expired', 'operation_clock'].includes(result?.status) && !validResult(operation, result)) throw new Error('invalid_result');
   const state = await readState();
   await ensureSession();
   present(result, state, operation);

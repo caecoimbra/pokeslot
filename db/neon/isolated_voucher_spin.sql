@@ -14,6 +14,9 @@ BEGIN
   END IF;
   SELECT result INTO v_previous FROM pokeslot_proof.operations WHERE user_id = p_user_id AND operation_id = p_operation_id;
   IF FOUND THEN RETURN v_previous || jsonb_build_object('replayed', true); END IF;
+  IF NOT pokeslot_proof.consume_operation_quota(p_user_id) THEN
+    RETURN jsonb_build_object('status', 'rate_limited');
+  END IF;
   SELECT balance INTO v_balance FROM pokeslot_proof.players WHERE user_id = p_user_id;
   IF v_balance = 0 THEN
     v_result := jsonb_build_object('status', 'no_balance', 'balance', 0);
