@@ -860,11 +860,16 @@ async function submitProofAuth(event, registering) {
     authMode = 'login';
     proofSessions?.postMessage('session-changed');
     let timer;
+    const recovery = recoverProofSession(result.data.user.id);
+    const recoveryVersion = proofGeneration;
     try {
       await Promise.race([
-        recoverProofSession(result.data.user.id),
+        recovery,
         new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('recovery_timeout')), 30000); }),
       ]);
+    } catch (error) {
+      if (error?.message === 'recovery_timeout' && recoveryVersion !== proofGeneration) return;
+      throw error;
     } finally { clearTimeout(timer); }
   } catch (error) {
     if (error?.message === 'recovery_timeout') resetProofSession('authUnavailable');
