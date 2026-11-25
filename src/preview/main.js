@@ -581,7 +581,8 @@ function render() {
   const spin = document.querySelector('#spin');
   spin.disabled = pending || (neonProof && (!proofUser || (!!pendingLocalAction && !proofPendingRoundId)));
   spin.textContent = spinning ? text.spinning : neonProof && proofPendingRoundId ? text.recoverButton : text.spinButton;
-  document.querySelector('#status').textContent = status === 'success' && !wins.length ? text.noRewards : text[status] ?? '';
+  const roundMessage = status === 'success' && !wins.length ? text.noRewards : text[status];
+  document.querySelector('#status').textContent = spinning ? text.reelsSpinning : roundMessage ?? '';
   document.querySelector('#demo-balance').textContent = balance === null ? '—' : String(balance);
   document.querySelector('#demo-balance').setAttribute('aria-label', balance === null ? text.credits : text.balance(balance));
   document.querySelector('#next-refill').textContent = nextRefill === null ? '' : text.nextRefill(formatNextRefill(nextRefill, language));

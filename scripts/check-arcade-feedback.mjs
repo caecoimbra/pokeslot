@@ -37,7 +37,13 @@ export async function checkArcadeFeedback(browser, origin) {
     };
     assert.deepEqual(await page.evaluate(() => window.feedback.notes), []);
     await page.waitForFunction(() => !document.querySelector('#spin').disabled);
-    await play();
+    await spin.press('Enter');
+    await page.waitForSelector('.is-stopping');
+    // A language change renders again after the server replies, while the reels still move.
+    await page.evaluate(() => document.querySelector('#language').click());
+    assert.equal(await page.locator('#status').textContent(), 'Round in progress');
+    await page.evaluate(() => document.querySelector('#language').click());
+    await page.waitForFunction(() => !document.querySelector('#spin').disabled);
     const first = await page.evaluate(() => window.feedback);
     assert.equal(first.notes.length, 2);
     assert.ok(first.notes[1][0] > first.notes[1].at(-1), 'Descending no-win cue');
