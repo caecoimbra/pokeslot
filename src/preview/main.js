@@ -53,7 +53,7 @@ const messages = {
     ballLine: '3 Pokébolas', spinLine: '3 símbolos de giro', ticketLine: '3 vales',
     ballPrize: 'Capture um Pokémon', spinPrize: 'Ganhe giros extras', ticketPrize: 'Receba um vale',
     aboutProject: 'Sobre o projeto',
-    balance: (value) => `Saldo: ${value} ${value === 1 ? 'giro' : 'giros'}`, noBalance: 'Seus giros acabaram. Confira a próxima reposição.',
+    balance: (value) => `Saldo: ${value} ${value === 1 ? 'giro' : 'giros'}`, noBalance: 'Seus giros acabaram. Confira o horário da próxima reposição e atualize o saldo.',
     nextRefill: (date) => `Próxima reposição: ${date} (hora local).`,
     refreshBalance: 'Atualizar saldo', balanceRefreshed: 'Saldo atualizado.',
     spinButton: 'Girar', spinning: 'Girando…',
@@ -126,7 +126,7 @@ const messages = {
     ballLine: '3 Poké Balls', spinLine: '3 spin symbols', ticketLine: '3 vouchers',
     ballPrize: 'Catch a Pokémon', spinPrize: 'Earn extra spins', ticketPrize: 'Draw a voucher',
     aboutProject: 'About the project',
-    balance: (value) => `Balance: ${value} ${value === 1 ? 'spin' : 'spins'}`, noBalance: 'You are out of spins. Check your next refill.',
+    balance: (value) => `Balance: ${value} ${value === 1 ? 'spin' : 'spins'}`, noBalance: 'You are out of spins. Check the next refill time and refresh your balance.',
     nextRefill: (date) => `Next refill: ${date} (local time).`,
     refreshBalance: 'Refresh balance', balanceRefreshed: 'Balance updated.',
     spinButton: 'Spin', spinning: 'Spinning…',
@@ -272,6 +272,7 @@ const proofSessions = neonProof && typeof BroadcastChannel === 'function'
 let authStatus = '';
 let lastProofReward = null;
 let proofPendingRoundId = null;
+let localPendingRoundId = null;
 let afterProofRound = null;
 const evolutionRecipes = neonProof ? kantoEvolutionOptions() : knownEvolutionOptions();
 const screenNav = document.querySelector('.arcade-nav');
@@ -605,9 +606,16 @@ function render() {
   }
   stoneUI.render();
   const spin = document.querySelector('#spin');
-  spin.disabled = pending || (neonProof && (!proofUser || (!!pendingLocalAction && !proofPendingRoundId)));
-  spin.textContent = spinning ? text.spinning : neonProof && proofPendingRoundId ? text.recoverButton : text.spinButton;
-  const roundMessage = status === 'success' && !wins.length ? text.noRewards : text[status];
+  const pendingRoundId = neonProof ? proofPendingRoundId : localPendingRoundId;
+  const emptyBalance = balance === 0;
+  spin.disabled = pending || balance === null || (emptyBalance && !pendingRoundId)
+    || (neonProof && (!proofUser || (!!pendingLocalAction && !proofPendingRoundId)));
+  spin.textContent = spinning ? text.spinning : pendingRoundId ? text.recoverButton : text.spinButton;
+  const emptyBalanceMessage = document.querySelector('#empty-balance');
+  emptyBalanceMessage.hidden = !emptyBalance;
+  emptyBalanceMessage.textContent = emptyBalance ? text.noBalance : '';
+  let roundMessage = status === 'success' && !wins.length ? text.noRewards : text[status];
+  if (status === 'noBalance' && emptyBalance) roundMessage = '';
   document.querySelector('#status').textContent = spinning ? text.reelsSpinning : roundMessage ?? '';
   document.querySelector('#demo-balance').textContent = balance === null ? '—' : String(balance);
   document.querySelector('#demo-balance').setAttribute('aria-label', balance === null ? text.credits : text.balance(balance));
@@ -996,7 +1004,10 @@ document.querySelector('#refresh-balance').addEventListener('click', async () =>
   render();
   try {
     await refreshDemoState();
-    if (pendingDb) showPendingLocalAction(await readPendingLocalAction(pendingDb));
+    if (pendingDb) {
+      showPendingLocalAction(await readPendingLocalAction(pendingDb));
+      localPendingRoundId = (await readPendingOperation(pendingDb, 'local-demo'))?.operationId ?? null;
+    }
     status = 'balanceRefreshed';
   }
   catch { status = 'failure'; }
@@ -1160,6 +1171,7 @@ async function spinLocal() {
   render();
   try {
     const operation = await claimPendingOperation(pendingDb, 'local-demo');
+    localPendingRoundId = operation.operationId;
     const response = await fetch('/api/demo-round', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ operationId: operation.operationId }) });
     if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
       throw new Error('Demo round unavailable');
@@ -1167,6 +1179,7 @@ async function spinLocal() {
     const result = await response.json();
     if (result.status === 'no_balance') {
       await clearPendingOperation(pendingDb, 'local-demo', operation.operationId);
+      localPendingRoundId = null;
       await refreshDemoState();
       status = 'noBalance';
       return;
@@ -1185,6 +1198,7 @@ async function spinLocal() {
       result.vouchers.some(({ line, type }, index) => line !== voucherLines[index].line || !DEMO_VOUCHER_TYPES.includes(type)))) throw new Error('Invalid vouchers');
     await refreshDemoState();
     await clearPendingOperation(pendingDb, 'local-demo', operation.operationId);
+    localPendingRoundId = null;
     // Só publicamos os estados depois de validar a rodada inteira.
     grid = result.grid;
     wins = checkedWins;
@@ -1209,7 +1223,7 @@ async function spinLocal() {
   }
 }
 document.querySelector('#spin').addEventListener('click', async (event) => {
-  if (pending) return;
+  if (event.currentTarget.disabled) return;
   const button = event.currentTarget;
   const hadFocus = document.activeElement === button;
   const version = proofGeneration;
@@ -1237,6 +1251,7 @@ if (neonProof) startNeonProof();
 else Promise.all([openPendingOperations(), refreshDemoState()]).then(async ([db]) => {
   pendingDb = db;
   showPendingLocalAction(await readPendingLocalAction(db));
+  localPendingRoundId = (await readPendingOperation(db, 'local-demo'))?.operationId ?? null;
   pending = false;
   render();
 }).catch(() => { status = 'failure'; render(); });

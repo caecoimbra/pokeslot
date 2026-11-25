@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import { checkArcadeFeedback } from './check-arcade-feedback.mjs';
 import { checkDexCardLabels } from './check-dex-card-labels.mjs';
 import { checkSessionLoading } from './check-session-loading.mjs';
+import { checkZeroBalance } from './check-zero-balance.mjs';
 
 const [moduleBase, edgePath, origin, screenshotPath] = process.argv.slice(2);
 const require = createRequire(moduleBase);
@@ -70,5 +71,6 @@ try {
   await checkArcadeFeedback(browser, origin);
   await checkDexCardLabels(browser, origin, axe);
   await checkSessionLoading(browser, origin);
+  await checkZeroBalance(browser, origin);
   console.log('Rodada local no Edge, teclado, foco, árvore de acessibilidade e axe passaram.');
 } finally { await browser.close(); }

@@ -55,10 +55,11 @@
           <div class="grid" id="grid" role="group"></div>
           <div class="control-deck">
             <div class="credit-meter"><span data-text="credits"></span><strong id="demo-balance" role="status"></strong></div>
-            <button id="spin" class="spin-button" type="button" data-text="spinButton"></button>
+            <button id="spin" class="spin-button" type="button" data-text="spinButton" aria-describedby="empty-balance"></button>
           </div>
           <div class="cabinet-feedback">
             <p id="status" class="status" role="status"></p>
+            <p id="empty-balance" class="status" role="status" hidden></p>
             <button id="sound-toggle" type="button" aria-pressed="true" hidden><span aria-hidden="true">♪</span> <span class="sound-label">Som</span> <span class="sound-state" aria-hidden="true"></span></button>
           </div>
         </div>
