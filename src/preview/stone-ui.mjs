@@ -23,7 +23,7 @@ const translations = {
     statuses: { stoneOk: 'Pedra adicionada ao inventário.', insufficient_vouchers: 'Você não possui vale pedra.',
       evolveOk: 'Evolução registrada. A forma anterior permanece na Pokédex.', incompatible: 'A pedra ou evolução não é compatível.',
       source_unavailable: 'A variante de origem não está disponível.', already_registered: 'A variante evoluída já está registrada; nenhuma pedra foi gasta.',
-      missing_stone: 'Você não possui a pedra necessária.', failure: 'Não foi possível confirmar a operação; recupere a ação pendente antes de iniciar outra.' },
+      missing_stone: 'Você não possui a pedra necessária.', rateLimited: 'Muitas ações em pouco tempo. Aguarde um minuto e recupere a ação pendente.', failure: 'Não foi possível confirmar a operação; recupere a ação pendente antes de iniciar outra.' },
   },
   en: {
     title: 'Evolution workshop', inventoryTitle: 'Stone case',
@@ -46,7 +46,7 @@ const translations = {
     statuses: { stoneOk: 'Stone added to inventory.', insufficient_vouchers: 'You have no stone voucher.',
       evolveOk: 'Evolution registered. The previous form remains in the Pokédex.', incompatible: 'The stone or evolution is incompatible.',
       source_unavailable: 'The source variant is unavailable.', already_registered: 'The evolved variant is already registered; no stone was spent.',
-      missing_stone: 'You do not have the required stone.', failure: 'Could not confirm the operation; recover the pending action before starting another.' },
+      missing_stone: 'You do not have the required stone.', rateLimited: 'Too many actions in a short time. Wait a minute and recover the pending action.', failure: 'Could not confirm the operation; recover the pending action before starting another.' },
   },
 };
 
@@ -108,7 +108,7 @@ export function setupStoneUI({ getState, performAction }) {
     setText('stone-evolve-title', text.evolveTitle);
     setText('stone-evolution-label', text.chooseEvolution);
     setText('stone-evolve-button', text.evolve);
-    setText('stone-action-status', text.statuses[failure ? 'failure' : state.actionMessage] ?? '');
+    setText('stone-action-status', failure ? text.statuses.failure : (state.actionMessageText ?? text.statuses[state.actionMessage] ?? ''));
     const list = element('stone-inventory');
     list.replaceChildren(...inventory.map(({ type, amount }) => inventoryCard(
       'gem gem-' + type, text.names[type] ?? type, '× ' + amount

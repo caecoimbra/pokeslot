@@ -14,7 +14,7 @@ test('endpoint local valida origem, dados e repetição de resgate', async () =>
   let middleware;
   try {
     process.chdir(dir);
-    config.plugins[0].configureServer({ httpServer, middlewares: { use(fn) { middleware = fn; } } });
+    config({ mode: 'development' }).plugins[0].configureServer({ httpServer, middlewares: { use(fn) { middleware = fn; } } });
     const call = (body, { origin = 'http://localhost:5173', method = 'POST', contentType = 'application/json', path = '/api/demo-redeem' } = {}) => new Promise((resolve) => {
       const req = new EventEmitter();
       Object.assign(req, { url: path, method, headers: { host: 'localhost:5173', origin, 'content-type': contentType } });

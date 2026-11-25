@@ -24,9 +24,9 @@ import { knownEvolutionOptions, kantoEvolutionOptions, DEMO_STONES } from '../se
 import { createRedemptionNamesLoader } from './redemption-names.mjs';
 
 const previewParams = new URLSearchParams(location.search);
-const neonProof = previewParams.get('backend') === 'neon';
+const neonProof = import.meta.env.MODE === 'homologacao' || previewParams.get('backend') === 'neon';
 const recoveryTest = import.meta.env.DEV && location.hostname === 'localhost' && previewParams.get('recovery-test') === '1';
-const proofUrl = 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
+const proofUrl = import.meta.env.VITE_NEON_PROOF_FUNCTION_URL || 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
 // Permite verificar uma falha de cada consulta no navegador de desenvolvimento.
 const failNextPokeApi = new Set(import.meta.env.DEV && new URLSearchParams(location.search).get('test') === 'pokeapi'
   ? ['details', 'names'] : []);
@@ -191,6 +191,18 @@ const messages = {
 };
 Object.assign(messages.pt, capturePresentationMessages.pt);
 Object.assign(messages.en, capturePresentationMessages.en);
+messages.pt.rateLimited = 'Muitas ações em pouco tempo. Aguarde um minuto e recupere a ação pendente.';
+messages.en.rateLimited = 'Too many actions in a short time. Wait a minute and recover the pending action.';
+Object.assign(messages.pt, {
+  operation_expired: 'O resultado da ação expirou. Confira o progresso atualizado antes de iniciar outra ação.',
+  operation_clock: 'Confira a data e a hora do dispositivo antes de iniciar outra ação.',
+  dailyLimit: 'A capacidade diária da prévia foi atingida. Tente após a virada do dia em UTC.',
+});
+Object.assign(messages.en, {
+  operation_expired: 'The action result expired. Check your updated progress before starting another action.',
+  operation_clock: 'Check your device time and date before starting another action.',
+  dailyLimit: 'The preview reached its daily capacity. Try again after midnight UTC.',
+});
 if (neonProof) {
   Object.assign(messages.pt, { footnote: 'Prévia isolada da Neon com contas de teste.',
     vouchersNote: 'Três símbolos de vale na mesma linha sorteiam um bilhete. Pokémon, pedra e giros têm a mesma chance.',
@@ -251,7 +263,7 @@ function activeScreen() {
 const stoneUI = setupStoneUI({
   getState: () => ({ visible: activeScreen() === 'stones', authenticated: neonProof, enabled: !!pendingDb && (!neonProof || (!!proofUser && (!proofPendingRoundId || !!pendingLocalAction))), language, ownedVariants,
     vouchers: demoVouchers, stones: demoStones, recipes: evolutionRecipes, pending,
-    pendingAction: pendingLocalAction, actionMessage: stoneActionMessage }),
+    pendingAction: pendingLocalAction, actionMessage: stoneActionMessage, actionMessageText: messages[language][stoneActionMessage] }),
   performAction: performStoneAction,
 });
 const detailsStore = createSpeciesDetailsStore(async (speciesId) => {
@@ -362,7 +374,10 @@ async function performProofInventoryAction(action, payload) {
       present: (result, state, operation) => {
         if (!current()) throw new Error('session_changed');
         setProofState(state);
-        if (operation.action === 'pokemon') {
+        if (['operation_expired', 'operation_clock'].includes(result.status)) {
+          if (operation.action === 'pokemon') redeemStatus = result.status;
+          else stoneActionMessage = result.status;
+        } else if (operation.action === 'pokemon') {
           redeemStatus = { ok: 'redeemOk', already_owned: 'redeemOwned', insufficient_vouchers: 'redeemInsufficient' }[result.status];
           if (result.status === 'ok') { selectedSpeciesId = operation.args.speciesId; selectedShiny = false; pokemonData = null; loadPokemon(); }
         } else {
@@ -384,6 +399,10 @@ async function performProofInventoryAction(action, payload) {
       if (['other_operation_pending', 'pending_changed'].includes(error?.message)) { await recoverProofSession(); return; }
       if (error?.message === 'session_changed') {
         resetProofSession('authSignedOut');
+      } else if (['rate_limited', 'daily_limit'].includes(error?.message)) {
+        const message = error.message === 'daily_limit' ? 'dailyLimit' : 'rateLimited';
+        if (action === 'pokemon' || pendingLocalAction?.action === 'redeem-pokemon') redeemStatus = message;
+        else stoneActionMessage = message;
       } else if (error?.message !== 'different_pending') {
         if (action === 'pokemon' || pendingLocalAction?.action === 'redeem-pokemon') redeemStatus = 'redeemFailure';
         else stoneActionMessage = 'failure';
@@ -495,7 +514,8 @@ function render() {
   document.querySelectorAll('[data-text]').forEach((element) => { element.textContent = text[element.dataset.text]; });
   const button = document.querySelector('#language');
   button.textContent = language === 'pt' ? 'EN' : 'PT';
-  button.setAttribute('aria-label', language === 'pt' ? 'Switch to English' : 'Mudar para português');
+  button.lang = language === 'pt' ? 'en' : 'pt-BR';
+  button.setAttribute('aria-label', language === 'pt' ? 'EN — Switch to English' : 'PT — Mudar para português');
   reelView.render(grid, wins, spinning, text);
   document.querySelector('.round-readout').hidden = spinning || grid === initialGrid;
   document.querySelector('#lines').textContent = wins.length ? wins.map(({ line }) => text.lines[line]).join(' · ') : text.noWins;
@@ -732,6 +752,7 @@ async function spinNeonProof() {
       present: ([result], state) => {
         if (!current()) throw new Error('session_changed');
         setProofState(state);
+        if (['operation_expired', 'operation_clock'].includes(result.status)) { status = result.status; return; }
         if (result.status === 'no_balance') { status = 'noBalance'; return; }
         grid = result.grid;
         wins = result.winningLines;
@@ -761,6 +782,8 @@ async function spinNeonProof() {
     if (current()) {
       if (['other_operation_pending', 'pending_changed'].includes(error?.message)) { await recoverProofSession(); return; }
       if (error?.message === 'session_changed') resetProofSession('authSignedOut');
+      else if (error?.message === 'rate_limited') status = 'rateLimited';
+      else if (error?.message === 'daily_limit') status = 'dailyLimit';
       else status = 'failure';
     }
   } finally {
@@ -811,7 +834,13 @@ async function submitProofAuth(event, registering) {
     proofSessions?.postMessage('session-changed');
     await recoverProofSession(result.data.user.id);
   } catch { authStatus = registering ? 'signupFailed' : 'authFailed'; }
-  finally { authSubmitting = false; render(); }
+  finally {
+    authSubmitting = false;
+    render();
+    if (proofUser && (document.activeElement === document.body || form.contains(document.activeElement))) {
+      document.querySelector('#proof-user').focus();
+    }
+  }
 }
 document.querySelector('#proof-login').addEventListener('submit', (event) => submitProofAuth(event, false));
 document.querySelector('#proof-signup').addEventListener('submit', (event) => submitProofAuth(event, true));
@@ -825,7 +854,13 @@ document.querySelector('#proof-logout').addEventListener('click', async () => {
     proofSessions?.postMessage('session-changed');
     await recoverProofSession();
   } catch { resetProofSession('authFailed'); }
-  finally { signingOut = false; render(); }
+  finally {
+    signingOut = false;
+    render();
+    if (!proofUser && document.activeElement === document.body) {
+      document.querySelector('#proof-login [name=email]').focus();
+    }
+  }
 });
 proofSessions?.addEventListener('message', ({ data }) => {
   if (data === 'session-changed') recoverProofSession();

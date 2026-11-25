@@ -10,8 +10,11 @@
   <body>
     <main class="shell">
       <header class="topbar">
-        <span class="brand">POKÉ<span>SLOT</span></span>
-        <button id="language" class="language" type="button" aria-label="Switch to English">EN</button>
+        <span class="brand">
+          <span class="brand-cabinet" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="brand-name">Poké<span>Slot</span></span>
+        </span>
+        <button id="language" class="language" type="button" lang="en" aria-label="EN — Switch to English">EN</button>
       </header>
       <section class="proof-auth" aria-labelledby="recovery-title">
         <h1 id="recovery-title" data-text="title">Redefinir senha</h1>
@@ -25,7 +28,7 @@
           <label><span data-text="confirm"></span><input name="confirmation" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
           <button type="submit" data-text="save"></button>
         </form>
-        <p id="recovery-status" role="status"></p>
+        <p id="recovery-status" role="status" tabindex="-1"></p>
         <a id="create-recovery-test-account" hidden data-text="createTestAccount"></a>
         <a id="return-to-machine" href="./previa-maquina.html?backend=neon" data-text="back">Voltar à máquina</a>
       </section>

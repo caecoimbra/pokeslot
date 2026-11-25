@@ -11,7 +11,7 @@ const messages = {
     requestFailed: 'Não foi possível confirmar a solicitação. Tente novamente em instantes.',
     invalidLink: 'Este link está inválido, foi usado ou expirou. Solicite um novo.',
     passwordsDiffer: 'As senhas precisam ser iguais.',
-    resetFailed: 'Não foi possível confirmar a alteração. Tente entrar com a nova senha ou solicite um novo link.',
+    resetFailed: 'Não foi possível confirmar a alteração. Tente entrar com a nova senha ou preencha os campos para tentar novamente.',
     passwordChanged: 'Senha alterada. Volte à máquina para entrar com a nova senha.',
   },
   en: {
@@ -23,7 +23,7 @@ const messages = {
     requestFailed: 'Could not confirm the request. Please try again shortly.',
     invalidLink: 'This link is invalid, has been used, or has expired. Request a new one.',
     passwordsDiffer: 'The passwords must match.',
-    resetFailed: 'Could not confirm the change. Try signing in with the new password or request a new link.',
+    resetFailed: 'Could not confirm the change. Try signing in with the new password or fill in the fields to retry.',
     passwordChanged: 'Password changed. Return to the machine to sign in with your new password.',
   },
 };
@@ -39,6 +39,7 @@ try {
 
 const request = document.querySelector('#request-link');
 const reset = document.querySelector('#reset-password');
+const confirmation = reset.elements.confirmation;
 const feedback = document.querySelector('#recovery-status');
 const languageButton = document.querySelector('#language');
 const back = document.querySelector('#return-to-machine');
@@ -51,7 +52,8 @@ function render() {
   document.title = `PokéSlot — ${text.title}`;
   for (const node of document.querySelectorAll('[data-text]')) node.textContent = text[node.dataset.text];
   languageButton.textContent = language === 'en' ? 'PT' : 'EN';
-  languageButton.ariaLabel = language === 'en' ? 'Mudar para português' : 'Switch to English';
+  languageButton.lang = language === 'en' ? 'pt-BR' : 'en';
+  languageButton.ariaLabel = language === 'en' ? 'PT — Mudar para português' : 'EN — Switch to English';
   back.href = `./previa-maquina.html?backend=neon&lang=${language}`;
   request.hidden = !recovery || !!token || status === 'passwordChanged';
   reset.hidden = !recovery || !token;
@@ -60,6 +62,13 @@ function render() {
   request.querySelector('button').disabled = busy;
   reset.querySelector('button').disabled = busy;
   feedback.textContent = text[busy ? 'working' : status] ?? '';
+  if (status === 'passwordsDiffer') {
+    confirmation.setAttribute('aria-invalid', 'true');
+    confirmation.setAttribute('aria-describedby', feedback.id);
+  } else {
+    confirmation.removeAttribute('aria-invalid');
+    confirmation.removeAttribute('aria-describedby');
+  }
 }
 
 languageButton.addEventListener('click', () => {
@@ -82,7 +91,7 @@ request.addEventListener('submit', async (event) => {
 reset.addEventListener('submit', async (event) => {
   event.preventDefault();
   if (busy || reset.hidden) return;
-  const { password, confirmation } = reset.elements;
+  const { password } = reset.elements;
   if (password.value !== confirmation.value) { status = 'passwordsDiffer'; render(); confirmation.focus(); return; }
   busy = true;
   render();
@@ -95,7 +104,20 @@ reset.addEventListener('submit', async (event) => {
       sessions.close();
     }
   } catch { status = 'resetFailed'; }
-  finally { reset.reset(); busy = false; render(); }
+  finally {
+    reset.reset();
+    busy = false;
+    render();
+    if (document.activeElement === document.body || reset.contains(document.activeElement)) {
+      if (status === 'passwordChanged') feedback.focus();
+      else if (status === 'invalidLink') request.elements.email.focus();
+      else password.focus();
+    }
+  }
+});
+
+reset.addEventListener('input', () => {
+  if (status === 'passwordsDiffer') { status = ''; render(); }
 });
 
 render();

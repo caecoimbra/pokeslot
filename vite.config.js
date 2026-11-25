@@ -1,5 +1,7 @@
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { copyFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { defineConfig, loadEnv } from 'vite';
 import { openLocalGameStore } from './src/server/local-game-store.mjs';
 
 // Endpoint apenas do servidor de desenvolvimento. Não é uma API de produção.
@@ -47,16 +49,37 @@ function demoRoundPlugin() {
   };
 }
 
-export default defineConfig({
-  plugins: [demoRoundPlugin()],
-  build: {
-    rollupOptions: {
-      input: {
-        main: fileURLToPath(new URL('./index.html', import.meta.url)),
-        preview: fileURLToPath(new URL('./previa-maquina.html', import.meta.url)),
-        passwordRecovery: fileURLToPath(new URL('./redefinir-senha.html', import.meta.url)),
-        gameProof: fileURLToPath(new URL('./prova-jogo.html', import.meta.url)),
+export default defineConfig(({ mode }) => {
+  const homologation = mode === 'homologacao';
+  if (homologation) {
+    const env = loadEnv(mode, process.cwd(), 'VITE_NEON_PROOF_');
+    for (const key of ['VITE_NEON_PROOF_DATABASE_URL', 'VITE_NEON_PROOF_FUNCTION_URL']) {
+      const value = env[key] && new URL(env[key]);
+      if (!value || value.protocol !== 'https:' || !value.hostname.endsWith('.neon.tech') ||
+          value.username || value.password || value.search || value.hash) {
+        throw new Error(`Configure um endpoint HTTPS público da Neon em ${key}.`);
+      }
+    }
+  }
+  const page = (name) => fileURLToPath(new URL(name, import.meta.url));
+  return {
+    plugins: [demoRoundPlugin(), ...(homologation ? [{
+      name: 'homologation-root',
+      async writeBundle({ dir }) {
+        await copyFile(join(dir, 'previa-maquina.html'), join(dir, 'index.html'));
+      },
+    }] : [])],
+    build: {
+      outDir: homologation ? 'dist/homologacao' : 'dist',
+      // A política de segurança da hospedagem permite imagens servidas pelo próprio site.
+      ...(homologation ? { assetsInlineLimit: 0 } : {}),
+      rollupOptions: {
+        input: {
+          preview: page('./previa-maquina.html'),
+          passwordRecovery: page('./redefinir-senha.html'),
+          ...(homologation ? {} : { main: page('./index.html'), gameProof: page('./prova-jogo.html') }),
+        },
       },
     },
-  },
+  };
 });
