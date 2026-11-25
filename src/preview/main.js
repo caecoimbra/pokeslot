@@ -27,6 +27,7 @@ import { createRedemptionNamesLoader } from './redemption-names.mjs';
 const previewParams = new URLSearchParams(location.search);
 const neonProof = import.meta.env.MODE === 'homologacao' || previewParams.get('backend') === 'neon';
 const recoveryTest = import.meta.env.DEV && location.hostname === 'localhost' && previewParams.get('recovery-test') === '1';
+const publicSignup = neonProof && !import.meta.env.DEV;
 const proofUrl = import.meta.env.VITE_NEON_PROOF_FUNCTION_URL || 'https://br-dry-block-be4mfcuo-pokeslotgame.compute.c-9.us-east-2.aws.neon.tech';
 // Permite verificar uma falha de cada consulta no navegador de desenvolvimento.
 const failNextPokeApi = new Set(import.meta.env.DEV && new URLSearchParams(location.search).get('test') === 'pokeapi'
@@ -97,9 +98,9 @@ const messages = {
     descriptionSource: (version) => `Descrição da PokéAPI · versão ${version}`,
     unknownVersion: 'não informada',
     missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal',
-    account: 'Jogador', signInTitle: 'Sua conta', inviteTitle: 'Acesso por convite', emailLabel: 'E-mail', passwordLabel: 'Senha', loginButton: 'Entrar', logoutButton: 'Sair',
+    account: 'Jogador', signInTitle: 'Sua conta', emailLabel: 'E-mail', passwordLabel: 'Senha', loginButton: 'Entrar', logoutButton: 'Sair',
     authSignedOut: 'Entre para continuar a jogar.', authFailed: 'Não foi possível entrar e carregar seu progresso. Confira seus dados e tente novamente.',
-    accessRestricted: 'Esta conta ainda não tem convite para jogar.',
+    accessRestricted: 'O acesso ao jogo está indisponível para esta conta.',
     showSignup: 'Criar conta de teste', showLogin: 'Voltar para entrar', signupButton: 'Criar conta',
     passwordRecovery: 'Esqueci a senha',
     signupNote: 'Use um nome fictício, um endereço @example.test e uma senha exclusiva para esta prova.',
@@ -166,9 +167,9 @@ const messages = {
     descriptionSource: (version) => `PokéAPI description · ${version} version`,
     unknownVersion: 'unspecified',
     missingSprite: 'Image unavailable.', spriteAlt: 'Normal sprite',
-    account: 'Player', signInTitle: 'Your account', inviteTitle: 'Invite-only access', emailLabel: 'Email', passwordLabel: 'Password', loginButton: 'Sign in', logoutButton: 'Sign out',
+    account: 'Player', signInTitle: 'Your account', emailLabel: 'Email', passwordLabel: 'Password', loginButton: 'Sign in', logoutButton: 'Sign out',
     authSignedOut: 'Sign in to continue playing.', authFailed: 'Could not sign in and load your progress. Check your details and try again.',
-    accessRestricted: 'This account does not have an invitation to play yet.',
+    accessRestricted: 'Game access is unavailable for this account.',
     showSignup: 'Create test account', showLogin: 'Back to sign in', signupButton: 'Create account',
     passwordRecovery: 'Forgot password',
     signupNote: 'Use a fictional name, an @example.test address, and a password unique to this test.',
@@ -207,6 +208,22 @@ if (neonProof) {
   Object.assign(messages.en, {
     failure: 'Could not confirm the round. Sign in to the same account and retry to recover a pending operation.',
     captureStatus: { new: 'New capture', duplicate: 'Duplicate' } });
+}
+if (publicSignup) {
+  Object.assign(messages.pt, {
+    showSignup: 'Criar conta',
+    signupNote: 'Use um e-mail que você possa acessar para recuperar sua conta.',
+    signupName: 'Nome de jogador',
+    signupPassword: 'Senha (8 caracteres ou mais)',
+    signupNameRequired: 'Informe um nome de jogador.',
+  });
+  Object.assign(messages.en, {
+    showSignup: 'Create account',
+    signupNote: 'Use an email address you can access to recover your account.',
+    signupName: 'Player name',
+    signupPassword: 'Password (8 characters or more)',
+    signupNameRequired: 'Enter a player name.',
+  });
 }
 const reelView = createArcadeReels(document.querySelector('#grid'));
 const arcadeSound = createArcadeSound();
@@ -592,7 +609,7 @@ function render() {
     : lastProofReward.available ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : text.earnedUnavailable;
   if (neonProof) {
     const busy = authSubmitting || signingOut;
-    document.querySelector('#account-label').textContent = proofUser ? text.account : import.meta.env.DEV ? text.signInTitle : text.inviteTitle;
+    document.querySelector('#account-label').textContent = proofUser ? text.account : text.signInTitle;
     document.querySelector('#open-password-recovery').href = `./redefinir-senha.html?lang=${language}`;
     document.querySelector('#proof-auth-status').textContent = busy ? text.authWorking : text[authStatus] ?? '';
     for (const button of document.querySelectorAll('#proof-login button, #proof-signup button')) button.disabled = busy;
@@ -691,9 +708,9 @@ function setProofState(state) {
 }
 async function startNeonProof() {
   document.querySelector('#proof-auth').hidden = false;
-  document.querySelector('#open-proof-signup').hidden = !import.meta.env.DEV;
-  if (recoveryTest) {
-    document.querySelector('#proof-signup-note').dataset.text = 'recoveryTestNote';
+  document.querySelector('#open-proof-signup').hidden = false;
+  if (recoveryTest || publicSignup) {
+    if (recoveryTest) document.querySelector('#proof-signup-note').dataset.text = 'recoveryTestNote';
     document.querySelector('#proof-signup [name=email]').removeAttribute('placeholder');
   }
   try {
@@ -816,7 +833,7 @@ async function submitProofAuth(event, registering) {
   const email = form.elements.email.value.trim();
   const password = form.elements.password.value;
   const name = registering ? form.elements.name.value.trim() : '';
-  if (registering && (!name || (!recoveryTest && !email.toLowerCase().endsWith('@example.test')))) {
+  if (registering && (!name || (!publicSignup && !recoveryTest && !email.toLowerCase().endsWith('@example.test')))) {
     authStatus = name ? 'signupEmailRequired' : 'signupNameRequired';
     render();
     return;

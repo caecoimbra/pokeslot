@@ -67,7 +67,7 @@ test('recusa token expirado antes de consultar banco', async () => {
   assert.equal((await request('/state', expired, { expectedUserId: 'A' })).status, 401);
   assert.equal(databaseCalls, 0);
 });
-test('prévia hospedada recusa uma conta autenticada fora da lista antes de consultar o banco', async () => {
+test('jogo hospedado aceita identidade autenticada e impede troca de jogador', async () => {
   process.env.POKESLOT_WEB_ORIGIN = 'https://preview.example.test';
   process.env.POKESLOT_ALLOWED_PLAYERS = 'A';
   try {
@@ -76,8 +76,8 @@ test('prévia hospedada recusa uma conta autenticada fora da lista antes de cons
     const response = await hostedApp.request('/state', { method: 'POST', headers: {
       Origin: 'https://preview.example.test',
       Authorization: `Bearer ${bearer}`, 'X-Session-Token': 'test-session', 'Content-Type': 'application/json',
-    }, body: JSON.stringify({ expectedUserId: 'B' }) });
-    assert.equal(response.status, 403);
+    }, body: JSON.stringify({ expectedUserId: 'A' }) });
+    assert.equal(response.status, 409);
     assert.equal(response.headers.get('access-control-allow-origin'), 'https://preview.example.test');
     assert.equal(databaseCalls, 0);
   } finally {

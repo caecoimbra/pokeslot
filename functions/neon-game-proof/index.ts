@@ -36,8 +36,7 @@ function auditRuntimeRole() {
 void auditRuntimeRole();
 const app = new Hono<{ Variables: { userId: string; sessionToken: string } }>();
 const allowedOrigin = process.env.POKESLOT_WEB_ORIGIN || 'http://localhost:5173';
-const limitedPreview = allowedOrigin !== 'http://localhost:5173';
-const invitedPlayers = new Set((process.env.POKESLOT_ALLOWED_PLAYERS || '').split(',').map((id) => id.trim()).filter(Boolean));
+const hosted = allowedOrigin !== 'http://localhost:5173';
 const expectedRole = process.env.POKESLOT_EXPECTED_DB_ROLE;
 let databaseRoleCheck: Promise<boolean> | undefined;
 function matchesDatabaseRole() {
@@ -45,8 +44,8 @@ function matchesDatabaseRole() {
     .then(([check]) => check.allowed === true)
     .catch(() => { databaseRoleCheck = undefined; return false; });
 }
-if (limitedPreview && (new URL(allowedOrigin).origin !== allowedOrigin || !allowedOrigin.startsWith('https://') || !invitedPlayers.size)) {
-  throw new Error('Set an HTTPS origin and player allowlist for the hosted preview');
+if (hosted && (new URL(allowedOrigin).origin !== allowedOrigin || !allowedOrigin.startsWith('https://'))) {
+  throw new Error('Set an HTTPS origin for the hosted game');
 }
 app.use('*', cors({ origin: allowedOrigin, allowMethods: ['POST', 'OPTIONS'], allowHeaders: ['Authorization', 'Content-Type', 'X-Session-Token'] }));
 app.use('*', async (c, next) => { await next(); c.header('Cache-Control', 'no-store'); });
@@ -60,7 +59,6 @@ const authenticated = createMiddleware<{ Variables: { userId: string; sessionTok
       issuer, audience: issuer, algorithms: ['EdDSA'], requiredClaims: ['sub', 'iss', 'aud', 'exp'],
     });
     if (typeof payload.sub !== 'string' || !payload.sub) return c.json({ error: 'unauthorized' }, 401);
-    if (limitedPreview && !invitedPlayers.has(payload.sub)) return c.json({ error: 'access_restricted' }, 403);
     c.set('userId', payload.sub);
     c.set('sessionToken', sessionToken);
   } catch (error) {

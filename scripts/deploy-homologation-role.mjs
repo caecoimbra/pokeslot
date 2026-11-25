@@ -77,13 +77,13 @@ try {
   );
   const deployed = spawnSync(process.execPath, ['--import', load, cliEntry, 'functions', 'deploy', 'pokeslothml',
     '--src', 'functions/neon-game-proof/index.ts', '--env', `POKESLOT_WEB_ORIGIN=${origin}`,
-    '--env', `POKESLOT_ALLOWED_PLAYERS=${playerId}`, '--env', 'POKESLOT_EXPECTED_DB_ROLE=pokeslot_runtime',
+    '--env', 'POKESLOT_EXPECTED_DB_ROLE=pokeslot_runtime',
     '--env', 'POKESLOT_AUDIT_DB_ROLE=1', '--wait', ...scope], {
     encoding: 'utf8', windowsHide: true, timeout: 50000,
     env: { ...process.env, POKESLOT_DEPLOY_CONNECTION: runtimeUrl.href },
   });
   assert.equal(deployed.status, 0);
-  console.log('Function de homologação atualizada com um único jogador permitido.');
+  console.log('Function atualizada com o papel de banco restrito.');
 } catch (error) {
   console.error(`Falha ao ${stage} (${error.code ?? error.name}).`);
   process.exitCode = 1;

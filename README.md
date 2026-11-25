@@ -4,7 +4,7 @@ Um arcade de coleção idealizado e dirigido por **Caetano Coimbra**. Cada rodad
 
 **[Abrir a máquina](https://pokeslot.pages.dev/) · [Case do projeto](https://pokeslot.pages.dev/case/) · [English case study](https://pokeslot.pages.dev/case/en/)**
 
-A demonstração hospedada persiste o progresso de contas convidadas. O case pode ser lido por qualquer visitante. Para experimentar a máquina sem convite, o repositório inclui um modo de desenvolvimento local.
+Crie uma conta para jogar na máquina hospedada e recuperar seu progresso. Use um e-mail ao qual tenha acesso para receber o link de redefinição de senha. O repositório também inclui um modo de desenvolvimento local.
 
 ![Máquina do PokéSlot após uma rodada local, com os três rolos, o saldo e o comando Girar](public/case/maquina-pt.png)
 
@@ -21,7 +21,7 @@ Uma linha de símbolos de giro concede dois giros. Capturar de novo a **mesma va
 | Camada | Responsabilidade |
 | --- | --- |
 | Interface PT/EN em JavaScript e CSS, servida pelo Cloudflare Pages | Receber comandos, animar os rolos e apresentar o resultado confirmado. A Pokédex usa folhas de sprites locais para preservar as silhuetas e os registros quando a PokéAPI está indisponível. |
-| Neon Auth e Neon Function | Identificar a conta, exigir uma sessão ativa e sortear o resultado no servidor. A aplicação hospedada restringe o jogo à lista de convidados. |
+| Neon Auth e Neon Function | Identificar a conta, exigir uma sessão ativa e sortear o resultado no servidor. |
 | PostgreSQL | Aplicar débito, recompensas e registros da coleção na mesma transação. A operação tem um identificador que permite recuperar a primeira resposta após uma interrupção. |
 | PokéAPI | Fornecer dados das espécies para as fichas. Nomes e sprites de referência incluídos no projeto também vêm dos repositórios da PokéAPI. |
 

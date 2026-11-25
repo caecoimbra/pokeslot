@@ -1,6 +1,8 @@
 # Caminho para uma versão 1.0 jogável
 
-**Entrega de portfólio em 25/11/2026.** A [máquina](https://pokeslot.pages.dev/) está hospedada com progresso por conta convidada. O [case público](https://pokeslot.pages.dev/case/) apresenta as decisões conduzidas por Caetano, a participação de IA e os resultados observados. O remetente de recuperação continua compartilhado. A abertura a novos jogadores e a escolha do remetente dedicado exigem validação separada dentro do orçamento de R$ 0.
+**Acesso público em 25/11/2026.** A [máquina](https://pokeslot.pages.dev/) permite criar contas e mantém o progresso por jogador. O [case público](https://pokeslot.pages.dev/case/) apresenta as decisões conduzidas por Caetano, a participação de IA e os resultados observados. O remetente de recuperação continua compartilhado, com limites de envio e entrega que dependem da Neon.
+
+Na abertura, duas contas fictícias novas passaram na prova de cadastro, entrada, isolamento, rodada simultânea com recuperação do mesmo resultado, saída e recuperação do progresso. A organização foi confirmada no plano Free. Os limites de acesso ao banco continuam ativos após a autenticação.
 
 Na revisão de entrega, o Edge verificou rolos com frenagem, movimento reduzido, comandos pelo teclado, persistência do botão de som e sequências distintas de notas por resultado. O teste de áudio observou a API do sintetizador. Uma Pokédex preenchida revelou divergência no nome acessível de cartões capturados. A regressão passou com variantes normal, shiny e ambas em PT/EN. O case foi verificado a 320 e 1.200 pixels, incluindo imagens, navegação e axe.
 
