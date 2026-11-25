@@ -289,6 +289,7 @@ const stoneUI = setupStoneUI({
     vouchers: demoVouchers, stones: demoStones, recipes: evolutionRecipes, pending,
     pendingAction: pendingLocalAction, actionMessage: stoneActionMessage, actionMessageText: messages[language][stoneActionMessage] }),
   performAction: performStoneAction,
+  speciesName,
 });
 const detailsStore = createSpeciesDetailsStore(async (speciesId) => {
   const controller = new AbortController();

@@ -53,7 +53,11 @@ test('recupera troca pendente mesmo quando o vale já foi consumido', async (t) 
   const calls = [];
   const state = { visible: true, enabled: true, language: 'pt', ownedVariants: [], vouchers: [], stones: [], recipes: [],
     pendingAction: { action: 'stone', payload: { stone: 'water' } } };
-  const ui = setupStoneUI({ getState: () => state, performAction: async (...args) => { calls.push(args); } });
+  const ui = setupStoneUI({
+    getState: () => state,
+    performAction: async (...args) => { calls.push(args); },
+    speciesName: (id) => ({ 25: 'Pikachu', 26: 'Raichu' })[id],
+  });
   ui.render();
   assert.equal(elements.get('#stone-exchange-button').disabled, true);
   assert.equal(elements.get('#stone-recover-button').hidden, false);
@@ -61,4 +65,20 @@ test('recupera troca pendente mesmo quando o vale já foi consumido', async (t) 
   assert.match(elements.get('#stone-recovery-message').textContent, /Pedra da Água/);
   await elements.get('#stone-recover-button').listeners.click({ preventDefault() {} });
   assert.deepEqual(calls, [['recover', {}]]);
+
+  state.ownedVariants = [{ speciesId: 25, isShiny: true }];
+  state.recipes = knownEvolutionOptions();
+  state.pendingAction = { action: 'evolve', payload: {
+    source: { speciesId: 25, isShiny: true }, targetId: 26, stone: 'thunder',
+  } };
+  ui.render();
+  const evolution = elements.get('#stone-evolution-choice');
+  assert.equal(evolution.children[1].label, 'Pikachu ✨ Shiny → Raichu · Pedra do Trovão');
+  assert.match(elements.get('#stone-recovery-message').textContent, /Pikachu Shiny → Raichu/);
+  const selected = evolution.children[1].value;
+  evolution.value = selected;
+  state.language = 'en';
+  ui.render();
+  assert.equal(evolution.children[1].label, 'Pikachu ✨ Shiny → Raichu · Thunder Stone');
+  assert.equal(evolution.value, selected);
 });

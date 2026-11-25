@@ -55,7 +55,7 @@ export function evolutionOptions(ownedVariants, recipes, stoneTypes = DEMO_STONE
     .map(({ targetId, stone }) => ({ source: { speciesId: source.speciesId, isShiny: source.isShiny }, targetId, stone })));
 }
 
-export function setupStoneUI({ getState, performAction }) {
+export function setupStoneUI({ getState, performAction, speciesName }) {
   const section = document.querySelector('#demo-stones');
   const element = (id) => section.querySelector(`#${id}`);
   const stoneChoice = element('stone-choice');
@@ -91,9 +91,10 @@ export function setupStoneUI({ getState, performAction }) {
     const pendingPayload = pendingAction?.payload;
     const pendingHere = pendingAction?.action === 'stone' || pendingAction?.action === 'evolve';
     const number = (id) => `#${String(id).padStart(3, '0')}`;
+    const name = (id) => speciesName?.(id) || number(id);
     const description = pendingAction?.action === 'stone' ? text.recoverStone(text.names[pendingPayload?.stone] ?? '?')
-      : pendingAction?.action === 'evolve' ? text.recoverEvolution(number(pendingPayload?.source?.speciesId ?? '?'),
-        pendingPayload?.source?.isShiny ? 'Shiny' : 'Normal', number(pendingPayload?.targetId ?? '?'), text.names[pendingPayload?.stone] ?? '?')
+      : pendingAction?.action === 'evolve' ? text.recoverEvolution(name(pendingPayload?.source?.speciesId ?? '?'),
+        pendingPayload?.source?.isShiny ? 'Shiny' : 'Normal', name(pendingPayload?.targetId ?? '?'), text.names[pendingPayload?.stone] ?? '?')
       : text.recoverElsewhere;
     setText('stone-recovery-message', description);
     setText('stone-recover-button', text.recover);
@@ -121,7 +122,7 @@ export function setupStoneUI({ getState, performAction }) {
     element('stone-preview').className = 'gem gem-' + stoneChoice.value;
     const choices = evolutionOptions(owned, state.recipes ?? [], stoneTypes);
     options(evolutionChoice, choices.map((option) => [JSON.stringify(option),
-      `${number(option.source.speciesId)}${option.source.isShiny ? ' ✨ Shiny' : ''} → ${number(option.targetId)} · ${text.names[option.stone]}`]), text.choosePlaceholder);
+      `${name(option.source.speciesId)}${option.source.isShiny ? ' ✨ Shiny' : ''} → ${name(option.targetId)} · ${text.names[option.stone]}`]), text.choosePlaceholder);
     let selected;
     try { selected = JSON.parse(evolutionChoice.value); } catch { selected = null; }
     const alreadyOwned = selected && owned.some((entry) => entry.speciesId === selected.targetId && entry.isShiny === selected.source.isShiny);
