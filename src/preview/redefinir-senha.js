@@ -3,10 +3,10 @@ import { createPasswordRecovery, takePasswordRecoveryLink } from './password-rec
 
 const messages = {
   pt: {
-    title: 'Redefinir senha', back: 'Voltar à máquina', testInbox: 'Use o endereço da conta de teste que recebe e-mail.',
+    title: 'Redefinir senha', back: 'Voltar à máquina',
     createTestAccount: 'Criar conta com uma caixa de teste',
     email: 'E-mail', send: 'Solicitar link', password: 'Nova senha (8 caracteres ou mais)', confirm: 'Repita a nova senha', save: 'Salvar nova senha',
-    working: 'Aguarde…', unavailable: 'A recuperação de conta está indisponível nesta prévia.',
+    working: 'Aguarde…', unavailable: 'A recuperação de conta está indisponível no momento.',
     requestAccepted: 'Se houver uma conta cadastrada com esse e-mail, você receberá um link. Verifique a caixa de entrada e o spam.',
     requestFailed: 'Não foi possível confirmar a solicitação. Tente novamente em instantes.',
     invalidLink: 'Este link está inválido, foi usado ou expirou. Solicite um novo.',
@@ -15,10 +15,10 @@ const messages = {
     passwordChanged: 'Senha alterada. Volte à máquina para entrar com a nova senha.',
   },
   en: {
-    title: 'Reset password', back: 'Back to the machine', testInbox: 'Use the address of the test account that can receive email.',
+    title: 'Reset password', back: 'Back to the machine',
     createTestAccount: 'Create an account with a test inbox',
     email: 'Email', send: 'Request reset link', password: 'New password (8 characters or more)', confirm: 'Repeat your new password', save: 'Save new password',
-    working: 'Please wait…', unavailable: 'Account recovery is unavailable in this preview.',
+    working: 'Please wait…', unavailable: 'Account recovery is currently unavailable.',
     requestAccepted: 'If an account is registered with that email, you will receive a link. Check your inbox and spam folder.',
     requestFailed: 'Could not confirm the request. Please try again shortly.',
     invalidLink: 'This link is invalid, has been used, or has expired. Request a new one.',
@@ -54,7 +54,7 @@ function render() {
   languageButton.textContent = language === 'en' ? 'PT' : 'EN';
   languageButton.lang = language === 'en' ? 'pt-BR' : 'en';
   languageButton.ariaLabel = language === 'en' ? 'PT — Mudar para português' : 'EN — Switch to English';
-  back.href = `./previa-maquina.html?backend=neon&lang=${language}`;
+  back.href = import.meta.env.MODE === 'homologacao' ? `/?lang=${language}` : `./previa-maquina.html?backend=neon&lang=${language}`;
   request.hidden = !recovery || !!token || status === 'passwordChanged';
   reset.hidden = !recovery || !token;
   createTestAccount.hidden = !localTest || request.hidden;

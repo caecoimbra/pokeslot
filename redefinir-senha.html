@@ -5,13 +5,16 @@
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PokéSlot — redefinir senha</title>
+    <meta name="theme-color" content="#17233d" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
     <link rel="stylesheet" href="/src/preview/style.css" />
+    <link rel="stylesheet" href="/src/preview/arcade.css" />
   </head>
-  <body>
+  <body class="arcade recovery-page">
     <main class="shell">
       <header class="topbar">
         <span class="brand">
-          <span class="brand-cabinet" aria-hidden="true"><i></i><i></i><i></i></span>
+          <img src="/favicon.svg" alt="" width="35" height="35" />
           <span class="brand-name">Poké<span>Slot</span></span>
         </span>
         <button id="language" class="language" type="button" lang="en" aria-label="EN — Switch to English">EN</button>
@@ -19,7 +22,6 @@
       <section class="proof-auth" aria-labelledby="recovery-title">
         <h1 id="recovery-title" data-text="title">Redefinir senha</h1>
         <form id="request-link" method="post" hidden>
-          <p data-text="testInbox"></p>
           <label><span data-text="email"></span><input name="email" type="email" autocomplete="email" required></label>
           <button type="submit" data-text="send"></button>
         </form>
@@ -30,7 +32,7 @@
         </form>
         <p id="recovery-status" role="status" tabindex="-1"></p>
         <a id="create-recovery-test-account" hidden data-text="createTestAccount"></a>
-        <a id="return-to-machine" href="./previa-maquina.html?backend=neon" data-text="back">Voltar à máquina</a>
+        <a id="return-to-machine" href="/" data-text="back">Voltar à máquina</a>
       </section>
     </main>
     <script type="module" src="/src/preview/redefinir-senha.js"></script>

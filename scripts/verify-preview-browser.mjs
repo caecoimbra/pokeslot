@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { checkArcadeFeedback } from './check-arcade-feedback.mjs';
+import { checkDexCardLabels } from './check-dex-card-labels.mjs';
 
 const [moduleBase, edgePath, origin, screenshotPath] = process.argv.slice(2);
 const require = createRequire(moduleBase);
@@ -29,10 +30,11 @@ try {
   const round = await roundResponse;
   assert.equal(round.status(), 200);
   assert.equal((await round.json()).status, 'ok');
-  await page.getByRole('status').filter({ hasText: 'Rodada demonstrativa concluída' }).waitFor();
+  const expectedStatus = /Rodada (concluída|sem prêmio)\./;
+  await page.getByRole('status').filter({ hasText: expectedStatus }).waitFor();
   const tree = await page.locator('[data-screen="machine"]').ariaSnapshot();
   assert.match(tree, /Girar/);
-  assert.match(tree, /Rodada demonstrativa concluída/);
+  assert.match(tree, expectedStatus);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   let violations = await scan('Máquina');
   if (screenshotPath) await page.locator('.topbar').screenshot({ path: screenshotPath });
@@ -65,5 +67,6 @@ try {
   violations += await scan('Recuperação');
   assert.equal(violations, 0, 'Violações nas verificações automatizadas');
   await checkArcadeFeedback(browser, origin);
+  await checkDexCardLabels(browser, origin, axe);
   console.log('Rodada local no Edge, teclado, foco, árvore de acessibilidade e axe passaram.');
 } finally { await browser.close(); }

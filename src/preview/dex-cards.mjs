@@ -29,7 +29,9 @@ export function renderDexCards(list, catalog, visible, selectedId, filter, nameF
     button.setAttribute('aria-pressed', String(owned && selectedId === speciesId));
     const name = owned ? nameFor(speciesId) : '???';
     const variants = [normal && text.normal, shiny && text.shiny].filter(Boolean).join(' · ');
-    button.setAttribute('aria-label', owned ? `${number} ${name}, ${variants}` : `${number}, ${text.unknownSpecies}`);
+    // O botão registrado recebe o nome dos próprios rótulos visíveis.
+    if (owned) button.removeAttribute('aria-label');
+    else button.setAttribute('aria-label', `${number}, ${text.unknownSpecies}`);
     button.querySelector('.dex-number').textContent = number;
     button.querySelector('.dex-name').textContent = name;
     const badge = button.querySelector('.dex-variants');

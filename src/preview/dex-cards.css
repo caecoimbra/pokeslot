@@ -40,7 +40,6 @@
 .dex-head progress::-moz-progress-bar { background: #83eac2; }
 .dex-head #variant-progress { color: #b9d9d8; font-size: .76rem; }
 #kanto-pokedex .pokedex-content { padding: clamp(12px, 2.5vw, 26px); color: #e1eeea; }
-#kanto-pokedex .dex-catalog-title { margin: 0 0 12px; color: #fff1cf; font-size: 1.28rem; }
 #kanto-pokedex .collection-filters { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
 #kanto-pokedex .collection-filters label { font-size: .82rem; font-weight: 700; }
 #kanto-pokedex .collection-filters :is(input, select) {
@@ -84,7 +83,7 @@
 .dex-variants { color: #305951; font-size: .66rem; font-weight: 700; margin-top: 3px; }
 .dex-variants:empty { display: none; }
 .dex-variants.has-shiny { color: #755015; }
-.dex-variants.has-shiny::before { content: '✦ '; }
+.dex-variants.has-shiny::before { content: '✦ ' / ''; }
 .dex-captures { margin-top: 20px; border-top: 1px solid #55746e; padding-top: 12px; }
 .dex-captures summary { width: fit-content; font-weight: 700; color: #c7e8d6; cursor: pointer; }
 #kanto-pokedex .pokemon-detail {

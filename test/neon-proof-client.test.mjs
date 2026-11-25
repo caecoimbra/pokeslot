@@ -152,6 +152,14 @@ test('não envia ação de inventário se a conta mudar durante a obtenção do 
   assert.equal(sent, false);
 });
 
+test('identifica uma conta sem convite apenas se a função confirmar o motivo da recusa', async () => {
+  for (const [reason, expected] of [['access_restricted', 'access_restricted'], ['forbidden', 'request_failed']]) {
+    const client = makeClient(base, api, async (url) => url.endsWith('/token')
+      ? json({ token: 'token-ficticio' }) : Response.json({ error: reason }, { status: 403 }), { client: auth });
+    await assert.rejects(client.request('state', 'A', () => true), { message: expected });
+  }
+});
+
 test('trata 401 e o conflito de sessão da função como troca de conta', async () => {
   for (const reply of [Response.json({ error: 'unauthorized' }, { status: 401 }),
     Response.json({ error: 'session_changed' }, { status: 409 })]) {

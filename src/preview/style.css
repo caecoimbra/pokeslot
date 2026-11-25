@@ -10,38 +10,6 @@ body { margin: 0; background: radial-gradient(circle at top, #283657, #101829 65
   width: fit-content;
   color: #fff3cf;
 }
-.brand-cabinet {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-  width: 35px;
-  height: 30px;
-  flex: none;
-  padding: 6px 4px 7px;
-  border: 2px solid #9ce4c7;
-  border-radius: 7px 7px 5px 5px;
-  background: linear-gradient(#3a8580, #1c4754);
-  box-shadow: 0 2px #09151e, inset 0 -3px #153541;
-}
-.brand-cabinet::after {
-  content: "";
-  position: absolute;
-  bottom: 2px;
-  left: 8px;
-  right: 8px;
-  height: 2px;
-  border-radius: 2px;
-  background: #ffd46a;
-}
-.brand-cabinet i {
-  border: 1px solid #182b32;
-  border-radius: 2px;
-  background: linear-gradient(#c9bd9e 0 25%, #fff3cf 25% 72%, #c9bd9e 72%);
-}
-.brand-cabinet i:nth-child(2) {
-  background: linear-gradient(#cf9d43 0 25%, #ffd46a 25% 72%, #cf9d43 72%);
-}
 .brand-name {
   font: 900 italic 1.42rem/1 "Arial Black", system-ui, sans-serif;
   letter-spacing: -.06em;
@@ -52,10 +20,7 @@ body { margin: 0; background: radial-gradient(circle at top, #283657, #101829 65
 .brand-name span { color: #ffd46a; }
 .language { color: white; background: #283958; border: 1px solid #7180a0; border-radius: 8px; padding: 8px 14px; font-weight: 800; cursor: pointer; }
 .language:focus-visible { outline: 3px solid #ffcb64; outline-offset: 3px; }
-.intro { margin: 50px 0 26px; }
-.eyebrow { text-transform: uppercase; color: #ffca61; font-size: .75rem; font-weight: 800; letter-spacing: .16em; }
 h1 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; margin: 10px 0; }
-.intro > p:last-child, .footnote { color: #c0cce1; line-height: 1.6; }
 .proof-auth { margin: 20px 0; padding: 18px; border: 1px solid #7180a0; border-radius: 12px; background: #1d2d4a; }
 .proof-auth[hidden], .proof-auth [hidden] { display: none; }
 .proof-auth label { display: block; margin: 10px 0; }
@@ -64,12 +29,7 @@ h1 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; margin: 10px 0; }
 .proof-auth a { display: inline-block; margin: 8px 4px; color: #ffdf91; }
 .machine { background: #243657; border: 2px solid #d89441; border-radius: 20px; padding: clamp(18px, 5vw, 32px); box-shadow: 0 14px 0 #a95c35, 0 22px 38px #080e1c88; }
 h2 { font-size: 1.05rem; margin: 24px 0 14px; }
-.results { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
-.results[hidden], .reward-preview[hidden] { display: none; }
-.results > span { color: #ffdf91; letter-spacing: .1em; font-size: .68rem; font-weight: 800; }
-.results strong { font-size: .9rem; }
 .reward-preview { margin-top: 18px; padding: 14px 16px; border-radius: 10px; background: #182946; }
-.reward-preview h3 { margin: 0; color: #ffdf91; font-size: .8rem; }
 .reward-preview ul { padding-left: 20px; margin: 10px 0 0; }
 .reward-preview li, .reward-preview p { font-size: .88rem; line-height: 1.6; }
 .reward-preview p { margin: 8px 0 0; }
@@ -120,5 +80,3 @@ h2 { font-size: 1.05rem; margin: 24px 0 14px; }
 .pokemon-detail img { display: block; image-rendering: pixelated; background: #eef2fb; border-radius: 10px; }
 .retry-detail { color: #182641; background: #ffca61; border: 0; border-radius: 8px; padding: 9px 14px; font: inherit; font-weight: 700; cursor: pointer; }
 .retry-detail:focus-visible { outline: 3px solid white; outline-offset: 3px; }
-.footnote { margin-top: 35px; font-size: .85rem; }
-@media (max-width: 420px) { .intro { margin-top: 36px; } }

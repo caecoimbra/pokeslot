@@ -13,9 +13,10 @@ export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, {
           const response = await fetchImpl(url, { ...options, signal: controller.signal });
           if (!response.ok) {
             if (response.status === 401) throw new Error('session_changed');
-            if (gameRequest && [400, 409, 410, 429].includes(response.status)) {
+            if (gameRequest && [400, 403, 409, 410, 429].includes(response.status)) {
               let error;
               try { ({ error } = await response.json()); } catch { /* A resposta também pode não ser JSON. */ }
+              if (response.status === 403 && error === 'access_restricted') throw new Error(error);
               if (response.status === 409 && error === 'session_changed') throw new Error(error);
               if (response.status === 410 && error === 'operation_expired') throw new Error(error);
               if (response.status === 400 && error === 'operation_clock') throw new Error(error);

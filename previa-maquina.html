@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#17233d" />
-    <title>PokéSlot — prévia da máquina</title>
+    <title>PokéSlot — Máquina</title>
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
     <link rel="stylesheet" href="/src/preview/style.css" />
     <link rel="stylesheet" href="/src/preview/arcade.css" />
     <link rel="stylesheet" href="/src/preview/arcade-scenery.css" />
@@ -16,7 +17,7 @@
     <main class="shell">
       <header class="topbar">
         <span class="brand">
-          <span class="brand-cabinet" aria-hidden="true"><i></i><i></i><i></i></span>
+          <img src="/favicon.svg" alt="" width="35" height="35" />
           <span class="brand-name">Poké<span>Slot</span></span>
         </span>
         <nav class="arcade-nav" aria-label="Áreas do jogo">
@@ -27,18 +28,13 @@
         </nav>
         <button id="language" class="language" type="button" lang="en" aria-label="EN — Switch to English">EN</button>
       </header>
-      <section class="intro">
-        <p class="eyebrow" data-text="eyebrow"></p>
-        <h1 data-text="title"></h1>
-        <p data-text="intro"></p>
-      </section>
       <section id="proof-auth" class="proof-auth" hidden>
-        <h2 data-text="authTitle"></h2>
+        <p id="account-label" class="account-label"></p>
         <form id="proof-login" method="post">
           <label><span data-text="emailLabel"></span><input name="email" type="email" autocomplete="username" required></label>
           <label><span data-text="passwordLabel"></span><input name="password" type="password" autocomplete="current-password" required></label>
           <button type="submit" data-text="loginButton"></button>
-          <button id="open-proof-signup" type="button" data-text="showSignup"></button>
+          <button id="open-proof-signup" type="button" data-text="showSignup" hidden></button>
           <a id="open-password-recovery" data-text="passwordRecovery"></a>
         </form>
         <form id="proof-signup" method="post" hidden>
@@ -54,7 +50,7 @@
       </section>
       <section class="machine" data-screen="machine" aria-labelledby="machine-title">
         <div class="cabinet">
-          <div class="marquee"><i aria-hidden="true"></i><h2 id="machine-title" data-text="machineTitle" tabindex="-1"></h2><i aria-hidden="true"></i></div>
+          <div class="marquee"><i aria-hidden="true"></i><h1 id="machine-title" data-text="machineTitle" tabindex="-1">Kanto Spin</h1><i aria-hidden="true"></i></div>
           <div class="grid" id="grid" role="group"></div>
           <div class="control-deck">
             <div class="credit-meter"><span data-text="credits"></span><strong id="demo-balance" role="status"></strong></div>
@@ -66,7 +62,7 @@
           </div>
         </div>
         <aside class="console-side">
-        <section class="paytable"><h3 data-text="paytable"></h3>
+        <section class="paytable"><h2 data-text="paytable"></h2>
           <dl>
             <div><dt><i class="reel-icon icon-pokeball" aria-hidden="true"><i class="icon-center"></i></i><span data-text="ballLine"></span></dt><dd data-text="ballPrize"></dd></div>
             <div><dt><i class="reel-icon icon-spin" aria-hidden="true"><i class="icon-center"></i></i><span data-text="spinLine"></span></dt><dd data-text="spinPrize"></dd></div>
@@ -74,14 +70,9 @@
           </dl>
         </section>
         <div class="round-readout">
-        <div class="results" aria-live="polite">
-          <span data-text="results"></span>
-          <strong id="lines"></strong>
-        </div>
         <div class="reward-preview" aria-live="polite">
-          <h3 data-text="rewardHeading"></h3>
+          <h2 data-text="rewardHeading"></h2>
           <ul id="rewards"></ul>
-          <p id="no-rewards"></p>
         </div>
         <p id="proof-rewards" class="status"></p>
         </div>
@@ -161,7 +152,6 @@
         </div>
         </header>
         <div class="pokedex-content">
-          <h2 class="dex-catalog-title" data-text="collectionTitle"></h2>
           <div class="collection-filters" role="search">
             <label><span data-text="numberFilter"></span><input id="collection-number" type="search" maxlength="40" placeholder="#025" autocomplete="off"></label>
             <label><span data-text="variantFilter"></span><select id="collection-variant"><option value="all" data-text="allVariants"></option><option value="normal" data-text="normal"></option><option value="shiny" data-text="shiny"></option></select></label>
@@ -169,7 +159,7 @@
           </div>
           <p id="filter-count" role="status"></p>
         <section id="pokemon-detail" class="pokemon-detail" aria-labelledby="selected-pokemon" hidden>
-          <h3 id="selected-pokemon" tabindex="-1"></h3>
+          <h2 id="selected-pokemon" tabindex="-1"></h2>
           <button id="back-to-card" type="button" data-text="backToCatalog"></button>
           <img id="pokemon-sprite" width="96" height="96" alt="" hidden />
           <p id="sprite-status"></p>
@@ -205,7 +195,7 @@
           </button></li>
         </template>
       </section>
-      <p class="footnote" data-text="footnote"></p>
+      <footer class="game-footer"><a id="about-project" href="/case/" data-text="aboutProject">Sobre o projeto</a></footer>
     </main>
     <script type="module" src="/src/preview/main.js"></script>
   </body>

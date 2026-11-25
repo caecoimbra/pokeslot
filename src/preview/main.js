@@ -48,30 +48,27 @@ let grid = [
 const initialGrid = grid;
 const messages = {
   pt: {
-    eyebrow: 'Fliperama de Kanto', title: 'Arcade de captura',
-    intro: 'Alinhe três símbolos para capturar Pokémon de Kanto e encontrar recompensas.',
     machineTitle: 'Kanto Spin', credits: 'Giros', paytable: 'Combinações',
     ballLine: '3 Pokébolas', spinLine: '3 símbolos de giro', ticketLine: '3 vales',
-    ballPrize: 'Captura Pokémon', spinPrize: 'Linha de giros extras', ticketPrize: 'Sorteio de vale',
-    results: 'LINHAS VENCEDORAS',
-    footnote: 'Demonstração local compartilhada neste computador: não usa uma conta autenticada nem concede prêmios reais.',
-    balance: (value) => `Saldo de teste: ${value} giros`, noBalance: 'Sem giros no saldo de teste.',
-    nextRefill: (date) => `Próxima reposição prevista: ${date} (horário local). Atualize o saldo para confirmar.`,
-    refreshBalance: 'Atualizar saldo', balanceRefreshed: 'Saldo atualizado pelo servidor.',
-    spinButton: 'Girar', spinning: 'Girando…', noWins: 'Nenhuma nesta rodada',
+    ballPrize: 'Capture um Pokémon', spinPrize: 'Ganhe giros extras', ticketPrize: 'Receba um vale',
+    aboutProject: 'Sobre o projeto',
+    balance: (value) => `Saldo: ${value} ${value === 1 ? 'giro' : 'giros'}`, noBalance: 'Seus giros acabaram. Confira a próxima reposição.',
+    nextRefill: (date) => `Próxima reposição: ${date} (hora local).`,
+    refreshBalance: 'Atualizar saldo', balanceRefreshed: 'Saldo atualizado.',
+    spinButton: 'Girar', spinning: 'Girando…',
     reelsSpinning: 'Rodada em andamento',
     navLabel: 'Áreas do jogo', navMachine: 'Máquina', navPokedex: 'Pokédex', navVouchers: 'Vales', navStones: 'Pedras',
-    rewardHeading: 'Recompensas', noRewards: 'Nenhuma recompensa nesta rodada.',
+    rewardHeading: 'Prêmios da rodada', noRewards: 'Rodada sem prêmio.',
     rewardTypes: { pokemon: 'Captura de Pokémon', extra_spins: 'Giros extras', voucher: 'Vale' },
-    initial: 'As setas marcam três horizontais e duas diagonais. Cada rodada custa um giro.',
-    success: 'Rodada demonstrativa concluída.', failure: 'Não foi possível confirmar a operação. Verifique o servidor local e tente novamente; uma rodada pendente será recuperada.',
+    initial: 'Cada rodada custa 1 giro. Alinhe três símbolos iguais na horizontal ou na diagonal.',
+    success: 'Rodada concluída.', failure: 'Não foi possível confirmar a rodada. Tente novamente para recuperá-la.',
     pokedexTitle: 'Pokédex de Kanto', unknownSpecies: 'Espécie desconhecida', backToCatalog: 'Voltar ao cartão',
     progressLabel: (count, total) => `Kanto: ${count} de ${total} espécies registradas`,
     variantProgress: ({ normal, shiny }) => `Normais: ${normal} · Shiny: ${shiny} (opcionais)`,
     completedKanto: 'Kanto completo! Você registrou as 151 espécies.',
-    pokedexNote: 'Capture uma espécie para revelar seu cartão. Selecione um registro para consultar as variantes.',
-    lastCaptures: 'Capturas da última rodada', collectionTitle: 'Catálogo de Kanto',
-    beforeRound: 'Gire para ver as capturas de teste.', noCaptures: 'Nenhuma captura nesta rodada.',
+    pokedexNote: 'Registre uma espécie para ver seu nome e suas cores.',
+    lastCaptures: 'Capturas da última rodada',
+    beforeRound: 'Nenhuma rodada por enquanto.', noCaptures: 'Nenhuma captura nesta rodada.',
     normal: 'Normal', shiny: 'Shiny', registered: 'Registrada', missing: 'Faltante',
     numberFilter: 'Nome ou número', variantFilter: 'Variante', allVariants: 'Todas',
     registrationFilter: 'Registro', allRegistrations: 'Todos',
@@ -81,11 +78,11 @@ const messages = {
     normalPath: (cost) => `Você pode capturar esta espécie ou resgatar a variante normal por ${cost} ${cost === 1 ? 'vale Pokémon' : 'vales Pokémon'}.`,
     evolveFrom: (names) => `Você já tem uma origem compatível: ${names}. Confira as pedras necessárias no painel de evolução.`,
     viewRedemption: 'Ver no resgate',
-    vouchersTitle: 'Carteira de vales', vouchersNote: 'Três símbolos de vale na mesma linha sorteiam um bilhete. A demonstração local inclui cinco tipos com chances iguais.',
-    voucherRoundTitle: 'Última rodada', voucherInventoryTitle: 'Seus bilhetes', voucherBefore: 'Gire a máquina para sortear vales.', voucherNone: 'Nenhum vale nesta rodada.', voucherUnknown: 'Detalhes dos vales indisponíveis para esta rodada antiga.',
+    vouchersTitle: 'Vales', vouchersNote: 'Cada tipo de vale tem a mesma chance de sair.',
+    voucherRoundTitle: 'Última rodada', voucherInventoryTitle: 'Sua carteira', voucherBefore: 'Nenhuma rodada por enquanto.', voucherNone: 'Nenhum vale nesta rodada.', voucherUnknown: 'Detalhes dos vales indisponíveis para esta rodada.',
     voucherEffects: { pokemon: 'Resgate uma espécie de Kanto.', stone: 'Escolha uma pedra de evolução.', spins: 'Giros creditados ao ganhar.', type: 'Guardado para uso futuro.', shiny_charm: 'Guardado para uso futuro.' },
     visitStones: 'Trocar vale por pedra →',
-    voucherNames: { pokemon: 'Vale Pokémon', stone: 'Vale pedra', spins: 'Vale de giros', type: 'Vale de tipo', shiny_charm: 'Amuleto shiny' }, voucherSpins: (value) => `+${value} giros de teste`, voucherValueUnknown: 'valor indisponível',
+    voucherNames: { pokemon: 'Vale Pokémon', stone: 'Vale pedra', spins: 'Vale de giros', type: 'Vale de tipo', shiny_charm: 'Amuleto shiny' }, voucherSpins: (value) => `+${value} giros`, voucherValueUnknown: 'valor indisponível',
     redeemTitle: 'Resgatar Pokémon', redeemNote: 'Escolha uma espécie para registrar a variante normal. O custo depende da raridade.', redeemSpecies: 'Pokémon de Kanto', redeemPlaceholder: 'Escolha uma espécie', redeemButton: 'Trocar vales',
     namesLoading: 'Consultando a PokéAPI…', namesUnavailable: 'Exibindo os nomes do catálogo local de Kanto.', retryNames: 'Tentar atualizar nomes',
     redeemStock: (count) => `Vales Pokémon disponíveis: ${count}.`,
@@ -100,8 +97,9 @@ const messages = {
     descriptionSource: (version) => `Descrição da PokéAPI · versão ${version}`,
     unknownVersion: 'não informada',
     missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal',
-    authTitle: 'Conta fictícia da prova Neon', emailLabel: 'E-mail de teste', passwordLabel: 'Senha de teste', loginButton: 'Entrar', logoutButton: 'Sair',
-    authSignedOut: 'Entre com uma conta fictícia para recuperar seu progresso.', authFailed: 'Não foi possível confirmar a sessão ou o progresso. Tente novamente.',
+    account: 'Jogador', signInTitle: 'Sua conta', inviteTitle: 'Acesso por convite', emailLabel: 'E-mail', passwordLabel: 'Senha', loginButton: 'Entrar', logoutButton: 'Sair',
+    authSignedOut: 'Entre para continuar a jogar.', authFailed: 'Não foi possível entrar e carregar seu progresso. Confira seus dados e tente novamente.',
+    accessRestricted: 'Esta conta ainda não tem convite para jogar.',
     showSignup: 'Criar conta de teste', showLogin: 'Voltar para entrar', signupButton: 'Criar conta',
     passwordRecovery: 'Esqueci a senha',
     signupNote: 'Use um nome fictício, um endereço @example.test e uma senha exclusiva para esta prova.',
@@ -113,36 +111,33 @@ const messages = {
     signupNeedsEntry: 'A conta ainda não está conectada. Volte para entrar.',
     authWorking: 'Confirmando com o serviço de conta…',
     recoverPending: 'Há uma rodada pendente de confirmação. Recupere-a antes de iniciar outra.', recoverButton: 'Recuperar rodada pendente',
-    earned: (lines, duplicates) => `Giros de teste: +${lines} por linhas e +${duplicates} por repetidos.`,
+    earned: (lines, duplicates) => [lines && `+${lines} giros por linhas`, duplicates && `+${duplicates} por capturas repetidas`].filter(Boolean).join(' · '),
     earnedUnavailable: 'Detalhes totais de giros indisponíveis para esta rodada.',
     symbols: { pokeball: 'Pokébola', spin: 'Giro', voucher: 'Vale' },
     lines: { top: 'Superior', middle: 'Central', bottom: 'Inferior', diagonal_down: 'Diagonal descendente', diagonal_up: 'Diagonal ascendente' },
   },
   en: {
-    eyebrow: 'Kanto game corner', title: 'Capture arcade',
-    intro: 'Line up three symbols to catch Kanto Pokémon and earn rewards.',
     machineTitle: 'Kanto Spin', credits: 'Spins', paytable: 'Combinations',
     ballLine: '3 Poké Balls', spinLine: '3 spin symbols', ticketLine: '3 vouchers',
-    ballPrize: 'Pokémon encounter', spinPrize: 'Extra spin line', ticketPrize: 'Voucher draw',
-    results: 'WINNING LINES',
-    footnote: 'Local demonstration shared on this computer: no authenticated account or real rewards.',
-    balance: (value) => `Test balance: ${value} spins`, noBalance: 'No test spins available.',
-    nextRefill: (date) => `Next refill expected: ${date} (local time). Refresh balance to confirm.`,
-    refreshBalance: 'Refresh balance', balanceRefreshed: 'Balance refreshed from the server.',
-    spinButton: 'Spin', spinning: 'Spinning…', noWins: 'None this round',
+    ballPrize: 'Catch a Pokémon', spinPrize: 'Earn extra spins', ticketPrize: 'Draw a voucher',
+    aboutProject: 'About the project',
+    balance: (value) => `Balance: ${value} ${value === 1 ? 'spin' : 'spins'}`, noBalance: 'You are out of spins. Check your next refill.',
+    nextRefill: (date) => `Next refill: ${date} (local time).`,
+    refreshBalance: 'Refresh balance', balanceRefreshed: 'Balance updated.',
+    spinButton: 'Spin', spinning: 'Spinning…',
     reelsSpinning: 'Round in progress',
     navLabel: 'Game areas', navMachine: 'Machine', navPokedex: 'Pokédex', navVouchers: 'Vouchers', navStones: 'Stones',
-    rewardHeading: 'Rewards', noRewards: 'No rewards this round.',
+    rewardHeading: 'Round rewards', noRewards: 'No prize this round.',
     rewardTypes: { pokemon: 'Pokémon capture', extra_spins: 'Extra spins', voucher: 'Voucher' },
-    initial: 'The arrows mark three horizontal and two diagonal lines. Each round costs one spin.',
-    success: 'Demonstration round complete.', failure: 'Could not confirm the operation. Check the local server and try again; a pending round will be recovered.',
+    initial: 'Each round costs 1 spin. Match three symbols across a row or diagonal.',
+    success: 'Round complete.', failure: 'Could not confirm the round. Try again to recover it.',
     pokedexTitle: 'Kanto Pokédex', unknownSpecies: 'Unknown species', backToCatalog: 'Back to card',
     progressLabel: (count, total) => `Kanto: ${count} of ${total} registered species`,
     variantProgress: ({ normal, shiny }) => `Normal: ${normal} · Shiny: ${shiny} (optional)`,
     completedKanto: 'Kanto complete! You registered all 151 species.',
-    pokedexNote: 'Catch a species to reveal its card. Select an entry to inspect its variants.',
-    lastCaptures: 'Last round captures', collectionTitle: 'Kanto catalog',
-    beforeRound: 'Spin to see test captures.', noCaptures: 'No captures this round.',
+    pokedexNote: 'Register a species to reveal its name and colors.',
+    lastCaptures: 'Last round captures',
+    beforeRound: 'No rounds yet.', noCaptures: 'No captures this round.',
     normal: 'Normal', shiny: 'Shiny', registered: 'Registered', missing: 'Missing',
     numberFilter: 'Name or number', variantFilter: 'Variant', allVariants: 'All',
     registrationFilter: 'Registration', allRegistrations: 'All',
@@ -152,11 +147,11 @@ const messages = {
     normalPath: (cost) => `You can capture this species or redeem the normal variant for ${cost} Pokémon ${cost === 1 ? 'voucher' : 'vouchers'}.`,
     evolveFrom: (names) => `You have a compatible Pokémon: ${names}. Check the evolution panel for compatible stones.`,
     viewRedemption: 'View redemption',
-    vouchersTitle: 'Voucher wallet', vouchersNote: 'Three voucher symbols on one line draw a ticket. The local demo includes five equally likely types.',
-    voucherRoundTitle: 'Last round', voucherInventoryTitle: 'Your tickets', voucherBefore: 'Spin the machine to draw vouchers.', voucherNone: 'No vouchers this round.', voucherUnknown: 'Voucher details unavailable for this older round.',
+    vouchersTitle: 'Vouchers', vouchersNote: 'Each type of voucher is equally likely to drop.',
+    voucherRoundTitle: 'Last round', voucherInventoryTitle: 'Your wallet', voucherBefore: 'No rounds yet.', voucherNone: 'No vouchers this round.', voucherUnknown: 'Voucher details unavailable for this round.',
     voucherEffects: { pokemon: 'Redeem a Kanto species.', stone: 'Choose an evolution stone.', spins: 'Spins credited when drawn.', type: 'Saved for future use.', shiny_charm: 'Saved for future use.' },
     visitStones: 'Exchange a voucher for a stone →',
-    voucherNames: { pokemon: 'Pokémon voucher', stone: 'Stone voucher', spins: 'Spin voucher', type: 'Type voucher', shiny_charm: 'Shiny charm' }, voucherSpins: (value) => `+${value} test spins`, voucherValueUnknown: 'value unavailable',
+    voucherNames: { pokemon: 'Pokémon voucher', stone: 'Stone voucher', spins: 'Spin voucher', type: 'Type voucher', shiny_charm: 'Shiny charm' }, voucherSpins: (value) => `+${value} spins`, voucherValueUnknown: 'value unavailable',
     redeemTitle: 'Redeem a Pokémon', redeemNote: 'Choose a species to register its normal variant. The cost depends on its rarity.', redeemSpecies: 'Kanto Pokémon', redeemPlaceholder: 'Choose a species', redeemButton: 'Redeem vouchers',
     namesLoading: 'Checking PokéAPI…', namesUnavailable: 'Showing names from the local Kanto catalog.', retryNames: 'Retry name update',
     redeemStock: (count) => `Pokémon vouchers available: ${count}.`,
@@ -171,8 +166,9 @@ const messages = {
     descriptionSource: (version) => `PokéAPI description · ${version} version`,
     unknownVersion: 'unspecified',
     missingSprite: 'Image unavailable.', spriteAlt: 'Normal sprite',
-    authTitle: 'Fictional Neon proof account', emailLabel: 'Test email', passwordLabel: 'Test password', loginButton: 'Sign in', logoutButton: 'Sign out',
-    authSignedOut: 'Sign in with a fictional account to recover your progress.', authFailed: 'Could not confirm the session or progress. Try again.',
+    account: 'Player', signInTitle: 'Your account', inviteTitle: 'Invite-only access', emailLabel: 'Email', passwordLabel: 'Password', loginButton: 'Sign in', logoutButton: 'Sign out',
+    authSignedOut: 'Sign in to continue playing.', authFailed: 'Could not sign in and load your progress. Check your details and try again.',
+    accessRestricted: 'This account does not have an invitation to play yet.',
     showSignup: 'Create test account', showLogin: 'Back to sign in', signupButton: 'Create account',
     passwordRecovery: 'Forgot password',
     signupNote: 'Use a fictional name, an @example.test address, and a password unique to this test.',
@@ -184,7 +180,7 @@ const messages = {
     signupNeedsEntry: 'The account is not signed in yet. Go back to sign in.',
     authWorking: 'Confirming with the account service…',
     recoverPending: 'A round is awaiting confirmation. Recover it before starting another.', recoverButton: 'Recover pending round',
-    earned: (lines, duplicates) => `Test spins: +${lines} from lines and +${duplicates} from duplicates.`,
+    earned: (lines, duplicates) => [lines && `+${lines} spins from lines`, duplicates && `+${duplicates} from duplicate catches`].filter(Boolean).join(' · '),
     earnedUnavailable: 'Total spin details are unavailable for this round.',
     symbols: { pokeball: 'Poké Ball', spin: 'Spin', voucher: 'Voucher' },
     lines: { top: 'Top', middle: 'Middle', bottom: 'Bottom', diagonal_down: 'Descending diagonal', diagonal_up: 'Ascending diagonal' },
@@ -197,20 +193,18 @@ messages.en.rateLimited = 'Too many actions in a short time. Wait a minute and r
 Object.assign(messages.pt, {
   operation_expired: 'O resultado da ação expirou. Confira o progresso atualizado antes de iniciar outra ação.',
   operation_clock: 'Confira a data e a hora do dispositivo antes de iniciar outra ação.',
-  dailyLimit: 'A capacidade diária da prévia foi atingida. Tente após a virada do dia em UTC.',
+  dailyLimit: 'O jogo atingiu seu limite diário. Tente novamente após a meia-noite UTC.',
 });
 Object.assign(messages.en, {
   operation_expired: 'The action result expired. Check your updated progress before starting another action.',
   operation_clock: 'Check your device time and date before starting another action.',
-  dailyLimit: 'The preview reached its daily capacity. Try again after midnight UTC.',
+  dailyLimit: 'The game has reached its daily limit. Try again after midnight UTC.',
 });
 if (neonProof) {
-  Object.assign(messages.pt, { footnote: 'Prévia isolada da Neon com contas de teste.',
-    vouchersNote: 'Três símbolos de vale na mesma linha sorteiam um bilhete. Pokémon, pedra e giros têm a mesma chance.',
+  Object.assign(messages.pt, {
     failure: 'Não foi possível confirmar a rodada. Entre na mesma conta e tente novamente para recuperar uma operação pendente.',
     captureStatus: { new: 'Nova captura', duplicate: 'Repetida' } });
-  Object.assign(messages.en, { footnote: 'Isolated Neon preview with test accounts.',
-    vouchersNote: 'Three voucher symbols on one line draw a ticket. Pokémon, stone and spin vouchers are equally likely.',
+  Object.assign(messages.en, {
     failure: 'Could not confirm the round. Sign in to the same account and retry to recover a pending operation.',
     captureStatus: { new: 'New capture', duplicate: 'Duplicate' } });
 }
@@ -525,8 +519,7 @@ function render() {
   soundToggle.querySelector('.sound-label').textContent = language === 'pt' ? 'Som' : 'Sound';
   const soundStates = language === 'pt' ? ['desligado', 'ligado'] : ['off', 'on'];
   soundToggle.querySelector('.sound-state').textContent = soundStates[Number(arcadeSound.enabled)];
-  document.querySelector('.round-readout').hidden = spinning || grid === initialGrid;
-  document.querySelector('#lines').textContent = wins.length ? wins.map(({ line }) => text.lines[line]).join(' · ') : text.noWins;
+  document.querySelector('.round-readout').hidden = spinning || !wins.length;
   const rewards = rewardTypesForLines(wins);
   renderList('#rewards', rewards.map(({ line, type }) => {
     const entry = lastCaptures?.find(capture => capture.line === line);
@@ -535,10 +528,9 @@ function render() {
     const prize = voucher ? text.voucherNames[voucher.type] : text.rewardTypes[type];
     return `${text.lines[line]} — ${prize}`;
   }));
-  document.querySelector('#no-rewards').textContent = rewards.length ? '' : text.noRewards;
   const ready = inventoryReady();
   const screen = activeScreen();
-  document.querySelector('.intro').hidden = screen !== 'machine';
+  document.querySelector('#about-project').href = language === 'en' ? '/case/en/' : '/case/';
   screenNav.setAttribute('aria-label', text.navLabel);
   for (const link of screenLinks) {
     const target = link.dataset.screenLink;
@@ -589,7 +581,7 @@ function render() {
   const spin = document.querySelector('#spin');
   spin.disabled = pending || (neonProof && (!proofUser || (!!pendingLocalAction && !proofPendingRoundId)));
   spin.textContent = spinning ? text.spinning : neonProof && proofPendingRoundId ? text.recoverButton : text.spinButton;
-  document.querySelector('#status').textContent = status ? text[status] : '';
+  document.querySelector('#status').textContent = status === 'success' && !wins.length ? text.noRewards : text[status] ?? '';
   document.querySelector('#demo-balance').textContent = balance === null ? '—' : String(balance);
   document.querySelector('#demo-balance').setAttribute('aria-label', balance === null ? text.credits : text.balance(balance));
   document.querySelector('#next-refill').textContent = nextRefill === null ? '' : text.nextRefill(formatNextRefill(nextRefill, language));
@@ -599,6 +591,7 @@ function render() {
     : lastProofReward.available ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : text.earnedUnavailable;
   if (neonProof) {
     const busy = authSubmitting || signingOut;
+    document.querySelector('#account-label').textContent = proofUser ? text.account : import.meta.env.DEV ? text.signInTitle : text.inviteTitle;
     document.querySelector('#open-password-recovery').href = `./redefinir-senha.html?lang=${language}`;
     document.querySelector('#proof-auth-status').textContent = busy ? text.authWorking : text[authStatus] ?? '';
     for (const button of document.querySelectorAll('#proof-login button, #proof-signup button')) button.disabled = busy;
@@ -697,6 +690,7 @@ function setProofState(state) {
 }
 async function startNeonProof() {
   document.querySelector('#proof-auth').hidden = false;
+  document.querySelector('#open-proof-signup').hidden = !import.meta.env.DEV;
   if (recoveryTest) {
     document.querySelector('#proof-signup-note').dataset.text = 'recoveryTestNote';
     document.querySelector('#proof-signup [name=email]').removeAttribute('placeholder');
@@ -714,7 +708,7 @@ async function recoverProofSession(expectedUserId) {
     const user = await proofClient.user();
     if (version !== proofGeneration) return;
     if (expectedUserId && user?.id !== expectedUserId) throw new Error('session_changed');
-    if (!user) { authStatus = 'authSignedOut'; return; }
+    if (!user) return;
     proofUser = user;
     const current = () => version === proofGeneration && proofUser?.id === user.id;
     const state = validateProofState(await proofClient.request('state', user.id, current));
@@ -729,8 +723,8 @@ async function recoverProofSession(expectedUserId) {
     if (proofPendingRoundId) status = 'recoverPending';
     authStatus = '';
     pending = false;
-  } catch {
-    if (version === proofGeneration) resetProofSession('authFailed');
+  } catch (error) {
+    if (version === proofGeneration) resetProofSession(error?.message === 'access_restricted' ? 'accessRestricted' : 'authFailed');
   } finally { if (version === proofGeneration) render(); }
 }
 async function spinNeonProof() {

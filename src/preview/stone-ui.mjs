@@ -4,8 +4,7 @@ import { inventoryCard } from './inventory-card.mjs';
 const translations = {
   pt: {
     title: 'Oficina de evolução', inventoryTitle: 'Estojo de pedras',
-    note: 'Troque um vale pela pedra de sua escolha. Nesta demonstração, ela ativa as evoluções clássicas por pedra de Kanto.',
-    proofNote: 'Um vale pedra dá direito a uma pedra à sua escolha. Cada evolução usa uma pedra compatível e mantém a variante de origem na Pokédex.',
+    note: 'Cada evolução consome uma pedra compatível. A forma anterior permanece na Pokédex.',
     stock: (n) => `Vales pedra disponíveis: ${n}.`, emptyInventory: 'Nenhuma pedra guardada.',
     recoverStone: (stone) => `Troca pendente: 1 vale pedra por ${stone}.`,
     recoverEvolution: (from, variant, to, stone) => `Evolução pendente: ${from} ${variant} → ${to}, com ${stone}.`,
@@ -27,8 +26,7 @@ const translations = {
   },
   en: {
     title: 'Evolution workshop', inventoryTitle: 'Stone case',
-    note: 'Exchange one voucher for a stone of your choice. This demo supports the classic Kanto stone evolutions.',
-    proofNote: 'One stone voucher gives you a stone of your choice. Each evolution uses a compatible stone and keeps the source variant in the Pokédex.',
+    note: 'Each evolution uses one compatible stone. The previous form stays in your Pokédex.',
     stock: (n) => `Stone vouchers available: ${n}.`, emptyInventory: 'No stones saved.',
     recoverStone: (stone) => `Pending exchange: 1 stone voucher for ${stone}.`,
     recoverEvolution: (from, variant, to, stone) => `Pending evolution: ${from} ${variant} → ${to}, using ${stone}.`,
@@ -87,7 +85,7 @@ export function setupStoneUI({ getState, performAction }) {
     const setText = (id, value) => { element(id).textContent = value; };
     setText('stone-title', text.title);
     setText('stone-inventory-title', text.inventoryTitle);
-    setText('stone-note', state.authenticated ? text.proofNote : text.note);
+    setText('stone-note', text.note);
     setText('stone-stock', text.stock(voucherCount));
     const pendingAction = state.pendingAction;
     const pendingPayload = pendingAction?.payload;
