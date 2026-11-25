@@ -100,6 +100,7 @@ const messages = {
     missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal',
     account: 'Jogador', signInTitle: 'Sua conta', emailLabel: 'E-mail', passwordLabel: 'Senha', loginButton: 'Entrar', logoutButton: 'Sair',
     authSignedOut: 'Entre para continuar a jogar.', authFailed: 'Não foi possível entrar e carregar seu progresso. Confira seus dados e tente novamente.',
+    authUnavailable: 'O serviço de conta demorou para responder. Tente novamente em instantes.',
     accessRestricted: 'O acesso ao jogo está indisponível para esta conta.',
     showSignup: 'Criar conta de teste', showLogin: 'Voltar para entrar', signupButton: 'Criar conta',
     passwordRecovery: 'Esqueci a senha',
@@ -109,6 +110,7 @@ const messages = {
     signupEmailRequired: 'Para esta prova, use um endereço fictício terminado em @example.test.',
     signupNameRequired: 'Informe um nome fictício.',
     signupFailed: 'Não foi possível confirmar o cadastro. Se você já criou a conta, volte para entrar.',
+    signupTimeout: 'O cadastro demorou para responder e pode ter sido concluído. Aguarde um instante e tente entrar com os mesmos dados.',
     signupNeedsEntry: 'A conta ainda não está conectada. Volte para entrar.',
     authWorking: 'Confirmando com o serviço de conta…',
     recoverPending: 'Há uma rodada pendente de confirmação. Recupere-a antes de iniciar outra.', recoverButton: 'Recuperar rodada pendente',
@@ -169,6 +171,7 @@ const messages = {
     missingSprite: 'Image unavailable.', spriteAlt: 'Normal sprite',
     account: 'Player', signInTitle: 'Your account', emailLabel: 'Email', passwordLabel: 'Password', loginButton: 'Sign in', logoutButton: 'Sign out',
     authSignedOut: 'Sign in to continue playing.', authFailed: 'Could not sign in and load your progress. Check your details and try again.',
+    authUnavailable: 'The account service took too long to respond. Please try again shortly.',
     accessRestricted: 'Game access is unavailable for this account.',
     showSignup: 'Create test account', showLogin: 'Back to sign in', signupButton: 'Create account',
     passwordRecovery: 'Forgot password',
@@ -178,6 +181,7 @@ const messages = {
     signupEmailRequired: 'For this test, use a fictional address ending in @example.test.',
     signupNameRequired: 'Enter a fictional name.',
     signupFailed: 'Could not confirm registration. If you already created the account, go back to sign in.',
+    signupTimeout: 'Registration took too long and may have completed. Wait a moment, then try signing in with the same details.',
     signupNeedsEntry: 'The account is not signed in yet. Go back to sign in.',
     authWorking: 'Confirming with the account service…',
     recoverPending: 'A round is awaiting confirmation. Recover it before starting another.', recoverButton: 'Recover pending round',
@@ -742,7 +746,10 @@ async function recoverProofSession(expectedUserId) {
     authStatus = '';
     pending = false;
   } catch (error) {
-    if (version === proofGeneration) resetProofSession(error?.message === 'access_restricted' ? 'accessRestricted' : 'authFailed');
+    if (version === proofGeneration) {
+      const unavailable = ['session_timeout', 'session_unavailable', 'request_timeout', 'request_failed'].includes(error?.message);
+      resetProofSession(error?.message === 'access_restricted' ? 'accessRestricted' : unavailable ? 'authUnavailable' : 'authFailed');
+    }
   } finally { if (version === proofGeneration) render(); }
 }
 async function spinNeonProof() {
@@ -852,8 +859,18 @@ async function submitProofAuth(event, registering) {
     form.reset();
     authMode = 'login';
     proofSessions?.postMessage('session-changed');
-    await recoverProofSession(result.data.user.id);
-  } catch { authStatus = registering ? 'signupFailed' : 'authFailed'; }
+    let timer;
+    try {
+      await Promise.race([
+        recoverProofSession(result.data.user.id),
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('recovery_timeout')), 30000); }),
+      ]);
+    } finally { clearTimeout(timer); }
+  } catch (error) {
+    if (error?.message === 'recovery_timeout') resetProofSession('authUnavailable');
+    else if (error?.message === 'request_timeout') authStatus = registering ? 'signupTimeout' : 'authUnavailable';
+    else authStatus = registering ? 'signupFailed' : 'authFailed';
+  }
   finally {
     authSubmitting = false;
     render();

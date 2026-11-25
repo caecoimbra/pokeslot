@@ -10,6 +10,37 @@ const testSession = { token: 'sessao-ficticia' };
 const auth = { auth: { getSession: async () => ({ data: { user: account, session: testSession } }) } };
 const json = (value) => ({ ok: true, json: async () => value });
 
+test('entrada, cadastro e saída encerram a espera mesmo se o SDK não responder', async () => {
+  for (const method of ['signIn', 'signUp', 'signOut']) {
+    let receivedOptions;
+    const neverReturns = (...args) => {
+      assert.equal(args.length, 2);
+      receivedOptions = args[1];
+      return new Promise(() => {});
+    };
+    const client = createNeonProofClient(base, api, fetch, {
+      client: { auth: { signIn: { email: neverReturns }, signUp: { email: neverReturns }, signOut: neverReturns } },
+      timeoutMs: 10,
+    });
+    const call = method === 'signIn' ? () => client.signIn('player@example.test', 'test-password')
+      : method === 'signUp' ? () => client.signUp({ name: 'Player', email: 'player@example.test', password: 'test-password' })
+      : () => client.signOut();
+    await assert.rejects(call(), { message: 'request_timeout' });
+    assert.equal(receivedOptions.retry, 0);
+    assert.equal(receivedOptions.timeout, 10);
+    assert.equal(receivedOptions.signal.aborted, true);
+  }
+});
+
+test('o resultado normal de autenticação é preservado', async () => {
+  const expected = { data: { user: { id: 'A' } }, error: null };
+  const client = createNeonProofClient(base, api, fetch, {
+    client: { auth: { signIn: { email: async () => expected } } },
+    timeoutMs: 100,
+  });
+  assert.equal(await client.signIn('player@example.test', 'test-password'), expected);
+});
+
 // O provedor responde com a credencial opaca ao consultar /get-session.
 function makeClient(baseUrl, functionUrl, fetchImpl, options = {}) {
   const sessionAuth = options.client ?? auth;

@@ -40,6 +40,21 @@ export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, {
     }
   }
   async function user() { return (await session())?.user ?? null; }
+  async function authAction(action) {
+    const controller = new AbortController();
+    let timer;
+    try {
+      return await Promise.race([
+        action({ signal: controller.signal, timeout: timeoutMs, retry: 0 }),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            controller.abort();
+            reject(new Error('request_timeout'));
+          }, timeoutMs);
+        }),
+      ]);
+    } finally { clearTimeout(timer); }
+  }
   async function ensureSession(userId, isCurrent) {
     if (!isCurrent()) throw new Error('session_changed');
     const initial = await session();
@@ -68,7 +83,8 @@ export function createNeonProofClient(baseUrl, functionUrl, fetchImpl = fetch, {
   }
   const inventoryAction = (userId, isCurrent, operationId, action, args) =>
     request('inventory/action', userId, isCurrent, operationId, { action, args });
-  return { user, ensureSession, request, inventoryAction, signIn: (email, password) => client.auth.signIn.email({ email, password }),
-    signUp: ({ name, email, password }) => client.auth.signUp.email({ name, email, password }),
-    signOut: () => client.auth.signOut() };
+  return { user, ensureSession, request, inventoryAction,
+    signIn: (email, password) => authAction((options) => client.auth.signIn.email({ email, password }, options)),
+    signUp: ({ name, email, password }) => authAction((options) => client.auth.signUp.email({ name, email, password }, options)),
+    signOut: () => authAction((options) => client.auth.signOut({}, options)) };
 }
