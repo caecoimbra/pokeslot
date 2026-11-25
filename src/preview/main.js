@@ -1,5 +1,6 @@
 import { findWinningLines } from '../domain/paylines.mjs';
 import { createArcadeReels } from './arcade-reels.mjs';
+import { createArcadeSound } from './arcade-sound.mjs';
 import { renderDexCards, setDexSprite } from './dex-cards.mjs';
 import kantoNames from './assets/kanto-names.json';
 import { inventoryCard } from './inventory-card.mjs';
@@ -214,6 +215,8 @@ if (neonProof) {
     captureStatus: { new: 'New capture', duplicate: 'Duplicate' } });
 }
 const reelView = createArcadeReels(document.querySelector('#grid'));
+const arcadeSound = createArcadeSound();
+const soundToggle = document.querySelector('#sound-toggle');
 let wins = [];
 let language = previewParams.get('lang') === 'en' ? 'en' : 'pt';
 let status = 'initial';
@@ -517,6 +520,11 @@ function render() {
   button.lang = language === 'pt' ? 'en' : 'pt-BR';
   button.setAttribute('aria-label', language === 'pt' ? 'EN — Switch to English' : 'PT — Mudar para português');
   reelView.render(grid, wins, spinning, text);
+  soundToggle.hidden = !arcadeSound.available;
+  soundToggle.setAttribute('aria-pressed', String(arcadeSound.enabled));
+  soundToggle.querySelector('.sound-label').textContent = language === 'pt' ? 'Som' : 'Sound';
+  const soundStates = language === 'pt' ? ['desligado', 'ligado'] : ['off', 'on'];
+  soundToggle.querySelector('.sound-state').textContent = soundStates[Number(arcadeSound.enabled)];
   document.querySelector('.round-readout').hidden = spinning || grid === initialGrid;
   document.querySelector('#lines').textContent = wins.length ? wins.map(({ line }) => text.lines[line]).join(' · ') : text.noWins;
   const rewards = rewardTypesForLines(wins);
@@ -616,6 +624,7 @@ async function refreshDemoState() {
 }
 
 function clearProofDisplay() {
+  arcadeSound.stop();
   spinning = false;
   proofPendingRoundId = null;
   balance = null;
@@ -787,8 +796,7 @@ async function spinNeonProof() {
       else status = 'failure';
     }
   } finally {
-    if (current() && status === 'success') await reelView.stop(grid);
-    if (current()) { pending = false; spinning = false; render(); }
+    await finishSpin(current);
   }
 }
 
@@ -866,6 +874,7 @@ proofSessions?.addEventListener('message', ({ data }) => {
   if (data === 'session-changed') recoverProofSession();
 });
 document.addEventListener('visibilitychange', () => {
+  if (document.hidden) arcadeSound.stop();
   if (neonProof && proofClient && document.visibilityState === 'visible') recoverProofSession();
 });
 window.addEventListener('pageshow', (event) => {
@@ -877,11 +886,14 @@ screenNav.addEventListener('click', (event) => {
   if (link?.getAttribute('aria-disabled') === 'true') event.preventDefault();
 });
 window.addEventListener('hashchange', () => {
+  if (activeScreen() !== 'machine') arcadeSound.stop();
   render();
   const section = document.querySelector('[data-screen]:not([hidden])');
   document.getElementById(section.getAttribute('aria-labelledby'))?.focus();
 });
 
+soundToggle.addEventListener('click', () => { arcadeSound.toggle(); render(); });
+window.addEventListener('pagehide', () => arcadeSound.stop());
 document.querySelector('#language').addEventListener('click', () => {
   language = language === 'pt' ? 'en' : 'pt';
   render();
@@ -1059,9 +1071,22 @@ document.querySelector('#pokemon-sprite').addEventListener('error', () => {
   spriteFailed = true;
   render();
 });
-document.querySelector('#spin').addEventListener('click', async () => {
-  if (pending) return;
-  if (neonProof) { await spinNeonProof(); return; }
+async function finishSpin(current = () => true) {
+  if (!current()) return;
+  try {
+    if (status === 'success') await reelView.stop(grid);
+  } finally {
+    if (current()) {
+      pending = false;
+      spinning = false;
+      render();
+      if (status === 'success') arcadeSound.finish(wins.length > 0);
+      else arcadeSound.stop();
+    }
+  }
+}
+
+async function spinLocal() {
   pending = true;
   spinning = true;
   status = '';
@@ -1113,10 +1138,21 @@ document.querySelector('#spin').addEventListener('click', async () => {
   } catch {
     status = 'failure';
   } finally {
-    if (status === 'success') await reelView.stop(grid);
-    pending = false;
-    spinning = false;
-    render();
+    await finishSpin();
+  }
+}
+document.querySelector('#spin').addEventListener('click', async (event) => {
+  if (pending) return;
+  const button = event.currentTarget;
+  const hadFocus = document.activeElement === button;
+  const version = proofGeneration;
+  arcadeSound.start();
+  try { await (neonProof ? spinNeonProof() : spinLocal()); }
+  finally {
+    if (hadFocus && version === proofGeneration && !button.disabled &&
+        activeScreen() === 'machine' && document.activeElement === document.body) {
+      button.focus({ preventScroll: true });
+    }
   }
 });
 setupRedemptionPicker();

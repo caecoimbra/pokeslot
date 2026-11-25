@@ -3,6 +3,7 @@ import { PAYLINES } from '../domain/paylines.mjs';
 
 const symbols = ['pokeball', 'spin', 'voucher'];
 const svgNamespace = 'http://www.w3.org/2000/svg';
+const loopMs = 135;
 
 function part(className) {
   const el = document.createElement('div');
@@ -20,10 +21,10 @@ function makeTile(symbol) {
 
 export function createArcadeReels(frame) {
   const windows = part('reel-windows');
-  const tracks = symbols.map((_, index) => {
+  windows.style.setProperty('--speed', `${loopMs}ms`);
+  const tracks = symbols.map(() => {
     const window = part('reel-window');
     const track = part('reel-track');
-    window.style.setProperty('--speed', (350 + index * 36) + 'ms');
     window.append(track);
     windows.append(window);
     return track;
@@ -98,20 +99,33 @@ export function createArcadeReels(frame) {
     if (!rolling || reducedMotion.matches || !frame.getClientRects().length ||
         !tracks[0].getAnimations || !tracks[0].animate) return;
     const version = generation;
-    const remaining = Math.max(0, 480 - (performance.now() - started));
+    const remaining = Math.max(0, loopMs - (performance.now() - started));
     if (remaining) await new Promise(resolve => setTimeout(resolve, remaining));
     if (version !== generation || reducedMotion.matches) return;
     const progress = tracks.map(track => track.getAnimations()[0]?.effect.getComputedTiming().progress ?? 0);
     frame.classList.add('is-stopping');
     stops = tracks.map((track, c) => {
-      // Prepend the confirmed result and continue from the same phase on the moving strip.
-      const strip = grid.map(row => row[c]).concat(patterns[c], patterns[c]);
+      // Keep the current phase; each later reel coasts one extra lap before braking.
+      const laps = 2 + c;
+      const strip = grid.map(row => row[c]);
+      for (let i = 0; i < laps; i++) strip.push(...patterns[c]);
       track.replaceChildren(...strip.map(makeTile));
-      const offset = -(2 - progress[c]) * 100 / 3;
-      return track.animate([{ transform: `translateY(${offset}%)` }, { transform: 'translateY(0)' }],
-        { duration: 420 + c * 140, easing: 'cubic-bezier(.15,.55,.29,1)', fill: 'forwards' });
+      const brakingLaps = 2 - progress[c];
+      const coastMs = c * loopMs;
+      // Constant deceleration covers half the distance of cruising for the same time.
+      const duration = coastMs + 2 * brakingLaps * loopMs;
+      const position = lapsLeft => `translateY(${-100 * lapsLeft / (1 + laps)}%)`;
+      const frames = [];
+      if (c) frames.push({ transform: position(c + brakingLaps), offset: 0 });
+      frames.push({ transform: position(brakingLaps), offset: coastMs / duration,
+        easing: 'cubic-bezier(.333333,.666667,.666667,1)' }, { transform: 'translateY(0)' });
+      return track.animate(frames, { duration, fill: 'forwards' });
     });
-    await Promise.allSettled(stops.map(animation => animation.finished));
+    const runningStops = stops;
+    const skipMotion = () => runningStops.forEach(animation => animation.finish());
+    reducedMotion.addEventListener('change', skipMotion, { once: true });
+    try { await Promise.allSettled(runningStops.map(animation => animation.finished)); }
+    finally { reducedMotion.removeEventListener('change', skipMotion); }
   }
   return { render, stop };
 }

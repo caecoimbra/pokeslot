@@ -2,6 +2,7 @@
 // Use um servidor de desenvolvimento com banco demonstrativo descartável.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { checkArcadeFeedback } from './check-arcade-feedback.mjs';
 
 const [moduleBase, edgePath, origin, screenshotPath] = process.argv.slice(2);
 const require = createRequire(moduleBase);
@@ -63,5 +64,6 @@ try {
   assert.equal(await page.locator('#return-to-machine').evaluate((link) => link === document.activeElement), true);
   violations += await scan('Recuperação');
   assert.equal(violations, 0, 'Violações nas verificações automatizadas');
+  await checkArcadeFeedback(browser, origin);
   console.log('Rodada local no Edge, teclado, foco, árvore de acessibilidade e axe passaram.');
 } finally { await browser.close(); }
