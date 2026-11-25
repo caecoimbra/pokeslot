@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { checkArcadeFeedback } from './check-arcade-feedback.mjs';
 import { checkDexCardLabels } from './check-dex-card-labels.mjs';
+import { checkSessionLoading } from './check-session-loading.mjs';
 
 const [moduleBase, edgePath, origin, screenshotPath] = process.argv.slice(2);
 const require = createRequire(moduleBase);
@@ -68,5 +69,6 @@ try {
   assert.equal(violations, 0, 'Violações nas verificações automatizadas');
   await checkArcadeFeedback(browser, origin);
   await checkDexCardLabels(browser, origin, axe);
+  await checkSessionLoading(browser, origin);
   console.log('Rodada local no Edge, teclado, foco, árvore de acessibilidade e axe passaram.');
 } finally { await browser.close(); }

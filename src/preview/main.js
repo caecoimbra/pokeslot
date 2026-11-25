@@ -101,6 +101,7 @@ const messages = {
     account: 'Jogador', signInTitle: 'Sua conta', emailLabel: 'E-mail', passwordLabel: 'Senha', loginButton: 'Entrar', logoutButton: 'Sair',
     authSignedOut: 'Entre para continuar a jogar.', authFailed: 'Não foi possível entrar e carregar seu progresso. Confira seus dados e tente novamente.',
     authUnavailable: 'O serviço de conta demorou para responder. Tente novamente em instantes.',
+    storageUnavailable: 'Não foi possível preparar o armazenamento da sessão. Recarregue a página para tentar novamente.',
     accessRestricted: 'O acesso ao jogo está indisponível para esta conta.',
     showSignup: 'Criar conta de teste', showLogin: 'Voltar para entrar', signupButton: 'Criar conta',
     passwordRecovery: 'Esqueci a senha',
@@ -113,6 +114,7 @@ const messages = {
     signupTimeout: 'O cadastro demorou para responder e pode ter sido concluído. Aguarde um instante e tente entrar com os mesmos dados.',
     signupNeedsEntry: 'A conta ainda não está conectada. Volte para entrar.',
     authWorking: 'Confirmando com o serviço de conta…',
+    authChecking: 'Verificando sua sessão…',
     recoverPending: 'Há uma rodada pendente de confirmação. Recupere-a antes de iniciar outra.', recoverButton: 'Recuperar rodada pendente',
     earned: (lines, duplicates) => [lines && `+${lines} giros por linhas`, duplicates && `+${duplicates} por capturas repetidas`].filter(Boolean).join(' · '),
     earnedUnavailable: 'Detalhes totais de giros indisponíveis para esta rodada.',
@@ -172,6 +174,7 @@ const messages = {
     account: 'Player', signInTitle: 'Your account', emailLabel: 'Email', passwordLabel: 'Password', loginButton: 'Sign in', logoutButton: 'Sign out',
     authSignedOut: 'Sign in to continue playing.', authFailed: 'Could not sign in and load your progress. Check your details and try again.',
     authUnavailable: 'The account service took too long to respond. Please try again shortly.',
+    storageUnavailable: 'Could not prepare session storage. Reload the page to try again.',
     accessRestricted: 'Game access is unavailable for this account.',
     showSignup: 'Create test account', showLogin: 'Back to sign in', signupButton: 'Create account',
     passwordRecovery: 'Forgot password',
@@ -184,6 +187,7 @@ const messages = {
     signupTimeout: 'Registration took too long and may have completed. Wait a moment, then try signing in with the same details.',
     signupNeedsEntry: 'The account is not signed in yet. Go back to sign in.',
     authWorking: 'Confirming with the account service…',
+    authChecking: 'Checking your session…',
     recoverPending: 'A round is awaiting confirmation. Recover it before starting another.', recoverButton: 'Recover pending round',
     earned: (lines, duplicates) => [lines && `+${lines} spins from lines`, duplicates && `+${duplicates} from duplicate catches`].filter(Boolean).join(' · '),
     earnedUnavailable: 'Total spin details are unavailable for this round.',
@@ -261,6 +265,7 @@ let proofUser = null;
 let proofGeneration = 0;
 let signingOut = false;
 let authSubmitting = false;
+let checkingSession = neonProof;
 let authMode = 'login';
 const proofSessions = neonProof && typeof BroadcastChannel === 'function'
   ? new BroadcastChannel('pokeslot-proof-session') : null;
@@ -615,8 +620,10 @@ function render() {
     const busy = authSubmitting || signingOut;
     document.querySelector('#account-label').textContent = proofUser ? text.account : text.signInTitle;
     document.querySelector('#open-password-recovery').href = `./redefinir-senha.html?lang=${language}`;
-    document.querySelector('#proof-auth-status').textContent = busy ? text.authWorking : text[authStatus] ?? '';
-    for (const button of document.querySelectorAll('#proof-login button, #proof-signup button')) button.disabled = busy;
+    document.querySelector('#proof-auth-status').textContent = checkingSession ? text.authChecking : busy ? text.authWorking : text[authStatus] ?? '';
+    for (const button of document.querySelectorAll('#proof-login button, #proof-signup button')) {
+      button.disabled = busy || !proofClient || !pendingDb;
+    }
   }
 }
 
@@ -685,8 +692,9 @@ function clearProofDisplay() {
   sprite.alt = '';
   status = 'initial';
 }
-function resetProofSession(nextAuthStatus = '') {
+function resetProofSession(nextAuthStatus = '', checking = false) {
   const version = ++proofGeneration;
+  checkingSession = checking;
   pending = true;
   authStatus = nextAuthStatus;
   proofUser = null;
@@ -696,8 +704,8 @@ function resetProofSession(nextAuthStatus = '') {
   return version;
 }
 function showProofIdentity(user) {
-  document.querySelector('#proof-login').hidden = !!user || authMode !== 'login';
-  document.querySelector('#proof-signup').hidden = !!user || authMode !== 'signup';
+  document.querySelector('#proof-login').hidden = checkingSession || !!user || authMode !== 'login';
+  document.querySelector('#proof-signup').hidden = checkingSession || !!user || authMode !== 'signup';
   document.querySelector('#proof-logout').hidden = !user;
   document.querySelector('#proof-user').textContent = user?.name || '';
 }
@@ -719,38 +727,63 @@ async function startNeonProof() {
   }
   try {
     proofClient = createNeonProofClient(import.meta.env.VITE_NEON_PROOF_DATABASE_URL, proofUrl);
-    pendingDb = await openPendingOperations();
+    let timer;
+    try {
+      pendingDb = await Promise.race([
+        openPendingOperations(),
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('storage_timeout')), 15000); }),
+      ]);
+    } finally { clearTimeout(timer); }
     await recoverProofSession();
-  } catch { clearProofDisplay(); authStatus = 'authFailed'; pending = true; render(); }
+  } catch {
+    checkingSession = false;
+    clearProofDisplay();
+    showProofIdentity(null);
+    authStatus = 'storageUnavailable';
+    pending = true;
+    render();
+  }
 }
 async function recoverProofSession(expectedUserId) {
   if (!proofClient || !pendingDb) return;
-  const version = resetProofSession();
+  const version = resetProofSession('', true);
+  let timer;
   try {
-    const user = await proofClient.user();
-    if (version !== proofGeneration) return;
-    if (expectedUserId && user?.id !== expectedUserId) throw new Error('session_changed');
-    if (!user) return;
-    proofUser = user;
-    const current = () => version === proofGeneration && proofUser?.id === user.id;
-    const state = validateProofState(await proofClient.request('state', user.id, current));
-    const savedOperation = await readPendingOperation(pendingDb, `game-proof:${user.id}`);
-    const inventoryOperation = await readProofInventoryOperation(pendingDb, user.id);
-    await proofClient.ensureSession(user.id, current);
-    if (!current()) return;
-    setProofState(state);
-    showProofIdentity(user);
-    showProofInventoryPending(inventoryOperation);
-    proofPendingRoundId = savedOperation?.operationId ?? null;
-    if (proofPendingRoundId) status = 'recoverPending';
-    authStatus = '';
-    pending = false;
+    await Promise.race([
+      (async () => {
+        const user = await proofClient.user();
+        if (version !== proofGeneration) return;
+        if (expectedUserId && user?.id !== expectedUserId) throw new Error('session_changed');
+        if (!user) return;
+        proofUser = user;
+        const current = () => version === proofGeneration && proofUser?.id === user.id;
+        const state = validateProofState(await proofClient.request('state', user.id, current));
+        const savedOperation = await readPendingOperation(pendingDb, `game-proof:${user.id}`);
+        const inventoryOperation = await readProofInventoryOperation(pendingDb, user.id);
+        await proofClient.ensureSession(user.id, current);
+        if (!current()) return;
+        setProofState(state);
+        showProofInventoryPending(inventoryOperation);
+        proofPendingRoundId = savedOperation?.operationId ?? null;
+        if (proofPendingRoundId) status = 'recoverPending';
+        authStatus = '';
+        pending = false;
+      })(),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('recovery_timeout')), 30000); }),
+    ]);
   } catch (error) {
     if (version === proofGeneration) {
-      const unavailable = ['session_timeout', 'session_unavailable', 'request_timeout', 'request_failed'].includes(error?.message);
+      const unavailable = ['session_timeout', 'session_unavailable', 'request_timeout', 'request_failed', 'recovery_timeout'].includes(error?.message);
       resetProofSession(error?.message === 'access_restricted' ? 'accessRestricted' : unavailable ? 'authUnavailable' : 'authFailed');
     }
-  } finally { if (version === proofGeneration) render(); }
+  } finally {
+    clearTimeout(timer);
+    if (version === proofGeneration) {
+      checkingSession = false;
+      showProofIdentity(proofUser);
+      render();
+    }
+  }
 }
 async function spinNeonProof() {
   if (!proofUser || !pendingDb) return;
