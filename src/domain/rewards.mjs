@@ -1,5 +1,4 @@
-// Cada linha vencedora representa uma recompensa. Os valores e a seleção de
-// Pokémon serão definidos em outra etapa, antes de alterar o progresso real.
+// Cada linha vencedora gera uma recompensa, inclusive quando duas linhas se cruzam.
 const REWARD_BY_SYMBOL = Object.freeze({
   pokeball: 'pokemon',
   spin: 'extra_spins',

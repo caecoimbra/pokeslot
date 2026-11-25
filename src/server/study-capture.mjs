@@ -2,7 +2,7 @@ import { randomInt } from 'node:crypto';
 import { selectSpecies } from '../domain/species-selection.mjs';
 import { STUDY_TIERS } from '../../scripts/data/kanto-estudo.mjs';
 
-// Pesos e catálogo são candidatos de estudo, não as regras finais do jogo.
+// Pesos por captura aprovados para os quatro grupos de Kanto na máquina hospedada.
 const weights = [70, 22, 7, 1];
 const tiers = STUDY_TIERS.map((tier, index) => ({ ...tier, weight: weights[index] }));
 

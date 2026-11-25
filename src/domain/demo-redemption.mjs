@@ -1,6 +1,6 @@
 import { STUDY_TIERS } from '../../scripts/data/kanto-estudo.mjs';
 
-// Os tiers são provisórios; o preço 1/2/3/4 expressa a regra discutida.
+// Custo da variante normal escolhida no resgate de vales Pokémon.
 const COST_BY_RARITY = Object.freeze({ common: 1, uncommon: 2, rare: 3, legendary: 4 });
 const catalog = new Map(STUDY_TIERS.flatMap(({ speciesIds, rarity }) =>
   speciesIds.map((speciesId) => [speciesId, { speciesId, rarity, cost: COST_BY_RARITY[rarity] }])

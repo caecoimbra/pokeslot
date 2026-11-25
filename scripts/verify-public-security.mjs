@@ -21,7 +21,7 @@ async function request(url, options = {}) {
   return response;
 }
 
-for (const path of ['/', '/previa-maquina.html', '/redefinir-senha.html']) {
+for (const path of ['/', '/previa-maquina.html', '/redefinir-senha.html', '/case/', '/case/en/']) {
   const response = await request(site + path, { redirect: 'follow' });
   assert.equal(new URL(response.url).origin, site);
   if (path === '/') assert.equal(new URL(response.url).pathname, '/', 'A máquina deve abrir na raiz.');
@@ -32,7 +32,20 @@ for (const path of ['/', '/previa-maquina.html', '/redefinir-senha.html']) {
   assert.match(policy, /(?:^|;)\s*frame-ancestors 'none'(?:;|$)/);
   assert.match(policy, /(?:^|;)\s*script-src 'self'(?:;|$)/);
   if (path === '/redefinir-senha.html') assert.match(response.headers.get('cache-control') || '', /\bno-store\b/);
+  if (path.startsWith('/case/')) {
+    const html = await response.text();
+    assert.ok(html.includes(path === '/case/' ? '<html lang="pt-BR">' : '<html lang="en">'));
+    assert.match(html, /<title>PokéSlot (por|by) Caetano Coimbra<\/title>/);
+  }
   console.log(`Hospedagem ${path}: HTTPS e cabeçalhos conferidos.`);
+}
+
+for (const [path, type] of [
+  ['/favicon.svg', 'image/svg+xml'], ['/case/maquina-pt.png', 'image/png'], ['/case/maquina-en.png', 'image/png'],
+]) {
+  const response = await request(site + path, { method: 'HEAD' });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type')?.split(';')[0], type);
 }
 
 const path = api + '/state';

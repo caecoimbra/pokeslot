@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Como Caetano Coimbra transformou uma máquina de três rolos em um jogo de coleção com progresso por conta.">
+  <meta name="theme-color" content="#101a26">
+  <title>PokéSlot por Caetano Coimbra</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="pt-BR" href="https://pokeslot.pages.dev/case/">
+  <link rel="alternate" hreflang="en" href="https://pokeslot.pages.dev/case/en/">
+  <link rel="stylesheet" href="/case/case.css">
+</head>
+<body>
+  <a class="skip" href="#case">Ir ao conteúdo</a>
+  <header class="masthead">
+    <a class="brand" href="/"><img src="/favicon.svg" alt="" width="34" height="34"> PokéSlot</a>
+    <nav aria-label="Navegação">
+      <a href="/case/en/" lang="en" hreflang="en">English</a>
+      <a class="play" href="/">Abrir a máquina</a>
+    </nav>
+  </header>
+  <main id="case">
+    <div class="opening">
+      <div>
+        <p class="byline">Caetano Coimbra · Produto e desenvolvimento</p>
+        <h1>Um arcade para colecionar os 151 Pokémon de Kanto</h1>
+        <p class="lead">Idealizei o PokéSlot como um arcade de três rolos com uma meta de longo prazo: completar as 151 espécies de Kanto. Conduzi as decisões de produto e arquitetura, do primeiro teste de saldo à publicação da máquina em português e inglês.</p>
+      </div>
+      <figure>
+        <img src="/case/maquina-pt.png" alt="Gabinete Kanto Spin com três rolos parados, setas de combinação, saldo e botão Girar." width="715" height="557">
+        <figcaption>Rodada executada no ambiente local. A máquina hospedada salva o progresso de cada conta convidada.</figcaption>
+      </figure>
+    </div>
+    <div class="decisions">
+      <section><h2>Por que dar uma escolha ao jogador?</h2><p>No início, quase toda captura revela uma espécie. No fim, até uma captura rara pode ser repetida. Os vales Pokémon permitem escolher uma espécie normal que falta. Com um vale pedra, o jogador escolhe a pedra de uma evolução.</p><p>Comparei cenários de progressão para escolher três vales equiprováveis e 72 evoluções. Em 1.500 trajetórias com até 25 rodadas diárias, a mediana para completar Kanto foi de 61 dias. É uma simulação com estratégia de resgate definida.</p></section>
+      <section><h2>E se a resposta de um giro se perder?</h2><p>Decidi que o jogador deveria poder retomar a rodada. A Neon Function verifica a identidade e sorteia no servidor. O PostgreSQL grava débito, recompensas e resultado juntos. Se a resposta se perder, a interface retoma a operação com o mesmo identificador. Ao trocar de conta, os itens e os resultados acompanham o jogador que fez a ação.</p></section>
+    </div>
+    <section class="evidence">
+      <h2>O que validamos</h2>
+      <dl>
+        <div><dt>Duas contas, uma máquina</dt><dd>Com estoque preparado na prova, o jogador C resgatou Pikachu, evoluiu para Raichu e recuperou ambos após recarregar. Ao entrar como B, vimos o inventário de B.</dd></div>
+        <div><dt>Recuperação da conta</dt><dd>Recebi o e-mail numa caixa controlada e redefini a senha. Depois de ativarmos a revogação de sessões, a aba antiga pediu nova entrada e o saldo foi recuperado.</dd></div>
+        <div><dt>Teclado e leitor de tela</dt><dd>Na máquina hospedada, um giro pelo teclado levou o saldo de 25 para 24 e o valor persistiu após recarregar. Ouvi as narrações com o Narrador do Windows.</dd></div>
+      </dl>
+    </section>
+    <section class="authorship"><h2>Como trabalhei</h2><p>Defini o escopo, o orçamento de R$ 0, as regras e os critérios de aceite. Usei IA para pesquisar, implementar, revisar código e automatizar testes. Conduzi as decisões de cada etapa e participei das verificações manuais com contas fictícias.</p></section>
+  </main>
+  <footer><p>Jogo por convite. Este case é público.</p><p>Projeto pessoal de fã. Dados e sprites da <a href="https://pokeapi.co/">PokéAPI</a>.</p></footer>
+</body>
+</html>

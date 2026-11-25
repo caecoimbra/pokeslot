@@ -1,6 +1,11 @@
 node_modules/
 .pnpm-store/
 dist/
+.wrangler/
+# Integrações do agente são locais e independentes do runtime do jogo.
+/.agents/skills/
+/.codex/
+/skills-lock.json
 .pokeslot-demo.sqlite*
 .env
 .env.*

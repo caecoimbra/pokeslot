@@ -12,6 +12,8 @@ function demoRoundPlugin() {
       const store = openLocalGameStore('.pokeslot-demo.sqlite');
       server.httpServer?.once('close', () => store.close());
       server.middlewares.use((request, response, next) => {
+        // Preserva os favoritos da prévia e os parâmetros de idioma e backend.
+        request.url = request.url?.replace(/^\/previa-maquina(?:\.html)?(?=\?|$)/, '/index.html');
         const postPaths = ['/api/demo-round', '/api/demo-redeem', '/api/demo-stone', '/api/demo-evolve'];
         if (!postPaths.includes(request.url) && request.url !== '/api/demo-state') return next();
         response.setHeader('Cache-Control', 'no-store');
@@ -63,21 +65,23 @@ export default defineConfig(({ mode }) => {
   }
   const page = (name) => fileURLToPath(new URL(name, import.meta.url));
   return {
-    plugins: [demoRoundPlugin(), ...(homologation ? [{
-      name: 'homologation-root',
+    plugins: [demoRoundPlugin(), {
+      name: 'legacy-machine-address',
       async writeBundle({ dir }) {
-        await copyFile(join(dir, 'previa-maquina.html'), join(dir, 'index.html'));
+        await copyFile(join(dir, 'index.html'), join(dir, 'previa-maquina.html'));
       },
-    }] : [])],
+    }],
     build: {
       outDir: homologation ? 'dist/homologacao' : 'dist',
       // A política de segurança da hospedagem permite imagens servidas pelo próprio site.
       ...(homologation ? { assetsInlineLimit: 0 } : {}),
       rollupOptions: {
         input: {
-          preview: page('./previa-maquina.html'),
+          machine: page('./index.html'),
+          casePt: page('./case/index.html'),
+          caseEn: page('./case/en/index.html'),
           passwordRecovery: page('./redefinir-senha.html'),
-          ...(homologation ? {} : { main: page('./index.html'), gameProof: page('./prova-jogo.html') }),
+          ...(homologation ? {} : { identityProof: page('./prova-identidade.html'), gameProof: page('./prova-jogo.html') }),
         },
       },
     },

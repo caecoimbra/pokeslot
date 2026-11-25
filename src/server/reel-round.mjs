@@ -10,8 +10,7 @@ export function createSecureReelRound() {
   return createReelRound(randomInt);
 }
 
-// Monta e avalia a grade. A execução de uma rodada com saldo e recompensas
-// ainda precisará de autenticação, persistência e proteção contra repetição.
+// A Function envia a grade avaliada para a transação que registra a rodada.
 export function createEvaluatedReelRound() {
   return evaluateReelRound(createSecureReelRound());
 }

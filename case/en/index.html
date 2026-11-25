@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="How Caetano Coimbra built a three-reel collecting game with persistent player accounts.">
+  <meta name="theme-color" content="#101a26">
+  <title>PokéSlot by Caetano Coimbra</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="pt-BR" href="https://pokeslot.pages.dev/case/">
+  <link rel="alternate" hreflang="en" href="https://pokeslot.pages.dev/case/en/">
+  <link rel="stylesheet" href="/case/case.css">
+</head>
+<body>
+  <a class="skip" href="#case">Skip to content</a>
+  <header class="masthead">
+    <a class="brand" href="/?lang=en"><img src="/favicon.svg" alt="" width="34" height="34"> PokéSlot</a>
+    <nav aria-label="Navigation">
+      <a href="/case/" lang="pt-BR" hreflang="pt-BR">Português</a>
+      <a class="play" href="/?lang=en">Open the machine</a>
+    </nav>
+  </header>
+  <main id="case">
+    <div class="opening">
+      <div>
+        <p class="byline">Caetano Coimbra · Product and development</p>
+        <h1>An arcade game for collecting all 151 Kanto Pokémon</h1>
+        <p class="lead">I designed PokéSlot as a three-reel arcade game with a longer goal: collecting all 151 Kanto species. I led product and architecture decisions from the first balance test through the release of the machine in English and Portuguese.</p>
+      </div>
+      <figure>
+        <img src="/case/maquina-en.png" alt="Kanto Spin cabinet with three stopped reels, payline arrows, spin balance and a Spin button." width="715" height="557">
+        <figcaption>A round played in the local environment. The hosted machine saves progress for each invited account.</figcaption>
+      </figure>
+    </div>
+    <div class="decisions">
+      <section><h2>Why give players a choice?</h2><p>Early on, almost every catch reveals a species. By the end, even a rare catch can be a duplicate. Pokémon vouchers let a player choose a missing normal species. With a stone voucher, the player picks the stone for an evolution.</p><p>I compared progression scenarios before choosing three equally likely vouchers and 72 evolutions. Across 1,500 simulated playthroughs with up to 25 rounds a day, the median time to complete Kanto was 61 days under the model’s redemption strategy.</p></section>
+      <section><h2>What if a spin’s response gets lost?</h2><p>I wanted the player to be able to recover the round. A Neon Function checks identity and draws the result on the server. PostgreSQL records the debit, rewards and result together. If the response gets lost, the interface retries with the same operation ID. Switching accounts keeps items and results with the player who performed the action.</p></section>
+    </div>
+    <section class="evidence">
+      <h2>What we verified</h2>
+      <dl>
+        <div><dt>Two accounts, one machine</dt><dd>Using inventory prepared for the test, player C redeemed Pikachu, evolved it into Raichu and recovered both after reloading. Signing in as player B showed B’s own inventory.</dd></div>
+        <div><dt>Account recovery</dt><dd>I received the email in a controlled inbox and reset the password. After we enabled session revocation, the previous tab required a fresh login and the balance was recovered.</dd></div>
+        <div><dt>Keyboard and screen reader</dt><dd>On the hosted machine, a keyboard spin took the balance from 25 to 24. The balance persisted after a reload. I heard the announcements with Windows Narrator.</dd></div>
+      </dl>
+    </section>
+    <section class="authorship"><h2>How I worked</h2><p>I set the scope, zero-cost budget, game rules and acceptance criteria. I used AI to support research, implementation, code review and test automation. I made the decisions at each stage and participated directly in manual checks with test accounts.</p></section>
+  </main>
+  <footer><p>Playing is by invitation. This case is public.</p><p>A personal fan project. Data and sprites from <a href="https://pokeapi.co/">PokéAPI</a>.</p></footer>
+</body>
+</html>

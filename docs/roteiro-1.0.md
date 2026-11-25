@@ -1,6 +1,10 @@
 # Caminho para uma versão 1.0 jogável
 
-Planejamento de 23/11/2026, sujeito às decisões de Caetano e aos testes. Há uma prévia bilíngue conectada a um branch Neon isolado; ela ainda é uma prova, não o jogo pronto para publicação.
+**Entrega de portfólio em 25/11/2026.** A [máquina](https://pokeslot.pages.dev/) está hospedada com progresso por conta convidada. O [case público](https://pokeslot.pages.dev/case/) apresenta as decisões conduzidas por Caetano, a participação de IA e os resultados observados. O remetente de recuperação continua compartilhado. A abertura a novos jogadores e a escolha do remetente dedicado exigem validação separada dentro do orçamento de R$ 0.
+
+Na revisão de entrega, o Edge verificou rolos com frenagem, movimento reduzido, comandos pelo teclado, persistência do botão de som e sequências distintas de notas por resultado. O teste de áudio observou a API do sintetizador. Uma Pokédex preenchida revelou divergência no nome acessível de cartões capturados. A regressão passou com variantes normal, shiny e ambas em PT/EN. O case foi verificado a 320 e 1.200 pixels, incluindo imagens, navegação e axe.
+
+As anotações abaixo preservam o roteiro original de 23/11 e os resultados de cada etapa, em ordem de execução.
 
 1. **Consolidar a prévia.** A recuperação de dados da PokéAPI e de operações pendentes já faz parte da prévia, inclusive com troca de conta. As verificações de interface e de confiabilidade voltam nos passos 6 e 7 com a versão jogável.
 2. **Fechar o catálogo de evolução.** Caetano aprovou 72 receitas, incluindo as 16 clássicas e 56 adaptações baseadas no tipo principal. A evolução preserva a origem na coleção e a variante normal ou shiny.

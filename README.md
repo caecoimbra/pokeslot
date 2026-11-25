@@ -1,48 +1,65 @@
 # PokéSlot
 
-Projeto de aprendizagem para construir uma máquina de três rolos inspirada em jogos de Pokémon. O projeto é pessoal, sem finalidade de venda, e está em desenvolvimento.
+Um arcade de coleção idealizado e dirigido por **Caetano Coimbra**. Cada rodada dura alguns instantes. A estratégia aparece entre os giros, ao escolher qual espécie resgatar ou qual Pokémon evoluir para completar a Pokédex de Kanto.
 
-## Direção do projeto
+**[Abrir a máquina](https://pokeslot.pages.dev/) · [Case do projeto](https://pokeslot.pages.dev/case/) · [English case study](https://pokeslot.pages.dev/case/en/)**
 
-**Caetano Coimbra idealiza e dirige o PokéSlot.** Ele definiu a experiência do jogador, as regras de progressão e o escopo de Kanto. Conduz as decisões técnicas e de produto, organiza a implementação em entregas verificáveis e participa dos testes da máquina com contas fictícias.
+A demonstração hospedada persiste o progresso de contas convidadas. O case pode ser lido por qualquer visitante. Para experimentar a máquina sem convite, o repositório inclui um modo de desenvolvimento local.
 
-- **Produto e balanceamento.** Definiu o ciclo de 20 giros iniciais e reposição de 10 a cada 24 horas. Propôs os vales para dar ao jogador mais controle sobre o fim da coleção e orientou a comparação de cenários antes de definir os pesos finais.
-- **Arquitetura e critérios de qualidade.** Escolheu avançar com Neon após a prova de identidade e persistência. Priorizou que o progresso sobreviva à reabertura e que uma operação pendente possa ser retomada com segurança.
-- **Validação prática.** Participou do ensaio com duas contas na mesma máquina, entrando como C e B para verificar a recuperação da coleção e a separação do inventário.
+![Máquina do PokéSlot após uma rodada local, com os três rolos, o saldo e o comando Girar](public/case/maquina-pt.png)
 
-O trabalho usa IA como apoio em pesquisa, implementação, revisão e preparação dos testes, sob a direção de Caetano.
+## Como jogar
 
-## Estado atual
+1. **Gire.** A conta começa com 20 giros. Cada rodada custa um. Cada rolo embaralha suas 20 posições e para em uma delas. A máquina verifica três horizontais e duas diagonais. Cada linha com três símbolos iguais concede sua própria recompensa.
+2. **Colecione.** Três Pokébolas concedem uma captura. O sorteio escolhe a raridade (70% comum, 22% incomum, 7% raro, 1% lendário) e uma espécie desse grupo. A chance de shiny é de 0,5% por captura, independente da raridade. Uma espécie aparece na Pokédex assim que qualquer uma das variantes é registrada.
+3. **Escolha o próximo registro.** Uma linha de vales sorteia, com chances iguais, um vale Pokémon, um vale pedra ou um vale de dois giros. O vale Pokémon permite escolher uma variante normal faltante por 1 a 4 vales, conforme a raridade. Ao evoluir com uma pedra compatível, o destino herda a variante e a origem continua disponível.
 
-O código inclui uma **prova técnica de identidade e saldo** e versões experimentais da máquina e da Pokédex. O jogo completo ainda está em desenvolvimento. As provas usam dados fictícios; o saldo inicial e a reposição definidos para o jogo são aplicados na prévia local e no backend autenticado isolado.
+Uma linha de símbolos de giro concede dois giros. Capturar de novo a **mesma variante** compensa o jogador com 1, 1, 2 ou 3 giros por raridade. A compensação dobra para um shiny repetido. O saldo recebe mais 10 giros por período completo de 24 horas desde o primeiro acesso. Após 53 horas, são duas reposições e cinco horas já transcorridas para a terceira.
 
-A regra inicial dos três rolos está em desenvolvimento: cada rolo contém 10 Pokébolas, 6 símbolos de giro e 4 vales, com embaralhamento e escolha de posição por rodada. A prévia bilíngue usa um banco SQLite local de teste: saldo e coleção sobrevivem a recarregar e reiniciar o servidor. Todos que acessam a prévia no mesmo computador compartilham o mesmo jogador fictício, sem autenticação; não é um backend seguro para publicação. A prévia usa classificações provisórias e não concede recompensas reais.
+## Da regra ao banco
 
-A prévia local também experimenta cinco tipos de prêmio por linha de vales com chances iguais, como hipótese de estudo. O vale de giros concede 2 giros de teste imediatamente. O vale Pokémon permite escolher uma variante normal em uma lista de Kanto que mostra o custo provisório de 1 a 4 vales por raridade. Ter apenas a shiny permite resgatar a normal. O seletor de resgate preserva os nomes e números de Kanto quando a consulta à PokéAPI falha. Um vale pedra pode ser trocado por uma pedra escolhida e usada em 16 evoluções clássicas; a origem e a variante são preservadas. Tipo e amuleto ficam guardados para estudo. A prova autenticada isolada também implementa esses inventários e ações, como descrito no [plano de vales, pedras e evolução](docs/vales-evolucao-integracao.md).
+| Camada | Responsabilidade |
+| --- | --- |
+| Interface PT/EN em JavaScript e CSS, servida pelo Cloudflare Pages | Receber comandos, animar os rolos e apresentar o resultado confirmado. A Pokédex usa folhas de sprites locais para preservar as silhuetas e os registros quando a PokéAPI está indisponível. |
+| Neon Auth e Neon Function | Identificar a conta, exigir uma sessão ativa e sortear o resultado no servidor. A aplicação hospedada restringe o jogo à lista de convidados. |
+| PostgreSQL | Aplicar débito, recompensas e registros da coleção na mesma transação. A operação tem um identificador que permite recuperar a primeira resposta após uma interrupção. |
+| PokéAPI | Fornecer dados das espécies para as fichas. Nomes e sprites de referência incluídos no projeto também vêm dos repositórios da PokéAPI. |
 
-Para o jogo, a regra em desenvolvimento prevê saldo inicial de 20 giros e reposição de 10 a cada período completo de 24 horas, acumulada durante a ausência. A prévia local e a prova autenticada isolada aplicam essa regra com o relógio de seus respectivos servidores. A máquina apresenta o próximo horário e permite atualizar o saldo; o horário apresentado não concede giros por si só.
+## Decisões e resultados de Caetano
 
-A primeira versão está planejada com as 151 espécies de Kanto e uma interface bilíngue em português e inglês, com alternância pelo jogador. A prévia local sorteia as espécies com chances iguais para testes. A prova Neon aplica os parâmetros iniciais aprovados para a 1.0 e persiste as variantes por conta fictícia. Ambas consultam a PokéAPI para mostrar detalhes. Na Pokédex, uma espécie ainda não registrada aparece como silhueta numerada. Obter a variante normal ou shiny revela o nome e libera a ficha para aquela conta. Os cartões usam duas folhas de sprites e um índice de nomes incluídos na prévia, de modo que a galeria continua legível quando o serviço externo falha. O script `scripts/gerar-sprites-kanto.ps1` recompõe esses recursos a partir de revisões fixas dos [sprites](https://github.com/PokeAPI/sprites) e do [catálogo da PokéAPI](https://github.com/PokeAPI/pokeapi). Veja as regras e os cenários comparados no [plano de vales, pedras e evolução](docs/vales-evolucao-integracao.md).
+Caetano definiu as regras, a arquitetura, o orçamento de R$ 0 e os critérios de aceite. Conduziu o projeto da prova de saldo até a publicação da máquina. Usou IA para pesquisar alternativas, escrever e revisar código e automatizar verificações. Participou diretamente das provas de troca de conta, recuperação de senha e acessibilidade.
 
-Foram experimentados Neon Auth, PostgreSQL, Neon Data API e uma Neon Function em um branch de teste. A Data API apresentou falha intermitente de contexto de identidade; a causa não foi identificada. A função alternativa passou em cenários pontuais de recuperação de saldo, repetição e concorrência, mas a arquitetura para publicação e os privilégios de acesso ainda precisam de revisão. A comparação prática com Supabase foi interrompida por decisão do autor e não constitui resultado para aquela plataforma.
+| Decisão | Como foi avaliada |
+| --- | --- |
+| Separar a apresentação do estado do jogador | Com contas fictícias no mesmo navegador, a coleção de uma conta foi preservada ao entrar em outra. Em um teste com estoque preparado, Pikachu e Raichu continuaram registrados após recarregar. |
+| Dar ao jogador escolhas para completar Kanto | O simulador comparou 1.500 trajetórias por cenário. Com três vales equiprováveis, 72 receitas e até 25 rodadas por dia, a mediana simulada para 151 espécies foi de 61 dias. |
+| Tornar o resultado acessível pelo teclado e por áudio assistivo | No endereço definitivo, uma rodada pelo teclado levou o saldo de 25 para 24. O valor persistiu após recarregar. Caetano confirmou a narração com o Narrador do Windows. |
 
-A prova em `proof-identity-safe` integra autenticação, rodada, débito e coleção no PostgreSQL isolado. A função gera a rodada no servidor e registra o resultado junto com o débito. Uma operação repetida recupera o mesmo resultado. A máquina autenticada sorteia três tipos de vale com chances iguais por linha premiada. O jogador pode resgatar Pokémon e trocar o vale pedra por uma das 14 pedras usadas nas 72 evoluções de Kanto. Abra a prova em `http://localhost:5173/previa-maquina.html?backend=neon`, com as variáveis públicas de teste e uma conta fictícia. Sem o parâmetro, a prévia usa o ambiente local. A publicação depende da revisão de privilégios, retenção e recuperação.
+O [roteiro e as evidências de validação](docs/roteiro-1.0.md) documentam os ambientes de cada prova. Os [cenários de progressão](docs/vales-evolucao-integracao.md) detalham as hipóteses da simulação.
 
-## Organização da prova
+## Executar e verificar
 
-- `src/domain/`: cálculo ilustrativo dos períodos de reposição.
-- `src/identity/`: interface e mecanismos usados nas verificações de identidade.
-- `functions/neon-authenticated-proof/`: API experimental que valida a identidade.
-- `functions/neon-game-proof/` e `db/neon/isolated_game.sql`: rodada transacional experimental para o branch isolado.
-- `db/neon/`: esquemas e consultas da prova. Alguns scripts são restritos ao branch isolado indicado neles.
-- `test/`: verificações locais com dados e dependências simulados quando indicado no próprio teste.
+O projeto foi verificado com Node.js 26.13.1 e pnpm 11.25.0. O modo local usa o SQLite incluído no Node e funciona sem conta Neon.
 
-## Executar localmente
+```sh
+pnpm install --frozen-lockfile
+pnpm dev
+```
 
-Requer Node.js compatível com `node:sqlite` e as dependências em `pnpm-lock.yaml` (a prévia foi testada com Node 26.13.1), além de pnpm. Instale com `pnpm install --frozen-lockfile` e execute `pnpm dev`. O endereço exibido pelo Vite deve ser aberto com `localhost`: a configuração de autenticação de teste pode tratar `127.0.0.1` como outra origem.
+Abra o endereço indicado pelo Vite. O servidor de desenvolvimento guarda um único jogador no arquivo ignorado `.pokeslot-demo.sqlite`. Esse modo usa sorteio simplificado, cinco tipos de vale e 16 receitas clássicas. A economia completa de giros, compensações, três vales e 72 evoluções funciona na máquina **hospedada**.
 
-Para experimentar a rodada demonstrativa, abra `http://localhost:5173/previa-maquina.html` enquanto o servidor local de desenvolvimento estiver em execução. Se a porta estiver ocupada, use a porta informada pelo Vite. A API de demonstração existe apenas nesse servidor; o build estático não oferece rodadas nem constitui um backend de produção.
+```sh
+pnpm test
+pnpm build
+```
 
-Os fluxos conectados também exigem infraestrutura Neon configurada. Copie `.env.example` para `.env.local` e informe os endereços públicos apropriados para cada branch. Variáveis `VITE_` são expostas ao navegador: nunca coloque senhas, tokens, chaves ou strings de conexão nelas. Os scripts SQL devem ser revisados antes de qualquer execução; não são migrações prontas para produção.
+O build do site usa `pnpm build:site` com os dois endereços públicos `VITE_NEON_PROOF_*` de [.env.example](.env.example) configurados em `.env.local` ou no ambiente. O destino é `dist/homologacao`. As credenciais do banco pertencem exclusivamente ao runtime da Function. A suíte local e a [verificação HTTP da publicação](scripts/verify-public-security.mjs) cobrem camadas diferentes.
 
-As verificações locais existentes podem ser executadas com `node --test test/*.test.mjs`. Elas não substituem testes integrados de contas, rede, autorização e segurança.
+## Encontrar o código
+
+- [Regras de domínio](src/domain) e [sorteios no servidor](src/server)
+- [Máquina, Pokédex e inventário](src/preview) e [cliente da PokéAPI](src/pokeapi)
+- [Function autenticada](functions/neon-game-proof/index.ts) e [transações PostgreSQL](db/neon)
+- [Testes](test) e [simulador de progressão](scripts/simular-progressao-v1.mjs)
+
+Projeto pessoal e não comercial de fã. Pokémon e os personagens pertencem aos respectivos titulares. Dados e sprites utilizados no catálogo estão disponíveis na [PokéAPI](https://pokeapi.co/) e no [repositório de sprites](https://github.com/PokeAPI/sprites).
