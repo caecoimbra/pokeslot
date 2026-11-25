@@ -1,11 +1,19 @@
 -- Executar em uma transação como proprietário do esquema, somente no branch isolado.
 -- O login e sua credencial devem ser provisionados separadamente.
-CREATE ROLE pokeslot_runtime NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE
-  NOINHERIT NOREPLICATION NOBYPASSRLS;
+DO $role$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'pokeslot_runtime') THEN
+    CREATE ROLE pokeslot_runtime NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE
+      NOINHERIT NOREPLICATION NOBYPASSRLS;
+  ELSIF EXISTS (SELECT FROM pg_roles WHERE rolname = 'pokeslot_runtime' AND
+    (rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolreplication OR rolbypassrls)) THEN
+    RAISE EXCEPTION 'Unexpected privileges on pokeslot_runtime';
+  END IF;
+END;
+$role$;
 GRANT USAGE ON SCHEMA pokeslot_proof TO pokeslot_runtime;
 
--- Somente as entradas da API elevam privilégios. A verificação da sessão
--- e o bloqueio de revogação permanecem na transação de cada operação.
+-- Atualiza também instalações anteriores em que essas entradas eram SECURITY INVOKER.
 ALTER FUNCTION pokeslot_proof.session_state(text, text) SECURITY DEFINER;
 ALTER FUNCTION pokeslot_proof.session_spin(text, text, uuid, jsonb) SECURITY DEFINER;
 ALTER FUNCTION pokeslot_proof.session_inventory_action(text, text, uuid, text, jsonb) SECURITY DEFINER;

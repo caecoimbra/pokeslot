@@ -107,8 +107,8 @@ $function$;
 
 CREATE OR REPLACE FUNCTION pokeslot_proof.session_state(p_user_id text, p_session_token text)
 RETURNS jsonb
-LANGUAGE plpgsql
-SET search_path = pg_catalog
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
 AS $function$
 BEGIN
   PERFORM pokeslot_proof.lock_active_session(p_user_id, p_session_token);
@@ -126,8 +126,8 @@ CREATE OR REPLACE FUNCTION pokeslot_proof.session_spin(
   p_user_id text, p_session_token text, p_operation_id uuid, p_round jsonb
 )
 RETURNS jsonb
-LANGUAGE plpgsql
-SET search_path = pg_catalog
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
 AS $function$
 DECLARE v_status text;
 BEGIN
@@ -142,8 +142,8 @@ CREATE OR REPLACE FUNCTION pokeslot_proof.session_inventory_action(
   p_user_id text, p_session_token text, p_operation_id uuid, p_action text, p_args jsonb
 )
 RETURNS jsonb
-LANGUAGE plpgsql
-SET search_path = pg_catalog
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
 AS $function$
 DECLARE v_status text;
 BEGIN

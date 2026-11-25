@@ -55,7 +55,11 @@ try {
   assert.equal(inventory.rows[0].result.status, 'insufficient_vouchers');
 
   await client.query('SAVEPOINT runtime_permissions');
-  await client.query(await readFile(new URL('../db/neon/isolated_runtime_permissions.sql', import.meta.url), 'utf8'));
+  const permissionsSql = await readFile(new URL('../db/neon/isolated_runtime_permissions.sql', import.meta.url), 'utf8');
+  await client.query(permissionsSql);
+  // Uma reinstalação deve preservar o login e as três rotas do papel já provisionado.
+  await client.query(permissionsSql);
+  await client.query(await readFile(new URL('../db/neon/isolated_session_guard.sql', import.meta.url), 'utf8'));
   await client.query('GRANT pokeslot_runtime TO CURRENT_USER WITH SET TRUE');
   await client.query('SET LOCAL ROLE pokeslot_runtime');
   const { rows: permissions } = await client.query(`SELECT current_user AS role,
