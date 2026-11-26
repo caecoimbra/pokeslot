@@ -36,6 +36,20 @@
       <section><h2>Why give players a choice?</h2><p>Early on, almost every catch reveals a species. By the end, even a rare catch can be a duplicate. Pokémon vouchers let a player choose a missing normal species. With a stone voucher, the player picks the stone for an evolution.</p><p>I compared progression scenarios before choosing three equally likely vouchers and 72 evolutions. Across 1,500 simulated playthroughs with up to 25 rounds a day, the median time to complete Kanto was 61 days under the model’s redemption strategy.</p></section>
       <section><h2>What if a spin’s response gets lost?</h2><p>I wanted the player to be able to recover the round. A Neon Function checks identity and draws the result on the server. PostgreSQL records the debit, rewards and result together. If the response gets lost, the interface retries with the same operation ID. Switching accounts keeps items and results with the player who performed the action.</p></section>
     </div>
+    <section class="stack">
+      <h2>A complete experience, with server-side rules</h2>
+      <p>Players create an account, spin, receive catches or items, and resume their collection after leaving. The Pokédex covers all 151 species, normal and shiny variants, filters, and EN/PT descriptions. Vouchers unlock species and stones; evolutions preserve both the variant and the source Pokémon.</p>
+      <table>
+        <caption>Applied technologies and their responsibilities</caption>
+        <thead><tr><th scope="col">Layer</th><th scope="col">Implementation</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Interface</th><td>HTML, CSS and modular JavaScript with Vite. Web Animations API for motion, Web Audio API for effects and HTML Audio for Pokémon cries.</td></tr>
+          <tr><th scope="row">Identity and API</th><td>Neon Auth and a TypeScript Neon Function with Hono. JOSE validates the JWT; the active session is also checked in the database.</td></tr>
+          <tr><th scope="row">Persistence</th><td>PostgreSQL and PL/pgSQL for transactions, player locks, collection, inventory and result recovery. IndexedDB preserves pending intent in the browser.</td></tr>
+          <tr><th scope="row">Data and release</th><td>PokéAPI, local Kanto assets and versioned translations. Cloudflare Pages hosts static files; the API runs on Neon.</td></tr>
+        </tbody>
+      </table>
+    </section>
     <section class="evidence">
       <h2>What we verified</h2>
       <dl>
@@ -43,6 +57,17 @@
         <div><dt>Account recovery</dt><dd>I received the email in a controlled inbox and reset the password. After we enabled session revocation, the previous tab required a fresh login and the balance was recovered.</dd></div>
         <div><dt>Keyboard and screen reader</dt><dd>On the hosted machine, a keyboard spin took the balance from 25 to 24. The balance persisted after a reload. I heard the announcements with Windows Narrator.</dd></div>
       </dl>
+      <p class="validation-note">On November 26, 2026, all 234 Node tests passed. Playwright and axe scripts checked browser flows, keyboard, focus, languages and reduced motion. HTTPS, headers, CORS and anonymous-request rejection also passed on the live site. Test count is not a coverage percentage; automated checks do not replace a complete manual assessment.</p>
+    </section>
+    <section class="iteration">
+      <h2>Feedback turned into improvements</h2>
+      <p>A visitor tried to spin before noticing the login. I turned this path into an introduction with Professor Coimbra, explaining the game and opening sign-up without executing a round. Other feedback led to names in evolution choices, Pokédex silhouettes and sound controls within the relevant screens.</p>
+      <p>When we checked all 151 Kanto species, the API provided no Portuguese descriptions. I chose local translations with their English sources identified: the finite catalog needs no translation service during gameplay. The effects and reward queue present new, duplicate and shiny catches, vouchers and spins from the confirmed result.</p>
+    </section>
+    <section class="limits">
+      <h2>Limits and next steps</h2>
+      <p>This is a portfolio demonstration on free plans, subject to quotas, wake-up after inactivity and external dependencies. Email uses Neon's shared sender. The database clock determines replenishment when a player accesses or acts, without a scheduled job. Operation recovery is valid for seven days.</p>
+      <p>Next steps are measuring session-check latency, automating tests and builds in CI, and making migrations easier to reproduce. Performance at scale has not been measured, and no CI pipeline is configured yet.</p>
     </section>
     <section class="authorship"><h2>How I worked</h2><p>I set the scope, zero-cost budget, game rules and acceptance criteria. I used AI to support research, implementation, code review and test automation. I made the decisions at each stage and participated directly in manual checks with test accounts.</p></section>
   </main>

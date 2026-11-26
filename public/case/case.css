@@ -28,7 +28,13 @@ figure { margin: 0; }
 figure img { display: block; width: 100%; height: auto; border-radius: 1rem; }
 figcaption, footer { color: var(--muted); font-size: .875rem; line-height: 1.5; }
 figcaption { margin-top: .6rem; }
-.decisions, .evidence, .authorship, footer { border-top: 1px solid var(--rule); padding: clamp(1.8rem, 4vw, 3.2rem) 0; }
+.decisions, .evidence, .authorship, .stack, .iteration, .limits, footer { border-top: 1px solid var(--rule); padding: clamp(1.8rem, 4vw, 3.2rem) 0; }
+.stack table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; line-height: 1.6; }
+.stack caption { text-align: left; color: var(--muted); margin-bottom: .6rem; }
+.stack th, .stack td { border-bottom: 1px solid var(--rule); padding: .9rem .7rem; text-align: left; vertical-align: top; }
+.stack th { color: #fff0cd; }
+.stack th:first-child { width: 26%; }
+.validation-note, .limits p { color: var(--muted); }
 .decisions { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 7vw, 6rem); }
 p { margin: .55em 0; }
 dl { margin-bottom: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }

@@ -36,6 +36,20 @@
       <section><h2>Por que dar uma escolha ao jogador?</h2><p>No início, quase toda captura revela uma espécie. No fim, até uma captura rara pode ser repetida. Os vales Pokémon permitem escolher uma espécie normal que falta. Com um vale pedra, o jogador escolhe a pedra de uma evolução.</p><p>Comparei cenários de progressão para escolher três vales equiprováveis e 72 evoluções. Em 1.500 trajetórias com até 25 rodadas diárias, a mediana para completar Kanto foi de 61 dias. É uma simulação com estratégia de resgate definida.</p></section>
       <section><h2>E se a resposta de um giro se perder?</h2><p>Decidi que o jogador deveria poder retomar a rodada. A Neon Function verifica a identidade e sorteia no servidor. O PostgreSQL grava débito, recompensas e resultado juntos. Se a resposta se perder, a interface retoma a operação com o mesmo identificador. Ao trocar de conta, os itens e os resultados acompanham o jogador que fez a ação.</p></section>
     </div>
+    <section class="stack">
+      <h2>Uma experiência completa, com regras no servidor</h2>
+      <p>O jogador cria uma conta, gira, recebe capturas ou itens e continua sua coleção depois de sair. A Pokédex apresenta as 151 espécies, variantes normal e shiny, filtros e descrições PT/EN. Vales permitem resgatar espécies e pedras; as evoluções preservam a variante e o Pokémon de origem.</p>
+      <table>
+        <caption>Tecnologias aplicadas e sua responsabilidade</caption>
+        <thead><tr><th scope="col">Camada</th><th scope="col">Implementação</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Interface</th><td>HTML, CSS e JavaScript modular, com Vite. Animações pela Web Animations API, efeitos pela Web Audio API e cries pelo HTML Audio.</td></tr>
+          <tr><th scope="row">Identidade e API</th><td>Neon Auth e uma Neon Function em TypeScript com Hono. JOSE valida o JWT; a sessão ativa também é conferida no banco.</td></tr>
+          <tr><th scope="row">Persistência</th><td>PostgreSQL e PL/pgSQL: transações, bloqueios por jogador, coleção, inventário e recuperação do resultado. IndexedDB preserva a intenção pendente no navegador.</td></tr>
+          <tr><th scope="row">Dados e publicação</th><td>PokéAPI, recursos locais de Kanto e traduções versionadas. Cloudflare Pages hospeda os arquivos estáticos; a API roda na Neon.</td></tr>
+        </tbody>
+      </table>
+    </section>
     <section class="evidence">
       <h2>O que validamos</h2>
       <dl>
@@ -43,6 +57,17 @@
         <div><dt>Recuperação da conta</dt><dd>Recebi o e-mail numa caixa controlada e redefini a senha. Depois de ativarmos a revogação de sessões, a aba antiga pediu nova entrada e o saldo foi recuperado.</dd></div>
         <div><dt>Teclado e leitor de tela</dt><dd>Na máquina hospedada, um giro pelo teclado levou o saldo de 25 para 24 e o valor persistiu após recarregar. Ouvi as narrações com o Narrador do Windows.</dd></div>
       </dl>
+      <p class="validation-note">Em 26/11/2026, os 234 testes da suíte Node passaram. Scripts com Playwright e axe verificaram fluxos de navegador, teclado, foco, idiomas e movimento reduzido. HTTPS, cabeçalhos, CORS e recusa de chamadas anônimas também passaram na publicação. Contagem de testes não é percentual de cobertura; verificações automatizadas não substituem toda a avaliação manual.</p>
+    </section>
+    <section class="iteration">
+      <h2>Feedback que virou melhoria</h2>
+      <p>Um visitante tentou girar antes de perceber o login. Transformei esse caminho em uma introdução com o Professor Coimbra, que explica o jogo e abre o cadastro sem executar uma rodada. Outros feedbacks levaram aos nomes nas opções de evolução, às silhuetas da Pokédex e ao controle de som em suas próprias telas.</p>
+      <p>Para as descrições de Kanto, a API não forneceu textos em português na consulta aos 151 Pokémon. Escolhi traduções locais com a fonte inglesa identificada: o catálogo é finito e dispensa um serviço de tradução durante o jogo. Os efeitos e a fila de prêmios apresentam capturas novas, repetidas, shiny, vales e giros a partir do resultado confirmado.</p>
+    </section>
+    <section class="limits">
+      <h2>Limites e próximos cuidados</h2>
+      <p>É uma demonstração de portfólio em planos gratuitos, sujeita a cotas, retomada após inatividade e dependências externas. O e-mail usa o remetente compartilhado da Neon. O saldo é reposto com o relógio do banco ao acessar ou agir, sem tarefa agendada. A recuperação de uma operação tem validade de sete dias.</p>
+      <p>Os próximos cuidados são medir a latência das confirmações de sessão, automatizar testes e build em CI e tornar as migrações mais fáceis de reproduzir. Ainda não há medição de desempenho em escala nem pipeline de CI configurado.</p>
     </section>
     <section class="authorship"><h2>Como trabalhei</h2><p>Defini o escopo, o orçamento de R$ 0, as regras e os critérios de aceite. Usei IA para pesquisar, implementar, revisar código e automatizar testes. Conduzi as decisões de cada etapa e participei das verificações manuais com contas fictícias.</p></section>
   </main>
