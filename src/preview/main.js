@@ -3,6 +3,8 @@ import { createArcadeReels } from './arcade-reels.mjs';
 import { createArcadeSound } from './arcade-sound.mjs';
 import { createPokemonCries } from './pokemon-cries.mjs';
 import { createCaptureDialog } from './capture-dialog.mjs';
+import { buildRewardPresentations } from './reward-presentation.mjs';
+import { createRewardAudio } from './reward-audio.mjs';
 import { setupPasswordVisibility } from './password-visibility.mjs';
 import { renderDexCards, setDexSprite } from './dex-cards.mjs';
 import kantoNames from './assets/kanto-names.json';
@@ -241,6 +243,7 @@ if (publicSignup) {
 const reelView = createArcadeReels(document.querySelector('#grid'));
 const arcadeSound = createArcadeSound();
 const pokemonCries = createPokemonCries({ isEnabled: () => arcadeSound.enabled });
+const rewardAudio = createRewardAudio({ arcadeSound, pokemonCries });
 const soundToggle = document.querySelector('#sound-toggle');
 let wins = [];
 let language = previewParams.get('lang') === 'en' ? 'en' : 'pt';
@@ -673,8 +676,7 @@ async function refreshDemoState() {
 }
 
 function clearProofDisplay() {
-  arcadeSound.stop();
-  pokemonCries.stop();
+  rewardAudio.stop();
   captureDialog.clear();
   spinning = false;
   proofPendingRoundId = null;
@@ -983,7 +985,7 @@ proofSessions?.addEventListener('message', ({ data }) => {
   if (data === 'session-changed') recoverProofSession();
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { arcadeSound.stop(); pokemonCries.stop(); }
+  if (document.hidden) rewardAudio.stop();
   if (neonProof && proofClient && document.visibilityState === 'visible') recoverProofSession();
 });
 window.addEventListener('pageshow', (event) => {
@@ -995,8 +997,8 @@ screenNav.addEventListener('click', (event) => {
   if (link?.getAttribute('aria-disabled') === 'true') event.preventDefault();
 });
 window.addEventListener('hashchange', () => {
-  pokemonCries.stop();
-  if (activeScreen() !== 'machine') arcadeSound.stop();
+  rewardAudio.stop();
+  if (activeScreen() !== 'machine') captureDialog.clear();
   render();
   const section = document.querySelector('[data-screen]:not([hidden])');
   document.getElementById(section.getAttribute('aria-labelledby'))?.focus();
@@ -1004,11 +1006,11 @@ window.addEventListener('hashchange', () => {
 
 soundToggle.addEventListener('click', () => {
   arcadeSound.toggle();
-  if (!arcadeSound.enabled) pokemonCries.stop();
+  if (!arcadeSound.enabled) rewardAudio.stop();
   render();
 });
-window.addEventListener('pagehide', () => { arcadeSound.stop(); pokemonCries.stop(); });
-document.querySelector('#capture-dialog').addEventListener('close', () => pokemonCries.stop());
+window.addEventListener('pagehide', () => rewardAudio.stop());
+document.querySelector('#capture-dialog').addEventListener('close', () => rewardAudio.stop());
 document.querySelector('#language').addEventListener('click', () => {
   language = language === 'pt' ? 'en' : 'pt';
   render();
@@ -1213,12 +1215,10 @@ async function finishSpin(current = () => true) {
       render();
       if (status === 'success') {
         if (activeScreen() === 'machine' && !document.hidden) {
-          const captured = (lastCaptures ?? []).filter((entry) => entry.status === 'new');
-          captureDialog.show(captured, language);
-          if (captured.length) {
-            arcadeSound.stop();
-            void pokemonCries.play(captured.map(({ capture }) => capture.speciesId));
-          } else arcadeSound.finish(wins.length > 0);
+          const rewards = buildRewardPresentations({ wins, captures: lastCaptures ?? [], vouchers: lastVouchers,
+            lineSpins: lastProofReward?.lines, authenticated: neonProof });
+          if (rewards.length) captureDialog.show(rewards, language, (entry) => { void rewardAudio.play(entry); });
+          else arcadeSound.finish(false);
         } else {
           arcadeSound.stop();
         }
@@ -1287,7 +1287,7 @@ async function spinLocal() {
 }
 document.querySelector('#spin').addEventListener('click', async (event) => {
   if (event.currentTarget.disabled) return;
-  pokemonCries.stop();
+  rewardAudio.stop();
   const button = event.currentTarget;
   const hadFocus = document.activeElement === button;
   const version = proofGeneration;

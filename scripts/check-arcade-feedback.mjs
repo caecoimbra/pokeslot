@@ -63,6 +63,7 @@ export async function checkArcadeFeedback(browser, origin) {
     const columns = await page.locator('.reel-track').evaluateAll(tracks => tracks.map(track =>
       Array.from(track.querySelectorAll('.reel-icon'), icon => icon.classList[1].slice('icon-'.length))));
     assert.deepEqual(columns, [0, 1, 2].map(c => win.map(row => row[c])));
+    await page.locator('#capture-dialog-close').click();
     fail = true;
     await play();
     assert.equal(await page.evaluate(() => window.feedback.notes.length), 5, 'Failure has no outcome cue');
@@ -74,6 +75,7 @@ export async function checkArcadeFeedback(browser, origin) {
     fail = false;
     await play();
     assert.deepEqual(await page.evaluate(() => window.feedback.notes), [], 'Mute survives reload');
+    await page.locator('#capture-dialog-close').click();
     await sound.click();
     let release;
     const heldResponse = new Promise(resolve => { release = resolve; });

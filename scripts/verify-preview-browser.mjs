@@ -7,6 +7,7 @@ import { checkDexCardLabels } from './check-dex-card-labels.mjs';
 import { checkSessionLoading } from './check-session-loading.mjs';
 import { checkZeroBalance } from './check-zero-balance.mjs';
 import { checkCaptureDialog } from './check-capture-dialog.mjs';
+import { checkRewardDialog } from './check-reward-dialog.mjs';
 import { checkPokedexFilters } from './check-pokedex-filters.mjs';
 import { checkPokemonCries } from './check-pokemon-cries.mjs';
 import { checkAccountMenu } from './check-account-menu.mjs';
@@ -39,7 +40,7 @@ try {
   const expectedStatus = /Rodada (concluída|sem prêmio)\./;
   await page.getByRole('status').filter({ hasText: expectedStatus }).waitFor();
   const captureDialog = page.locator('#capture-dialog');
-  if (await captureDialog.isVisible()) await page.locator('#capture-dialog-close').click();
+  while (await captureDialog.isVisible()) await page.locator('#capture-dialog-close').click();
   const tree = await page.locator('[data-screen="machine"]').ariaSnapshot();
   assert.match(tree, /Girar/);
   assert.match(tree, expectedStatus);
@@ -83,6 +84,7 @@ try {
   await checkSessionLoading(browser, origin);
   await checkZeroBalance(browser, origin);
   await checkCaptureDialog(browser, origin);
+  await checkRewardDialog(browser, origin, axe);
   await checkPokedexFilters(browser, origin, axe);
   await checkPokemonCries(browser, origin);
   await checkAccountMenu(browser, origin, axe);

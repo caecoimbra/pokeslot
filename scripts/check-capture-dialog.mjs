@@ -37,11 +37,13 @@ export async function checkCaptureDialog(browser, origin) {
     await started;
     assert.equal(await page.locator('#capture-dialog').isVisible(), false);
     release();
-    const dialog = page.getByRole('dialog', { name: 'Novas capturas!' });
+    const dialog = page.getByRole('dialog', { name: 'Nova captura!' });
     await dialog.waitFor();
-    assert.deepEqual(await dialog.locator('.capture-card strong').allTextContents(), ['Pikachu', 'Lapras']);
+    assert.deepEqual(await dialog.locator('.capture-card strong').allTextContents(), ['Pikachu']);
+    await dialog.getByRole('button', { name: 'Próximo prêmio' }).click();
+    assert.deepEqual(await dialog.locator('.capture-card strong').allTextContents(), ['Lapras']);
     assert.equal(await dialog.getByText('Normal · Raro').count(), 1);
-    assert.equal(await dialog.locator('img').count(), 2);
+    assert.equal(await dialog.locator('img').count(), 1);
     assert.equal(await dialog.locator('.capture-dialog-content').evaluate(el => getComputedStyle(el).animationName), 'none');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await page.keyboard.press('Escape');
@@ -50,8 +52,12 @@ export async function checkCaptureDialog(browser, origin) {
     assert.equal(await spin.evaluate(el => document.activeElement === el), true);
     duplicate = true;
     await spin.click();
-    await page.waitForFunction(() => !document.querySelector('#spin').disabled);
-    assert.equal(await page.locator('#capture-dialog').isVisible(), false);
+    const duplicateDialog = page.getByRole('dialog', { name: 'Captura repetida!' });
+    await duplicateDialog.waitFor();
+    assert.match(await duplicateDialog.innerText(), /Compensação não aplicada nesta demonstração/);
+    await duplicateDialog.getByRole('button', { name: 'Próximo prêmio' }).click();
+    assert.match(await duplicateDialog.innerText(), /Lapras/);
+    await duplicateDialog.getByRole('button', { name: 'Continuar' }).click();
     console.log('Apresentação de capturas, múltiplas linhas, duplicatas e movimento reduzido verificadas.');
   } finally {
     release?.();

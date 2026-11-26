@@ -10,6 +10,9 @@
   box-shadow: 0 8px #06171c, 0 0 48px #69e3b86b;
 }
 #capture-dialog::backdrop { background: #06111bd9; }
+#capture-dialog[data-reward="shiny"] { border-color: #ffe49c; box-shadow: 0 8px #06171c, 0 0 64px #ffe49c88; }
+#capture-dialog[data-reward="shiny"] .capture-dialog-content { background: radial-gradient(ellipse at 50% 30%, #78643b, #233c48 50%, #102a33 85%); }
+#capture-dialog[data-reward="voucher"] .capture-portrait { background: radial-gradient(circle, #ffda7e88, transparent 72%); }
 .capture-dialog-content {
   padding: clamp(22px, 5vw, 42px);
   text-align: center;
@@ -54,6 +57,8 @@
   background: radial-gradient(circle, #ffe49c 0, #a9eed6 42%, #72dfb666 60%, transparent 72%);
 }
 .capture-portrait img { width: 96px; height: 96px; max-width: none; object-fit: none; image-rendering: pixelated; }
+.reward-icon { color: #ffe49c; font: 900 4rem/1 system-ui, sans-serif; text-shadow: 0 3px #a76542; }
+.capture-card > .reward-outcome { max-width: 28ch; margin-top: 8px; color: #fff0cc; font-weight: 700; }
 #capture-dialog-close {
   min-width: 160px;
   padding: 12px 24px;
@@ -67,6 +72,7 @@
 }
 #capture-dialog-close:focus-visible { outline: 3px solid white; outline-offset: 3px; }
 @media (prefers-reduced-motion: no-preference) {
+  #capture-dialog[open] .capture-card { animation: capture-arrive .35s cubic-bezier(.2, .8, .25, 1) both; }
   #capture-dialog[open] .capture-dialog-content { animation: capture-arrive .5s cubic-bezier(.2, .8, .25, 1) both; }
   #capture-dialog[open] .capture-portrait { animation: capture-glow 1.8s ease-in-out infinite alternate; }
 }
