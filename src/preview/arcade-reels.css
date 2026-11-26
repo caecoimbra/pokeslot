@@ -95,8 +95,8 @@
 .cabinet-feedback { display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-top: 12px; }
 .cabinet-feedback #status { margin: 0; }
 .cabinet #sound-toggle { flex: none; margin: 0 0 0 auto; border-radius: 6px; padding: .4em .7em; font-size: .8rem; color: #efffec; background: #14343a; }
-#sound-toggle > span:first-child { color: #9cf5d0; font-weight: bold; }
-#sound-toggle[aria-pressed=false] > span:first-child { text-decoration: line-through; }
+[data-sound-toggle] > span:first-child { color: #9cf5d0; font-weight: bold; }
+[data-sound-toggle][aria-pressed=false] > span:first-child { text-decoration: line-through; }
 @media (prefers-reduced-motion: reduce) {
   .arcade-reels.is-spinning:not(.is-stopping) .reel-track { animation: none; }
 }

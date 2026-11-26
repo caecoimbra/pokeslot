@@ -7,9 +7,13 @@ export async function checkPokemonCries(browser, origin) {
   try {
     await page.addInitScript(() => {
       window.playedCries = [];
+      window.stoppedCries = 0;
+      HTMLMediaElement.prototype.pause = function () {
+        if (this.getAttribute('src')) window.stoppedCries++;
+      };
       HTMLMediaElement.prototype.play = function () {
         window.playedCries.push(this.src);
-        setTimeout(() => this.dispatchEvent(new Event('ended')), 10);
+        if (!window.holdCries) setTimeout(() => this.dispatchEvent(new Event('ended')), 10);
         return Promise.resolve();
       };
     });
@@ -46,6 +50,27 @@ export async function checkPokemonCries(browser, origin) {
     await page.locator('#collection [data-species-id="25"]').click();
     await page.waitForTimeout(100);
     assert.equal((await page.evaluate(() => window.playedCries)).length, 2);
-    console.log('Cry na captura e Pokédex, cache e opção de silenciar verificados.');
+    const dexSound = page.locator('#pokedex-sound-toggle');
+    assert.equal(await dexSound.getAttribute('aria-pressed'), 'false');
+    await dexSound.click();
+    assert.equal(await page.locator('#sound-toggle').getAttribute('aria-pressed'), 'true');
+    await page.locator('#back-to-card').click();
+    await page.evaluate(() => { window.holdCries = true; });
+    await page.locator('#collection [data-species-id="25"]').click();
+    await page.waitForFunction(() => window.playedCries.length === 3);
+    const stoppedBefore = await page.evaluate(() => window.stoppedCries);
+    await dexSound.focus();
+    await page.keyboard.press('Enter');
+    assert.ok(await page.evaluate(() => window.stoppedCries) > stoppedBefore, 'Mute interrupts the current cry');
+    await page.reload();
+    await dexSound.waitFor({ state: 'visible' });
+    assert.equal(await dexSound.getAttribute('aria-pressed'), 'false');
+    assert.equal(await page.locator('#sound-toggle').getAttribute('aria-pressed'), 'false');
+    await page.locator('#collection [data-species-id="25"]').click();
+    await page.waitForTimeout(100);
+    assert.deepEqual(await page.evaluate(() => window.playedCries), [], 'Pokédex mute survives reload');
+    await page.locator('#language').click();
+    assert.match(await dexSound.textContent(), /Sound off/);
+    console.log('Cry na captura/Pokédex, silêncio imediato, controles sincronizados, teclado, idioma e preferência após recarga verificados.');
   } finally { await context.close(); }
 }

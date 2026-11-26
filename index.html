@@ -65,7 +65,7 @@
           <div class="cabinet-feedback">
             <p id="status" class="status" role="status"></p>
             <p id="empty-balance" class="status" role="status" hidden></p>
-            <button id="sound-toggle" type="button" aria-pressed="true" hidden><span aria-hidden="true">♪</span> <span class="sound-label">Som</span> <span class="sound-state" aria-hidden="true"></span></button>
+            <button id="sound-toggle" data-sound-toggle type="button" aria-pressed="true" hidden><span aria-hidden="true">♪</span> <span class="sound-label">Som</span> <span class="sound-state" aria-hidden="true"></span></button>
           </div>
         </div>
         <aside class="console-side">
@@ -159,6 +159,9 @@
         </div>
         </header>
         <div class="pokedex-content">
+          <div class="dex-tools">
+            <button id="pokedex-sound-toggle" data-sound-toggle type="button" aria-pressed="true" hidden><span aria-hidden="true">♪</span> <span class="sound-label">Som</span> <span class="sound-state" aria-hidden="true"></span></button>
+          </div>
           <div class="collection-filters" role="search">
             <label><span data-text="numberFilter"></span><input id="collection-number" type="search" maxlength="40" placeholder="#025" autocomplete="off"></label>
             <label><span data-text="variantFilter"></span><select id="collection-variant"><option value="all" data-text="allVariants"></option><option value="normal" data-text="normal"></option><option value="shiny" data-text="shiny"></option></select></label>

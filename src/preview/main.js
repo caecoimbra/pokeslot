@@ -247,7 +247,7 @@ const reelView = createArcadeReels(document.querySelector('#grid'));
 const arcadeSound = createArcadeSound();
 const pokemonCries = createPokemonCries({ isEnabled: () => arcadeSound.enabled });
 const rewardAudio = createRewardAudio({ arcadeSound, pokemonCries });
-const soundToggle = document.querySelector('#sound-toggle');
+const soundToggles = document.querySelectorAll('[data-sound-toggle]');
 let wins = [];
 let language = previewParams.get('lang') === 'en' ? 'en' : 'pt';
 const passwordVisibility = setupPasswordVisibility(document.querySelector('#proof-auth'), () => language);
@@ -573,11 +573,13 @@ function render() {
   button.lang = language === 'pt' ? 'en' : 'pt-BR';
   button.setAttribute('aria-label', language === 'pt' ? 'EN — Switch to English' : 'PT — Mudar para português');
   reelView.render(grid, wins, spinning || guestIntro.spinning, text);
-  soundToggle.hidden = !arcadeSound.available;
-  soundToggle.setAttribute('aria-pressed', String(arcadeSound.enabled));
-  soundToggle.querySelector('.sound-label').textContent = language === 'pt' ? 'Som' : 'Sound';
   const soundStates = language === 'pt' ? ['desligado', 'ligado'] : ['off', 'on'];
-  soundToggle.querySelector('.sound-state').textContent = soundStates[Number(arcadeSound.enabled)];
+  for (const soundToggle of soundToggles) {
+    soundToggle.hidden = !arcadeSound.available;
+    soundToggle.setAttribute('aria-pressed', String(arcadeSound.enabled));
+    soundToggle.querySelector('.sound-label').textContent = language === 'pt' ? 'Som' : 'Sound';
+    soundToggle.querySelector('.sound-state').textContent = soundStates[Number(arcadeSound.enabled)];
+  }
   document.querySelector('.round-readout').hidden = spinning || !wins.length;
   const rewards = rewardTypesForLines(wins);
   renderList('#rewards', rewards.map(({ line, type }) => {
@@ -1017,11 +1019,11 @@ window.addEventListener('hashchange', () => {
   document.getElementById(section.getAttribute('aria-labelledby'))?.focus();
 });
 
-soundToggle.addEventListener('click', () => {
+soundToggles.forEach((soundToggle) => soundToggle.addEventListener('click', () => {
   arcadeSound.toggle();
   if (!arcadeSound.enabled) rewardAudio.stop();
   render();
-});
+}));
 window.addEventListener('pagehide', () => { guestIntro.cancel(); rewardAudio.stop(); });
 document.querySelector('#capture-dialog').addEventListener('close', () => rewardAudio.stop());
 document.querySelector('#language').addEventListener('click', () => {
