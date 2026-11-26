@@ -27,9 +27,18 @@ export async function checkAccountMenu(browser, origin, axe) {
     await page.waitForFunction(() => document.querySelector('#proof-auth-status').textContent !== 'Verificando sua sessão…');
     await summary.press('Enter');
     await page.locator('#proof-login').waitFor({ state: 'visible' });
+    const loginPassword = page.locator('#login-password');
+    await loginPassword.fill('senha-ficticia');
+    await page.getByRole('button', { name: 'Mostrar Senha', exact: true }).click();
+    assert.equal(await loginPassword.getAttribute('type'), 'text');
+    assert.equal(await loginPassword.inputValue(), 'senha-ficticia');
+    await page.getByRole('button', { name: 'Ocultar Senha', exact: true }).click();
+    assert.equal(await loginPassword.getAttribute('type'), 'password');
     await page.locator('#open-proof-signup').click();
     await page.locator('#proof-signup').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#proof-signup [name=name]').evaluate(element => element === document.activeElement), true);
+    await page.getByRole('button', { name: 'Mostrar Senha de teste (8 caracteres ou mais)', exact: true }).click();
+    assert.equal(await page.locator('#signup-password').getAttribute('type'), 'text');
     await page.evaluate(axe);
     const issues = await page.evaluate(async () => (await window.axe.run({
       runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },

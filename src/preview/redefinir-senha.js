@@ -1,5 +1,6 @@
 import { createClient } from '@neon/neon-js';
 import { createPasswordRecovery, takePasswordRecoveryLink } from './password-recovery.mjs';
+import { setupPasswordVisibility } from './password-visibility.mjs';
 
 const messages = {
   pt: {
@@ -45,12 +46,14 @@ const languageButton = document.querySelector('#language');
 const back = document.querySelector('#return-to-machine');
 const createTestAccount = document.querySelector('#create-recovery-test-account');
 const localTest = import.meta.env.DEV && location.hostname === 'localhost';
+const passwordVisibility = setupPasswordVisibility(reset, () => language);
 
 function render() {
   const text = messages[language];
   document.documentElement.lang = language === 'en' ? 'en' : 'pt-BR';
   document.title = `PokéSlot — ${text.title}`;
   for (const node of document.querySelectorAll('[data-text]')) node.textContent = text[node.dataset.text];
+  passwordVisibility.update();
   languageButton.textContent = language === 'en' ? 'PT' : 'EN';
   languageButton.lang = language === 'en' ? 'pt-BR' : 'en';
   languageButton.ariaLabel = language === 'en' ? 'PT — Mudar para português' : 'EN — Switch to English';
@@ -60,7 +63,7 @@ function render() {
   createTestAccount.hidden = !localTest || request.hidden;
   if (localTest) createTestAccount.href = `${back.href}&recovery-test=1`;
   request.querySelector('button').disabled = busy;
-  reset.querySelector('button').disabled = busy;
+  reset.querySelector('[type="submit"]').disabled = busy;
   feedback.textContent = text[busy ? 'working' : status] ?? '';
   if (status === 'passwordsDiffer') {
     confirmation.setAttribute('aria-invalid', 'true');

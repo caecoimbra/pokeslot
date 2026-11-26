@@ -36,6 +36,8 @@ try {
   assert.equal((await round.json()).status, 'ok');
   const expectedStatus = /Rodada (concluída|sem prêmio)\./;
   await page.getByRole('status').filter({ hasText: expectedStatus }).waitFor();
+  const captureDialog = page.locator('#capture-dialog');
+  if (await captureDialog.isVisible()) await page.locator('#capture-dialog-close').click();
   const tree = await page.locator('[data-screen="machine"]').ariaSnapshot();
   assert.match(tree, /Girar/);
   assert.match(tree, expectedStatus);
@@ -55,6 +57,10 @@ try {
   const confirmation = page.locator('#reset-password [name=confirmation]');
   await password.fill('ficticia-123');
   await confirmation.fill('diferente-123');
+  await page.getByRole('button', { name: 'Mostrar Nova senha (8 caracteres ou mais)', exact: true }).click();
+  assert.equal(await password.getAttribute('type'), 'text');
+  await page.getByRole('button', { name: 'Mostrar Repita a nova senha', exact: true }).click();
+  assert.equal(await confirmation.getAttribute('type'), 'text');
   const save = page.getByRole('button', { name: 'Salvar nova senha' });
   await save.click();
   assert.equal(await confirmation.getAttribute('aria-invalid'), 'true');

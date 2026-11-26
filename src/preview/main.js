@@ -2,6 +2,7 @@ import { findWinningLines } from '../domain/paylines.mjs';
 import { createArcadeReels } from './arcade-reels.mjs';
 import { createArcadeSound } from './arcade-sound.mjs';
 import { createCaptureDialog } from './capture-dialog.mjs';
+import { setupPasswordVisibility } from './password-visibility.mjs';
 import { renderDexCards, setDexSprite } from './dex-cards.mjs';
 import kantoNames from './assets/kanto-names.json';
 import { inventoryCard } from './inventory-card.mjs';
@@ -239,6 +240,7 @@ const arcadeSound = createArcadeSound();
 const soundToggle = document.querySelector('#sound-toggle');
 let wins = [];
 let language = previewParams.get('lang') === 'en' ? 'en' : 'pt';
+const passwordVisibility = setupPasswordVisibility(document.querySelector('#proof-auth'), () => language);
 let status = 'initial';
 let pending = true;
 let spinning = false;
@@ -540,6 +542,7 @@ function render() {
   const text = messages[language];
   document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
   document.querySelectorAll('[data-text]').forEach((element) => { element.textContent = text[element.dataset.text]; });
+  passwordVisibility.update();
   const button = document.querySelector('#language');
   button.textContent = language === 'pt' ? 'EN' : 'PT';
   button.lang = language === 'pt' ? 'en' : 'pt-BR';
@@ -868,6 +871,7 @@ async function spinNeonProof() {
 function showAuthForm(mode) {
   if (authSubmitting || signingOut || proofUser) return;
   authMode = mode;
+  passwordVisibility.conceal();
   authStatus = '';
   for (const form of document.querySelectorAll('#proof-login, #proof-signup')) {
     form.elements.password.value = '';
@@ -879,6 +883,7 @@ function showAuthForm(mode) {
 document.querySelector('#open-proof-signup').addEventListener('click', () => showAuthForm('signup'));
 document.querySelector('#open-proof-login').addEventListener('click', () => showAuthForm('login'));
 const accountMenu = document.querySelector('#proof-auth');
+accountMenu.addEventListener('toggle', () => { if (!accountMenu.open) passwordVisibility.conceal(); });
 document.addEventListener('click', (event) => {
   if (accountMenu.open && !accountMenu.contains(event.target)) accountMenu.open = false;
 });
