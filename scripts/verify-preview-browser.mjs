@@ -7,6 +7,8 @@ import { checkDexCardLabels } from './check-dex-card-labels.mjs';
 import { checkSessionLoading } from './check-session-loading.mjs';
 import { checkZeroBalance } from './check-zero-balance.mjs';
 import { checkCaptureDialog } from './check-capture-dialog.mjs';
+import { checkPokedexFilters } from './check-pokedex-filters.mjs';
+import { checkPokemonCries } from './check-pokemon-cries.mjs';
 import { checkAccountMenu } from './check-account-menu.mjs';
 
 const [moduleBase, edgePath, origin, screenshotPath] = process.argv.slice(2);
@@ -81,6 +83,8 @@ try {
   await checkSessionLoading(browser, origin);
   await checkZeroBalance(browser, origin);
   await checkCaptureDialog(browser, origin);
+  await checkPokedexFilters(browser, origin, axe);
+  await checkPokemonCries(browser, origin);
   await checkAccountMenu(browser, origin, axe);
   console.log('Rodada local no Edge, teclado, foco, árvore de acessibilidade e axe passaram.');
 } finally { await browser.close(); }

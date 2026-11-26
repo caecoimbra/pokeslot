@@ -44,3 +44,18 @@ test('filtra posse por variante mantendo a independência entre contas', () => {
   assert.equal(first[24].shiny, true);
   assert.equal(second[24].shiny, false);
 });
+
+test('combina raridade, variante e registro usando os tiers de Kanto', () => {
+  const catalog = buildKantoCatalog(collection);
+  const filter = (variant, registration, rarity) =>
+    filterKantoCatalog(catalog, '', variant, registration, () => '', rarity).map(({ speciesId }) => speciesId);
+  assert.deepEqual(filter('all', 'owned', 'common'), [1, 25]);
+  assert.deepEqual(filter('all', 'owned', 'legendary'), [151]);
+  assert.deepEqual(filter('normal', 'owned', 'common'), [1]);
+  assert.deepEqual(filter('shiny', 'owned', 'common'), [25]);
+  assert.deepEqual(filter('shiny', 'owned', 'legendary'), [151]);
+  assert.ok(filter('all', 'missing', 'rare').includes(131));
+  assert.equal(filter('all', 'missing', 'legendary').includes(151), false);
+  assert.deepEqual(filter('all', 'owned', 'shiny'), []);
+  assert.deepEqual(filterKantoCatalog(catalog, 'pika', 'all', 'owned', (id) => id === 25 ? 'Pikachu' : '', 'legendary'), []);
+});

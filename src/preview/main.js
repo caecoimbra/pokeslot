@@ -1,6 +1,7 @@
 import { findWinningLines } from '../domain/paylines.mjs';
 import { createArcadeReels } from './arcade-reels.mjs';
 import { createArcadeSound } from './arcade-sound.mjs';
+import { createPokemonCries } from './pokemon-cries.mjs';
 import { createCaptureDialog } from './capture-dialog.mjs';
 import { setupPasswordVisibility } from './password-visibility.mjs';
 import { renderDexCards, setDexSprite } from './dex-cards.mjs';
@@ -74,7 +75,8 @@ const messages = {
     beforeRound: 'Nenhuma rodada por enquanto.', noCaptures: 'Nenhuma captura nesta rodada.',
     normal: 'Normal', shiny: 'Shiny', registered: 'Registrada', missing: 'Faltante',
     numberFilter: 'Nome ou número', variantFilter: 'Variante', allVariants: 'Todas',
-    registrationFilter: 'Registro', allRegistrations: 'Todos',
+    registrationFilter: 'Registro', allRegistrations: 'Todos', capturedFilter: 'Capturados', uncapturedFilter: 'Não capturados',
+    rarityFilter: 'Raridade', allRarities: 'Todas', commonRarity: 'Comum', uncommonRarity: 'Incomum', rareRarity: 'Raro', legendaryRarity: 'Lendário',
     filterCount: (count) => `${count} ${count === 1 ? 'cartão visível' : 'cartões visíveis'}.`, noFilterMatches: 'Nenhuma espécie corresponde aos filtros.',
     captureTier: (rarity) => `Raridade na captura: ${rarity}.`,
     shinyPath: 'Shiny pode vir em uma captura ou ao evoluir uma origem shiny compatível.',
@@ -147,7 +149,8 @@ const messages = {
     beforeRound: 'No rounds yet.', noCaptures: 'No captures this round.',
     normal: 'Normal', shiny: 'Shiny', registered: 'Registered', missing: 'Missing',
     numberFilter: 'Name or number', variantFilter: 'Variant', allVariants: 'All',
-    registrationFilter: 'Registration', allRegistrations: 'All',
+    registrationFilter: 'Registration', allRegistrations: 'All', capturedFilter: 'Caught', uncapturedFilter: 'Not caught',
+    rarityFilter: 'Rarity', allRarities: 'All', commonRarity: 'Common', uncommonRarity: 'Uncommon', rareRarity: 'Rare', legendaryRarity: 'Legendary',
     filterCount: (count) => `${count} ${count === 1 ? 'card' : 'cards'} shown.`, noFilterMatches: 'No species match these filters.',
     captureTier: (rarity) => `Capture rarity: ${rarity}.`,
     shinyPath: 'Shiny variants can be captured or evolved from a compatible shiny Pokémon.',
@@ -237,6 +240,7 @@ if (publicSignup) {
 }
 const reelView = createArcadeReels(document.querySelector('#grid'));
 const arcadeSound = createArcadeSound();
+const pokemonCries = createPokemonCries({ isEnabled: () => arcadeSound.enabled });
 const soundToggle = document.querySelector('#sound-toggle');
 let wins = [];
 let language = previewParams.get('lang') === 'en' ? 'en' : 'pt';
@@ -263,6 +267,8 @@ let spriteFailed = false;
 let selectedSpeciesId = null;
 let detailsRequest = 0;
 let selectedShiny = false;
+let registrationFilter = 'all';
+let rarityFilter = 'all';
 let proofClient = null;
 let proofUser = null;
 let proofGeneration = 0;
@@ -478,7 +484,13 @@ function variantLabel(text, shiny, owned) {
 function renderCollection(text, catalog) {
   const variant = document.querySelector('#collection-variant').value;
   const visible = filterKantoCatalog(catalog, document.querySelector('#collection-number').value,
-    variant, document.querySelector('#collection-registration').value, speciesName);
+    variant, registrationFilter, speciesName, rarityFilter);
+  for (const button of document.querySelectorAll('#collection-registration [data-registration]')) {
+    button.setAttribute('aria-pressed', String(button.dataset.registration === registrationFilter));
+  }
+  for (const button of document.querySelectorAll('#collection-rarity [data-rarity]')) {
+    button.setAttribute('aria-pressed', String(button.dataset.rarity === rarityFilter));
+  }
   renderDexCards(document.querySelector('#collection'), catalog, visible, selectedSpeciesId, variant, speciesName, text);
   document.querySelector('#filter-count').textContent = text.filterCount(visible.length);
   return visible;
@@ -662,6 +674,7 @@ async function refreshDemoState() {
 
 function clearProofDisplay() {
   arcadeSound.stop();
+  pokemonCries.stop();
   captureDialog.clear();
   spinning = false;
   proofPendingRoundId = null;
@@ -686,7 +699,8 @@ function clearProofDisplay() {
   document.querySelector('#collection').replaceChildren();
   document.querySelector('#collection-number').value = '';
   document.querySelector('#collection-variant').value = 'all';
-  document.querySelector('#collection-registration').value = 'all';
+  registrationFilter = 'all';
+  rarityFilter = 'all';
   redeemSpecies.value = '';
   document.querySelector('#stone-choice').value = '';
   document.querySelector('#stone-evolution-choice').replaceChildren();
@@ -969,7 +983,7 @@ proofSessions?.addEventListener('message', ({ data }) => {
   if (data === 'session-changed') recoverProofSession();
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) arcadeSound.stop();
+  if (document.hidden) { arcadeSound.stop(); pokemonCries.stop(); }
   if (neonProof && proofClient && document.visibilityState === 'visible') recoverProofSession();
 });
 window.addEventListener('pageshow', (event) => {
@@ -981,14 +995,20 @@ screenNav.addEventListener('click', (event) => {
   if (link?.getAttribute('aria-disabled') === 'true') event.preventDefault();
 });
 window.addEventListener('hashchange', () => {
+  pokemonCries.stop();
   if (activeScreen() !== 'machine') arcadeSound.stop();
   render();
   const section = document.querySelector('[data-screen]:not([hidden])');
   document.getElementById(section.getAttribute('aria-labelledby'))?.focus();
 });
 
-soundToggle.addEventListener('click', () => { arcadeSound.toggle(); render(); });
-window.addEventListener('pagehide', () => arcadeSound.stop());
+soundToggle.addEventListener('click', () => {
+  arcadeSound.toggle();
+  if (!arcadeSound.enabled) pokemonCries.stop();
+  render();
+});
+window.addEventListener('pagehide', () => { arcadeSound.stop(); pokemonCries.stop(); });
+document.querySelector('#capture-dialog').addEventListener('close', () => pokemonCries.stop());
 document.querySelector('#language').addEventListener('click', () => {
   language = language === 'pt' ? 'en' : 'pt';
   render();
@@ -1130,11 +1150,23 @@ document.querySelector('#demo-redeem').addEventListener('submit', async (event) 
 });
 document.querySelector('#collection-number').addEventListener('input', render);
 document.querySelector('#collection-variant').addEventListener('change', render);
-document.querySelector('#collection-registration').addEventListener('change', render);
+document.querySelector('#collection-registration').addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-registration]');
+  if (!button) return;
+  registrationFilter = button.dataset.registration;
+  render();
+});
+document.querySelector('#collection-rarity').addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-rarity]');
+  if (!button) return;
+  rarityFilter = button.dataset.rarity;
+  render();
+});
 document.querySelector('#collection').addEventListener('click', (event) => {
   const button = event.target.closest('button[data-species-id]');
   if (!button || button.disabled || !inventoryReady()) return;
   selectedSpeciesId = Number(button.dataset.speciesId);
+  void pokemonCries.play([selectedSpeciesId]);
   const variant = document.querySelector('#collection-variant').value;
   selectedShiny = ownedVariants.some(({ speciesId, isShiny }) => speciesId === selectedSpeciesId && isShiny) &&
     (variant === 'shiny' || !normalVariantOwned(ownedVariants, selectedSpeciesId));
@@ -1143,6 +1175,7 @@ document.querySelector('#collection').addEventListener('click', (event) => {
   document.querySelector('#selected-pokemon').focus();
 });
 document.querySelector('#back-to-card').addEventListener('click', () => {
+  pokemonCries.stop();
   const entry = document.querySelector(`#collection [data-species-id="${selectedSpeciesId}"]`);
   selectedSpeciesId = null;
   detailsRequest++;
@@ -1179,8 +1212,16 @@ async function finishSpin(current = () => true) {
       spinning = false;
       render();
       if (status === 'success') {
-        arcadeSound.finish(wins.length > 0);
-        if (activeScreen() === 'machine' && !document.hidden) captureDialog.show(lastCaptures ?? [], language);
+        if (activeScreen() === 'machine' && !document.hidden) {
+          const captured = (lastCaptures ?? []).filter((entry) => entry.status === 'new');
+          captureDialog.show(captured, language);
+          if (captured.length) {
+            arcadeSound.stop();
+            void pokemonCries.play(captured.map(({ capture }) => capture.speciesId));
+          } else arcadeSound.finish(wins.length > 0);
+        } else {
+          arcadeSound.stop();
+        }
       } else arcadeSound.stop();
     }
   }
@@ -1246,6 +1287,7 @@ async function spinLocal() {
 }
 document.querySelector('#spin').addEventListener('click', async (event) => {
   if (event.currentTarget.disabled) return;
+  pokemonCries.stop();
   const button = event.currentTarget;
   const hadFocus = document.activeElement === button;
   const version = proofGeneration;
