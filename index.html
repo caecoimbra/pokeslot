@@ -27,28 +27,33 @@
           <a href="#vales" data-screen-link="vouchers"><span class="nav-icon" aria-hidden="true"></span><span data-text="navVouchers">Vales</span></a>
           <a href="#pedras" data-screen-link="stones"><span class="nav-icon" aria-hidden="true"></span><span data-text="navStones">Pedras</span></a>
         </nav>
-        <button id="language" class="language" type="button" lang="en" aria-label="EN — Switch to English">EN</button>
+        <div class="topbar-actions">
+          <details id="proof-auth" class="proof-auth account-menu" hidden>
+            <summary id="account-label" class="account-label"></summary>
+            <div class="account-panel">
+              <form id="proof-login" method="post" hidden>
+                <label><span data-text="emailLabel"></span><input name="email" type="email" autocomplete="username" required></label>
+                <label><span data-text="passwordLabel"></span><input name="password" type="password" autocomplete="current-password" required></label>
+                <button type="submit" data-text="loginButton"></button>
+                <button id="open-proof-signup" type="button" data-text="showSignup" hidden></button>
+                <a id="open-password-recovery" data-text="passwordRecovery"></a>
+              </form>
+              <form id="proof-signup" method="post" hidden>
+                <p id="proof-signup-note" data-text="signupNote"></p>
+                <label><span data-text="signupName"></span><input name="name" type="text" maxlength="60" autocomplete="off" required></label>
+                <label><span data-text="emailLabel"></span><input name="email" type="email" autocomplete="username" placeholder="jogador@example.test" required></label>
+                <label><span data-text="signupPassword"></span><input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+                <button type="submit" data-text="signupButton"></button>
+                <button id="open-proof-login" type="button" data-text="showLogin"></button>
+              </form>
+              <p id="proof-user" tabindex="-1"></p>
+              <button id="proof-logout" type="button" data-text="logoutButton" hidden></button>
+              <p id="proof-auth-status" role="status"></p>
+            </div>
+          </details>
+          <button id="language" class="language" type="button" lang="en" aria-label="EN — Switch to English">EN</button>
+        </div>
       </header>
-      <section id="proof-auth" class="proof-auth" hidden>
-        <p id="account-label" class="account-label"></p>
-        <form id="proof-login" method="post" hidden>
-          <label><span data-text="emailLabel"></span><input name="email" type="email" autocomplete="username" required></label>
-          <label><span data-text="passwordLabel"></span><input name="password" type="password" autocomplete="current-password" required></label>
-          <button type="submit" data-text="loginButton"></button>
-          <button id="open-proof-signup" type="button" data-text="showSignup" hidden></button>
-          <a id="open-password-recovery" data-text="passwordRecovery"></a>
-        </form>
-        <form id="proof-signup" method="post" hidden>
-          <p id="proof-signup-note" data-text="signupNote"></p>
-          <label><span data-text="signupName"></span><input name="name" type="text" maxlength="60" autocomplete="off" required></label>
-          <label><span data-text="emailLabel"></span><input name="email" type="email" autocomplete="username" placeholder="jogador@example.test" required></label>
-          <label><span data-text="signupPassword"></span><input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
-          <button type="submit" data-text="signupButton"></button>
-          <button id="open-proof-login" type="button" data-text="showLogin"></button>
-        </form>
-        <p id="proof-user" tabindex="-1"></p><button id="proof-logout" type="button" data-text="logoutButton" hidden></button>
-        <p id="proof-auth-status" role="status"></p>
-      </section>
       <section class="machine" data-screen="machine" aria-labelledby="machine-title">
         <div class="cabinet">
           <div class="marquee"><i aria-hidden="true"></i><h1 id="machine-title" data-text="machineTitle" tabindex="-1">Kanto Spin</h1><i aria-hidden="true"></i></div>
@@ -199,6 +204,14 @@
       </section>
       <footer class="game-footer"><a id="about-project" href="/case/" data-text="aboutProject">Sobre o projeto</a></footer>
     </main>
+    <dialog id="capture-dialog" aria-labelledby="capture-dialog-title" aria-describedby="capture-dialog-intro">
+      <div class="capture-dialog-content">
+        <p class="capture-dialog-kicker" id="capture-dialog-intro"></p>
+        <h2 id="capture-dialog-title"></h2>
+        <ul id="capture-dialog-list"></ul>
+        <button id="capture-dialog-close" type="button" autofocus></button>
+      </div>
+    </dialog>
     <script type="module" src="/src/preview/main.js"></script>
   </body>
 </html>

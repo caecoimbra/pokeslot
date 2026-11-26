@@ -1,0 +1,74 @@
+#capture-dialog {
+  width: min(92vw, 640px);
+  max-height: min(90dvh, 720px);
+  overflow: auto;
+  padding: 0;
+  border: 2px solid #9ff0d3;
+  border-radius: 20px;
+  background: #102a33;
+  color: #fff0cc;
+  box-shadow: 0 8px #06171c, 0 0 48px #69e3b86b;
+}
+#capture-dialog::backdrop { background: #06111bd9; }
+.capture-dialog-content {
+  padding: clamp(22px, 5vw, 42px);
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 25%, #367a70 0, #143c43 45%, #102a33 80%);
+}
+.capture-dialog-kicker {
+  margin: 0;
+  color: #9ff0d3;
+  font: 800 .72rem/1.4 ui-monospace, monospace;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+#capture-dialog h2 { margin: 8px 0 18px; font-size: clamp(2rem, 7vw, 3.4rem); line-height: 1; }
+#capture-dialog-list {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 0;
+  margin: 0 0 24px;
+  list-style: none;
+}
+.capture-card {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 150px;
+  padding: 12px 20px 16px;
+  border: 1px solid #a8efd5;
+  border-radius: 14px;
+  background: #102d36;
+  box-shadow: 0 4px #0a2026;
+}
+.capture-card strong { font-size: 1.2rem; color: #fff0cc; }
+.capture-card > span { color: #b7e7d5; font-size: .88rem; }
+.capture-portrait {
+  width: 104px;
+  height: 104px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe49c 0, #a9eed6 42%, #72dfb666 60%, transparent 72%);
+}
+.capture-portrait img { width: 96px; height: 96px; max-width: none; object-fit: none; image-rendering: pixelated; }
+#capture-dialog-close {
+  min-width: 160px;
+  padding: 12px 24px;
+  border: 2px solid #442e28;
+  border-radius: 8px;
+  color: #172c32;
+  background: #ffda7e;
+  box-shadow: 0 4px #a76542;
+  font: 800 1rem system-ui, sans-serif;
+  cursor: pointer;
+}
+#capture-dialog-close:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) {
+  #capture-dialog[open] .capture-dialog-content { animation: capture-arrive .5s cubic-bezier(.2, .8, .25, 1) both; }
+  #capture-dialog[open] .capture-portrait { animation: capture-glow 1.8s ease-in-out infinite alternate; }
+}
+@keyframes capture-arrive { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+@keyframes capture-glow { from { box-shadow: 0 0 8px #ffe49c55; } to { box-shadow: 0 0 26px #ffe49cbb; } }

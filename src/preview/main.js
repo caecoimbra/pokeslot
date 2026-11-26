@@ -1,6 +1,7 @@
 import { findWinningLines } from '../domain/paylines.mjs';
 import { createArcadeReels } from './arcade-reels.mjs';
 import { createArcadeSound } from './arcade-sound.mjs';
+import { createCaptureDialog } from './capture-dialog.mjs';
 import { renderDexCards, setDexSprite } from './dex-cards.mjs';
 import kantoNames from './assets/kanto-names.json';
 import { inventoryCard } from './inventory-card.mjs';
@@ -331,6 +332,8 @@ function speciesName(id) {
   return data?.names[language] || data?.names.en || kantoNames[id - 1];
 }
 
+const captureDialog = createCaptureDialog({ speciesName });
+
 function speciesLabel(id) {
   return `#${String(id).padStart(3, '0')} ${speciesName(id)}`;
 }
@@ -627,7 +630,7 @@ function render() {
     : lastProofReward.available ? text.earned(lastProofReward.lines, lastProofReward.duplicates) : text.earnedUnavailable;
   if (neonProof) {
     const busy = authSubmitting || signingOut;
-    document.querySelector('#account-label').textContent = proofUser ? text.account : text.signInTitle;
+    document.querySelector('#account-label').textContent = proofUser && !checkingSession ? proofUser.name : text.signInTitle;
     document.querySelector('#open-password-recovery').href = `./redefinir-senha.html?lang=${language}`;
     document.querySelector('#proof-auth-status').textContent = checkingSession ? text.authChecking : busy ? text.authWorking : text[authStatus] ?? '';
     for (const button of document.querySelectorAll('#proof-login button, #proof-signup button')) {
@@ -656,6 +659,7 @@ async function refreshDemoState() {
 
 function clearProofDisplay() {
   arcadeSound.stop();
+  captureDialog.clear();
   spinning = false;
   proofPendingRoundId = null;
   balance = null;
@@ -874,6 +878,16 @@ function showAuthForm(mode) {
 }
 document.querySelector('#open-proof-signup').addEventListener('click', () => showAuthForm('signup'));
 document.querySelector('#open-proof-login').addEventListener('click', () => showAuthForm('login'));
+const accountMenu = document.querySelector('#proof-auth');
+document.addEventListener('click', (event) => {
+  if (accountMenu.open && !accountMenu.contains(event.target)) accountMenu.open = false;
+});
+accountMenu.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || !accountMenu.open) return;
+  event.preventDefault();
+  accountMenu.open = false;
+  document.querySelector('#account-label').focus();
+});
 
 async function submitProofAuth(event, registering) {
   event.preventDefault();
@@ -1159,8 +1173,10 @@ async function finishSpin(current = () => true) {
       pending = false;
       spinning = false;
       render();
-      if (status === 'success') arcadeSound.finish(wins.length > 0);
-      else arcadeSound.stop();
+      if (status === 'success') {
+        arcadeSound.finish(wins.length > 0);
+        if (activeScreen() === 'machine' && !document.hidden) captureDialog.show(lastCaptures ?? [], language);
+      } else arcadeSound.stop();
     }
   }
 }

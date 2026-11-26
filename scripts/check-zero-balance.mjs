@@ -91,7 +91,7 @@ export async function checkZeroBalance(browser, origin) {
       };
     }));
     await page.goto(origin + '/?backend=neon');
-    await page.getByText('Jogador A', { exact: true }).waitFor();
+    await page.locator('#account-label').getByText('Jogador A', { exact: true }).waitFor();
     await page.waitForFunction(() => !document.querySelector('#spin').disabled);
     assert.match(await spin.textContent(), /Recuperar rodada pendente/);
     const recoveryResponse = page.waitForResponse(response => response.url().endsWith('/spin')

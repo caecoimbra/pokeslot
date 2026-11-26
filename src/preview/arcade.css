@@ -87,16 +87,30 @@
 .arcade button:disabled { opacity: .6; cursor: default; }
 .arcade :is(a,button,input,select):focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .arcade .proof-auth, .arcade .pokedex { border-color: #507271; background: #132d36f5; color: var(--paper); }
-.arcade .proof-auth { margin: 14px 0; padding: 12px 18px; }
-.account-label { margin: 2px 0 7px; color: #c5e7d9; font-weight: 700; }
+.topbar-actions { display: flex; align-items: center; justify-content: end; gap: 10px; min-width: 0; }
+.arcade .account-menu { position: relative; margin: 0; padding: 0; border: 0; background: none; min-width: 0; }
+.account-menu summary {
+  display: flex; align-items: center; gap: 8px; max-width: min(22vw, 190px); min-height: 40px;
+  padding: 7px 11px; border: 1px solid #648782; border-radius: 7px;
+  color: #ddf7e9; background: #173740; font-size: .9rem; font-weight: 700;
+  cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.account-menu summary::after { content: '▾'; color: #9ce4c7; margin-left: auto; }
+.account-menu summary:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.account-panel {
+  position: absolute; z-index: 12; top: calc(100% + 10px); right: 0;
+  width: min(360px, calc(100vw - 20px)); max-height: min(75vh, 600px); overflow: auto;
+  padding: 18px; border: 1px solid #648782; border-radius: 12px;
+  background: #132d36; box-shadow: 0 12px 26px #07151dbb;
+}
 .arcade .proof-auth form:not([hidden]) { display: flex; align-items: end; gap: 8px 12px; flex-wrap: wrap; }
 .arcade .proof-auth form label { flex: 1 1 140px; margin: 4px 0; font-size: .85rem; }
 .arcade .proof-auth input { border: 1px solid #adc8c1; border-radius: 4px; background: #fff8e7; color: var(--ink); }
 .arcade .proof-auth :is(form p,#proof-auth-status) { font-size: .85rem; }
 .arcade .proof-auth form p { width: 100%; }
 .arcade .proof-auth p:empty { display: none; }
-.arcade .proof-auth:has(#proof-logout:not([hidden])) { display: flex; align-items: center; flex-wrap: wrap; gap: .5em 1em; }
-.arcade .proof-auth:has(#proof-logout:not([hidden])) p { margin: 0; }
+.arcade .account-panel:has(#proof-logout:not([hidden])) { display: flex; align-items: center; flex-wrap: wrap; gap: .5em 1em; }
+.arcade .account-panel:has(#proof-logout:not([hidden])) p { margin: 0; }
 .arcade .pokedex { margin-top: 0; border-radius: 12px; }
 .arcade .collection-progress progress { accent-color: var(--aqua); }
 .arcade .detail-variants [aria-pressed="true"] { color: var(--ink) !important; background: var(--aqua) !important; }
@@ -111,7 +125,8 @@
 .recovery-page .proof-auth [type="submit"] { background: var(--gold); color: var(--ink); font-weight: 700; }
 @media(max-width:760px) {
   .arcade .topbar { grid-template-columns: 1fr auto; gap: 12px; }
-  .arcade .language { grid-column: 2; grid-row: 1; }
+  .arcade .topbar-actions { grid-column: 2; grid-row: 1; }
+  .account-menu summary { max-width: min(30vw, 150px); }
   .arcade-nav { grid-column: 1 / -1; }
   .arcade .machine { grid-template-columns: minmax(0,1fr); }
   .arcade .shell { width: min(100% - 24px,610px); }

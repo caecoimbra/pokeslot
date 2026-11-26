@@ -57,7 +57,7 @@ export async function checkSessionLoading(browser, origin) {
     assert.equal(await page.locator('#proof-login').isVisible(), false, 'Não exibir login durante restauração inicial');
     assert.equal(await page.locator('#proof-signup').isVisible(), false);
     releaseSession();
-    await page.getByText('Jogador A', { exact: true }).waitFor();
+    await page.locator('#account-label').getByText('Jogador A', { exact: true }).waitFor();
     assert.equal(await page.locator('#demo-balance').textContent(), '20');
 
     // On reload, no credentials are needed when the session still exists.
@@ -67,12 +67,12 @@ export async function checkSessionLoading(browser, origin) {
     await reloadStarted;
     assert.equal(await page.locator('#proof-login').isVisible(), false, 'Não exibir login durante recarga');
     releaseSession();
-    await page.getByText('Jogador A', { exact: true }).waitFor();
+    await page.locator('#account-label').getByText('Jogador A', { exact: true }).waitFor();
 
     // Back navigation should restore a session rather than present a login form.
     await page.goto(origin + '/case/');
     await page.goBack();
-    await page.getByText('Jogador A', { exact: true }).waitFor();
+    await page.locator('#account-label').getByText('Jogador A', { exact: true }).waitFor();
     assert.equal(await page.locator('#demo-balance').textContent(), '20');
 
     // A delayed result for A must never replace the newer account B.
@@ -82,7 +82,7 @@ export async function checkSessionLoading(browser, origin) {
     await delayedState;
     session = userB;
     await page.evaluate(() => new BroadcastChannel('pokeslot-proof-session').postMessage('session-changed'));
-    await page.getByText('Jogador B', { exact: true }).waitFor();
+    await page.locator('#account-label').getByText('Jogador B', { exact: true }).waitFor();
     assert.equal(await page.locator('#demo-balance').textContent(), '19');
     releaseState();
     await page.waitForTimeout(100);
@@ -91,11 +91,13 @@ export async function checkSessionLoading(browser, origin) {
 
     session = null;
     await page.reload();
+    await page.locator('#account-label').click();
     await page.locator('#proof-login').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#proof-user').textContent(), '');
 
     mode = 'fail-session';
     await page.reload();
+    await page.locator('#account-label').click();
     await page.locator('#proof-login').waitFor({ state: 'visible' });
     assert.notEqual((await page.locator('#proof-auth-status').textContent()).trim(), '');
     console.log('Restauração, recarga, troca de conta, sessão ausente e falha de Auth verificadas.');
