@@ -4,6 +4,7 @@ const win = [72, 76, 79, 84];
 const miss = [64, 57];
 // Short original cues; they do not depend on downloaded audio or third-party assets.
 const cues = {
+  dialogue: { notes: [76, 83], beat: .055, volume: .035 },
   voucher: { notes: [88, 95], beat: .12, volume: .065 },
   spins: { notes: [60, 64, 67, 72, 76, 79, 84], beat: .065, volume: .06 },
   shiny: { notes: [79, 86, 91, 88, 95, 100, 103], beat: .09, volume: .065 },

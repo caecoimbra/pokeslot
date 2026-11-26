@@ -11,6 +11,8 @@ import { checkRewardDialog } from './check-reward-dialog.mjs';
 import { checkPokedexFilters } from './check-pokedex-filters.mjs';
 import { checkPokemonCries } from './check-pokemon-cries.mjs';
 import { checkAccountMenu } from './check-account-menu.mjs';
+import { checkGuestIntro } from './check-guest-intro.mjs';
+import { checkBilingualData } from './check-bilingual-data.mjs';
 
 const [moduleBase, edgePath, origin, screenshotPath] = process.argv.slice(2);
 const require = createRequire(moduleBase);
@@ -88,5 +90,7 @@ try {
   await checkPokedexFilters(browser, origin, axe);
   await checkPokemonCries(browser, origin);
   await checkAccountMenu(browser, origin, axe);
+  await checkGuestIntro(browser, origin, { axe });
+  await checkBilingualData(browser, origin);
   console.log('Rodada local no Edge, teclado, foco, árvore de acessibilidade e axe passaram.');
 } finally { await browser.close(); }

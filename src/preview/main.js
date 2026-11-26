@@ -5,6 +5,7 @@ import { createPokemonCries } from './pokemon-cries.mjs';
 import { createCaptureDialog } from './capture-dialog.mjs';
 import { buildRewardPresentations } from './reward-presentation.mjs';
 import { createRewardAudio } from './reward-audio.mjs';
+import { createGuestIntro } from './guest-intro.mjs';
 import { setupPasswordVisibility } from './password-visibility.mjs';
 import { renderDexCards, setDexSprite } from './dex-cards.mjs';
 import kantoNames from './assets/kanto-names.json';
@@ -346,6 +347,15 @@ function speciesName(id) {
 }
 
 const captureDialog = createCaptureDialog({ speciesName });
+const guestIntro = createGuestIntro({
+  onChange: render,
+  onRollingEnd: () => arcadeSound.stop(),
+  onDialogue: () => { void arcadeSound.cue('dialogue'); },
+  onAccount: () => {
+    accountMenu.open = true;
+    showAuthForm('signup');
+  },
+});
 
 function speciesLabel(id) {
   return `#${String(id).padStart(3, '0')} ${speciesName(id)}`;
@@ -562,7 +572,7 @@ function render() {
   button.textContent = language === 'pt' ? 'EN' : 'PT';
   button.lang = language === 'pt' ? 'en' : 'pt-BR';
   button.setAttribute('aria-label', language === 'pt' ? 'EN — Switch to English' : 'PT — Mudar para português');
-  reelView.render(grid, wins, spinning, text);
+  reelView.render(grid, wins, spinning || guestIntro.spinning, text);
   soundToggle.hidden = !arcadeSound.available;
   soundToggle.setAttribute('aria-pressed', String(arcadeSound.enabled));
   soundToggle.querySelector('.sound-label').textContent = language === 'pt' ? 'Som' : 'Sound';
@@ -630,9 +640,10 @@ function render() {
   const spin = document.querySelector('#spin');
   const pendingRoundId = neonProof ? proofPendingRoundId : localPendingRoundId;
   const emptyBalance = balance === 0;
-  spin.disabled = pending || balance === null || (emptyBalance && !pendingRoundId)
-    || (neonProof && (!proofUser || (!!pendingLocalAction && !proofPendingRoundId)));
-  spin.textContent = spinning ? text.spinning : pendingRoundId ? text.recoverButton : text.spinButton;
+  const guestReady = neonProof && !proofUser && !checkingSession && !authSubmitting && !signingOut;
+  spin.disabled = guestIntro.busy || (!guestReady && (pending || balance === null || (emptyBalance && !pendingRoundId)
+    || (neonProof && (!proofUser || (!!pendingLocalAction && !proofPendingRoundId)))));
+  spin.textContent = spinning || guestIntro.spinning ? text.spinning : pendingRoundId ? text.recoverButton : text.spinButton;
   const emptyBalanceMessage = document.querySelector('#empty-balance');
   emptyBalanceMessage.hidden = !emptyBalance;
   emptyBalanceMessage.textContent = emptyBalance ? text.noBalance : '';
@@ -676,6 +687,7 @@ async function refreshDemoState() {
 }
 
 function clearProofDisplay() {
+  guestIntro.cancel();
   rewardAudio.stop();
   captureDialog.clear();
   spinning = false;
@@ -985,7 +997,7 @@ proofSessions?.addEventListener('message', ({ data }) => {
   if (data === 'session-changed') recoverProofSession();
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) rewardAudio.stop();
+  if (document.hidden) { guestIntro.cancel(); rewardAudio.stop(); }
   if (neonProof && proofClient && document.visibilityState === 'visible') recoverProofSession();
 });
 window.addEventListener('pageshow', (event) => {
@@ -997,6 +1009,7 @@ screenNav.addEventListener('click', (event) => {
   if (link?.getAttribute('aria-disabled') === 'true') event.preventDefault();
 });
 window.addEventListener('hashchange', () => {
+  guestIntro.cancel();
   rewardAudio.stop();
   if (activeScreen() !== 'machine') captureDialog.clear();
   render();
@@ -1009,9 +1022,10 @@ soundToggle.addEventListener('click', () => {
   if (!arcadeSound.enabled) rewardAudio.stop();
   render();
 });
-window.addEventListener('pagehide', () => rewardAudio.stop());
+window.addEventListener('pagehide', () => { guestIntro.cancel(); rewardAudio.stop(); });
 document.querySelector('#capture-dialog').addEventListener('close', () => rewardAudio.stop());
 document.querySelector('#language').addEventListener('click', () => {
+  guestIntro.cancel();
   language = language === 'pt' ? 'en' : 'pt';
   render();
 });
@@ -1292,6 +1306,10 @@ document.querySelector('#spin').addEventListener('click', async (event) => {
   const hadFocus = document.activeElement === button;
   const version = proofGeneration;
   arcadeSound.start();
+  if (neonProof && !proofUser) {
+    await guestIntro.start(language);
+    return;
+  }
   try { await (neonProof ? spinNeonProof() : spinLocal()); }
   finally {
     if (hadFocus && version === proofGeneration && !button.disabled &&

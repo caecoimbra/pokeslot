@@ -229,6 +229,23 @@
         <button id="capture-dialog-close" type="button" autofocus></button>
       </div>
     </dialog>
+    <dialog id="guest-intro" class="guest-intro" aria-labelledby="guest-speaker" aria-describedby="guest-spoken">
+      <div class="guest-scene">
+        <img alt="" width="320" height="480" hidden />
+        <span class="guest-portrait-fallback" aria-hidden="true">PC</span>
+        <button class="guest-close" type="button" aria-label="Fechar introdução">×</button>
+      </div>
+      <div class="guest-balloon">
+        <h2 id="guest-speaker" class="guest-speaker">Professor Coimbra</h2>
+        <p class="guest-dialogue-visual" aria-hidden="true"></p>
+        <p id="guest-spoken" class="guest-dialogue-spoken" aria-live="polite" aria-atomic="true"></p>
+        <span class="guest-progress"></span>
+      </div>
+      <div class="guest-actions">
+        <button class="guest-skip" type="button">Ir para o cadastro</button>
+        <button class="guest-next" type="button" autofocus>Continuar</button>
+      </div>
+    </dialog>
     <script type="module" src="/src/preview/main.js"></script>
   </body>
 </html>

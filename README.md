@@ -6,6 +6,8 @@ Um arcade de coleção idealizado e dirigido por **Caetano Coimbra**. Cada rodad
 
 Crie uma conta para jogar na máquina hospedada e recuperar seu progresso. Use um e-mail ao qual tenha acesso para receber o link de redefinição de senha. O repositório também inclui um modo de desenvolvimento local.
 
+Ao tentar girar sem entrar, o visitante conhece o Professor Coimbra em uma introdução interativa que leva ao cadastro. O [personagem original](docs/arte-professor-coimbra.md) foi criado sob direção de Caetano, com arte apoiada por IA. A apresentação usa animações, diálogos PT/EN, teclado e movimento reduzido, sem gerar uma rodada ou alterar dados de jogadores.
+
 ![Máquina do PokéSlot após uma rodada local, com os três rolos, o saldo e o comando Girar](public/case/maquina-pt.png)
 
 ## Como jogar
