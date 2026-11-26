@@ -1,0 +1,1063 @@
+{
+  "fetchedAt": "2026-11-26T11:58:29.150Z",
+  "nativePortugueseDescriptions": 0,
+  "entries": [
+    {
+      "id": 1,
+      "name": "Bulbasaur",
+      "en": "There is a plant seed on its back right from the day this POKéMON is born. The seed slowly grows larger.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/1/"
+    },
+    {
+      "id": 2,
+      "name": "Ivysaur",
+      "en": "There is a plant bulb on its back. When it absorbs nutrients, the bulb is said to blossom into a large flower.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/2/"
+    },
+    {
+      "id": 3,
+      "name": "Venusaur",
+      "en": "A bewitching aroma wafts from its flower. The fragrance becalms those engaged in a battle.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/3/"
+    },
+    {
+      "id": 4,
+      "name": "Charmander",
+      "en": "From the time it is born, a flame burns at the tip of its tail. Its life would end if the flame were to go out.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/4/"
+    },
+    {
+      "id": 5,
+      "name": "Charmeleon",
+      "en": "It lashes about with its tail to knock down its foe. It then tears up the fallen opponent with sharp claws.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/5/"
+    },
+    {
+      "id": 6,
+      "name": "Charizard",
+      "en": "Its wings can carry this POKéMON close to an altitude of 4,600 feet. It blows out fire at very high temperatures.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/6/"
+    },
+    {
+      "id": 7,
+      "name": "Squirtle",
+      "en": "When it retracts its long neck into its shell, it squirts out water with vigorous force.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/7/"
+    },
+    {
+      "id": 8,
+      "name": "Wartortle",
+      "en": "This POKéMON is very popular as a pet. Its fur-covered tail is a symbol of its longevity.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/8/"
+    },
+    {
+      "id": 9,
+      "name": "Blastoise",
+      "en": "It crushes its foe under its heavy body to cause fainting. In a pinch, it will withdraw inside its shell.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/9/"
+    },
+    {
+      "id": 10,
+      "name": "Caterpie",
+      "en": "It is covered with a green skin. When it grows, it sheds the skin, covers itself with silk, and becomes a cocoon.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/10/"
+    },
+    {
+      "id": 11,
+      "name": "Metapod",
+      "en": "Even though it is encased in a sturdy shell, the body inside is tender. It can’t withstand a harsh attack.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/11/"
+    },
+    {
+      "id": 12,
+      "name": "Butterfree",
+      "en": "The wings are protected by rain-repellent dust. As a result, this POKéMON can fly about even in rain.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/12/"
+    },
+    {
+      "id": 13,
+      "name": "Weedle",
+      "en": "Often found in forests and grasslands. It has a sharp, toxic barb of around two inches on top of its head.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/13/"
+    },
+    {
+      "id": 14,
+      "name": "Kakuna",
+      "en": "This POKéMON is in a temporary stage while making its body. It is almost completely unable to move on its own.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/14/"
+    },
+    {
+      "id": 15,
+      "name": "Beedrill",
+      "en": "May appear in a swarm. Flies at violent speeds, all the while stabbing with the toxic stinger on its rear.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/15/"
+    },
+    {
+      "id": 16,
+      "name": "Pidgey",
+      "en": "Does not like to fight. It hides in tall grass and so on, foraging for food such as small bugs.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/16/"
+    },
+    {
+      "id": 17,
+      "name": "Pidgeotto",
+      "en": "The claws on its feet are well developed. It can carry prey such as an EXEGGCUTE to its nest over 60 miles away.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/17/"
+    },
+    {
+      "id": 18,
+      "name": "Pidgeot",
+      "en": "It spreads its gorgeous wings widely to intimidate enemies. It races through the skies at Mach-2 speed.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/18/"
+    },
+    {
+      "id": 19,
+      "name": "Rattata",
+      "en": "Its fangs are long and very sharp. They grow continuously, so it gnaws on hard things to whittle them down.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/19/"
+    },
+    {
+      "id": 20,
+      "name": "Raticate",
+      "en": "Its rear feet have three toes each. They are webbed, enabling it to swim across rivers.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/20/"
+    },
+    {
+      "id": 21,
+      "name": "Spearow",
+      "en": "It busily flits around here and there. Even if it is frail, it can be a tough foe that uses MIRROR MOVE.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/21/"
+    },
+    {
+      "id": 22,
+      "name": "Fearow",
+      "en": "Its huge and magnificent wings can keep it aloft in the sky. It can remain flying a whole day without landing.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/22/"
+    },
+    {
+      "id": 23,
+      "name": "Ekans",
+      "en": "A very common sight in grassland, etc. It flicks its tongue in and out to sense danger in its surroundings.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/23/"
+    },
+    {
+      "id": 24,
+      "name": "Arbok",
+      "en": "The pattern on its belly appears to be a frightening face. Weak foes will flee just at the sight of the pattern.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/24/"
+    },
+    {
+      "id": 25,
+      "name": "Pikachu",
+      "en": "It has small electric sacs on both its cheeks. If threatened, it looses electric charges from the sacs.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/25/"
+    },
+    {
+      "id": 26,
+      "name": "Raichu",
+      "en": "Its electric charges can reach even 100,000 volts. Careless contact can cause even an Indian elephant to faint.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/26/"
+    },
+    {
+      "id": 27,
+      "name": "Sandshrew",
+      "en": "It burrows and lives underground. If threatened, it curls itself up into a ball for protection.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/27/"
+    },
+    {
+      "id": 28,
+      "name": "Sandslash",
+      "en": "It is adept at attacking with the spines on its back and its sharp claws while quickly scurrying about.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/28/"
+    },
+    {
+      "id": 29,
+      "name": "Nidoran♀",
+      "en": "Though small, it must be treated with caution because of its powerfully toxic barbs. The female has smaller horns.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/29/"
+    },
+    {
+      "id": 30,
+      "name": "Nidorina",
+      "en": "The female has a gentle temperament. It emits ultrasonic cries that have the power to befuddle foes.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/30/"
+    },
+    {
+      "id": 31,
+      "name": "Nidoqueen",
+      "en": "The body is covered by stiff, needle- like scales. If it becomes excited, the needles bristle outwards.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/31/"
+    },
+    {
+      "id": 32,
+      "name": "Nidoran♂",
+      "en": "Its large ears are flapped like wings when it is listening to distant sounds. It extends toxic barbs when angered.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/32/"
+    },
+    {
+      "id": 33,
+      "name": "Nidorino",
+      "en": "It is easily angered. By swinging its well- developed horn wildly, it can even punch through diamond.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/33/"
+    },
+    {
+      "id": 34,
+      "name": "Nidoking",
+      "en": "It is recognized by its rock-hard hide and its extended horn. Be careful with the horn as it contains venom.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/34/"
+    },
+    {
+      "id": 35,
+      "name": "Clefairy",
+      "en": "Its adorable appearance makes it popular as a pet. However, it is rare and difficult to find.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/35/"
+    },
+    {
+      "id": 36,
+      "name": "Clefable",
+      "en": "It has an acute sense of hearing. It can easily hear a pin being dropped nearly 1,100 yards away.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/36/"
+    },
+    {
+      "id": 37,
+      "name": "Vulpix",
+      "en": "While young, it has six gorgeous tails. When it grows, several new tails are sprouted.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/37/"
+    },
+    {
+      "id": 38,
+      "name": "Ninetales",
+      "en": "It has nine long tails and fur that gleams gold. It is said to live for 1,000 years.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/38/"
+    },
+    {
+      "id": 39,
+      "name": "Jigglypuff",
+      "en": "It captivates foes with its huge, round eyes, then lulls them to sleep by singing a soothing melody.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/39/"
+    },
+    {
+      "id": 40,
+      "name": "Wigglytuff",
+      "en": "Its fur is extremely fine, dense, and supple. The exquisitely pleasant fur conveys an image of luxury.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/40/"
+    },
+    {
+      "id": 41,
+      "name": "Zubat",
+      "en": "It has no eyes. Instead, it relies on its ultrasonic cries for echo location to flit about in darkness.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/41/"
+    },
+    {
+      "id": 42,
+      "name": "Golbat",
+      "en": "It clamps down on its prey with needle- sharp fangs and drains over 10 ounces of blood in one gulp.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/42/"
+    },
+    {
+      "id": 43,
+      "name": "Oddish",
+      "en": "Its scientific name is “Oddium Wanderus.” At night, it is said to walk nearly 1,000 feet on its two roots.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/43/"
+    },
+    {
+      "id": 44,
+      "name": "Gloom",
+      "en": "Its pistils exude an incredibly foul odor. The horrid stench can cause fainting at a distance of 1.25 miles.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/44/"
+    },
+    {
+      "id": 45,
+      "name": "Vileplume",
+      "en": "Its petals are the largest in the world. It fiendishly scatters allergy-causing pollen from its petals.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/45/"
+    },
+    {
+      "id": 46,
+      "name": "Paras",
+      "en": "Growing out of the bug’s back are mushrooms called tochukaso. The mushrooms grow with the bug host.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/46/"
+    },
+    {
+      "id": 47,
+      "name": "Parasect",
+      "en": "It scatters toxic spores from the mushroom cap. In China, the spores are used as herbal medicine.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/47/"
+    },
+    {
+      "id": 48,
+      "name": "Venonat",
+      "en": "Its eyes act as radar, enabling it to be active in darkness. The eyes can also shoot powerful beams.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/48/"
+    },
+    {
+      "id": 49,
+      "name": "Venomoth",
+      "en": "The wings are covered with dustlike scales. Every time it flaps its wings, it looses highly toxic dust.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/49/"
+    },
+    {
+      "id": 50,
+      "name": "Diglett",
+      "en": "It burrows through the ground at a shallow depth. It leaves raised earth in its wake, making it easy to spot.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/50/"
+    },
+    {
+      "id": 51,
+      "name": "Dugtrio",
+      "en": "In battle, it digs through the ground and strikes the unsuspecting foe from an unexpected direction.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/51/"
+    },
+    {
+      "id": 52,
+      "name": "Meowth",
+      "en": "All it does is sleep during the daytime. At night, it patrols its territory with its eyes aglow.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/52/"
+    },
+    {
+      "id": 53,
+      "name": "Persian",
+      "en": "Has a vicious temperament. Beware if it raises its tail straight up. It is a signal that it is about to pounce and bite.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/53/"
+    },
+    {
+      "id": 54,
+      "name": "Psyduck",
+      "en": "It is constantly wracked by a headache. When the headache turns intense, it begins using mysterious powers.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/54/"
+    },
+    {
+      "id": 55,
+      "name": "Golduck",
+      "en": "The forelegs are webbed, helping to make it an adept swimmer. It can be seen swimming elegantly in lakes, etc.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/55/"
+    },
+    {
+      "id": 56,
+      "name": "Mankey",
+      "en": "Light and agile on its feet, and ferocious in temperament. When angered, it flies into an uncontrollable frenzy.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/56/"
+    },
+    {
+      "id": 57,
+      "name": "Primeape",
+      "en": "It is always outrageously furious. If it gives chase, it will tenaciously track the target no matter how far.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/57/"
+    },
+    {
+      "id": 58,
+      "name": "Growlithe",
+      "en": "Very friendly and faithful to people. It will try to repel enemies by barking and biting.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/58/"
+    },
+    {
+      "id": 59,
+      "name": "Arcanine",
+      "en": "A POKéMON that is described in Chinese legends. It is said to race at an unbelievable speed.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/59/"
+    },
+    {
+      "id": 60,
+      "name": "Poliwag",
+      "en": "Its slick black skin is thin and damp. A part of its internal organs can be seen through the skin as a spiral pattern.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/60/"
+    },
+    {
+      "id": 61,
+      "name": "Poliwhirl",
+      "en": "Its two legs are well developed. Even though it can live on the ground, it prefers living in water.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/61/"
+    },
+    {
+      "id": 62,
+      "name": "Poliwrath",
+      "en": "An adept swimmer, it knows the front crawl, butterfly, and more. It is faster than the best human swimmers.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/62/"
+    },
+    {
+      "id": 63,
+      "name": "Abra",
+      "en": "It sleeps for 18 hours a day. It uses a variety of extrasensory powers even while asleep.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/63/"
+    },
+    {
+      "id": 64,
+      "name": "Kadabra",
+      "en": "It happened one morning - a boy with extrasensory powers awoke in bed transformed into KADABRA.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/64/"
+    },
+    {
+      "id": 65,
+      "name": "Alakazam",
+      "en": "It does not like physical attacks very much. Instead, it freely uses extra­ sensory powers to defeat foes.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/65/"
+    },
+    {
+      "id": 66,
+      "name": "Machop",
+      "en": "Its whole body is composed of muscles. Even though it’s the size of a human child, it can hurl 100 grown-ups.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/66/"
+    },
+    {
+      "id": 67,
+      "name": "Machoke",
+      "en": "Its formidable body never gets tired. It helps people by doing work such as the moving of heavy goods.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/67/"
+    },
+    {
+      "id": 68,
+      "name": "Machamp",
+      "en": "Its four ruggedly developed arms can launch a flurry of 1,000 punches in just two seconds.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/68/"
+    },
+    {
+      "id": 69,
+      "name": "Bellsprout",
+      "en": "Its bud looks like a human face. Because of the bud, it is rumored to be a type of legendary mandrake plant.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/69/"
+    },
+    {
+      "id": 70,
+      "name": "Weepinbell",
+      "en": "The leafy parts act as cutters for slashing foes. It spits a fluid that dissolves everything.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/70/"
+    },
+    {
+      "id": 71,
+      "name": "Victreebel",
+      "en": "Lures prey into its mouth with a honeylike aroma. The helpless prey is melted with a dissolving fluid.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/71/"
+    },
+    {
+      "id": 72,
+      "name": "Tentacool",
+      "en": "Its eyes are as transparent as crystals. From them, it shoots mysterious beams of light.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/72/"
+    },
+    {
+      "id": 73,
+      "name": "Tentacruel",
+      "en": "It has 80 tentacles that move about freely. They can sting, causing poisoning and sharp, stabbing pain.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/73/"
+    },
+    {
+      "id": 74,
+      "name": "Geodude",
+      "en": "Its round form makes it easy to pick up. Some people have used them to hurl at each other in a snowball fight.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/74/"
+    },
+    {
+      "id": 75,
+      "name": "Graveler",
+      "en": "Be careful while hiking on mountain trails. GRAVELER may come rolling down the path without slowing.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/75/"
+    },
+    {
+      "id": 76,
+      "name": "Golem",
+      "en": "It is enclosed in a hard shell that is as rugged as slabs of rock. It sheds skin once a year to grow larger.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/76/"
+    },
+    {
+      "id": 77,
+      "name": "Ponyta",
+      "en": "Its body is light, and its legs are incredibly powerful. It can clear Ayers Rock in one leap.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/77/"
+    },
+    {
+      "id": 78,
+      "name": "Rapidash",
+      "en": "It can gallop at a top speed of 150 miles per hour. It can race as fast as a bullet train while ablaze.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/78/"
+    },
+    {
+      "id": 79,
+      "name": "Slowpoke",
+      "en": "It is always vacantly lost in thought, but no one knows what it is thinking about. It is good at fishing with its tail.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/79/"
+    },
+    {
+      "id": 80,
+      "name": "Slowbro",
+      "en": "When a SLOWPOKE went hunting in the sea, its tail was bitten by a SHELLDER. That made it evolve into SLOWBRO.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/80/"
+    },
+    {
+      "id": 81,
+      "name": "Magnemite",
+      "en": "It moves while constantly hovering. It discharges THUNDER WAVE and so on from the units at its sides.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/81/"
+    },
+    {
+      "id": 82,
+      "name": "Magneton",
+      "en": "A linked cluster formed of several MAGNEMITE. It discharges powerful magnetic waves at high voltage.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/82/"
+    },
+    {
+      "id": 83,
+      "name": "Farfetch’d",
+      "en": "It always walks about with a plant stalk clamped in its beak. The stalk is used for building its nest.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/83/"
+    },
+    {
+      "id": 84,
+      "name": "Doduo",
+      "en": "A two-headed POKéMON that was discovered as a sudden mutation. It runs at a pace of over 60 miles per hour.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/84/"
+    },
+    {
+      "id": 85,
+      "name": "Dodrio",
+      "en": "An odd species that is rarely found. The three heads respectively represent joy, sadness, and anger.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/85/"
+    },
+    {
+      "id": 86,
+      "name": "Seel",
+      "en": "Covered with light blue fur, its hide is thick and tough. It is active in bitter cold of minus 40 degrees Fahrenheit.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/86/"
+    },
+    {
+      "id": 87,
+      "name": "Dewgong",
+      "en": "Its body is covered with a pure white fur. The colder the weather, the more active it becomes.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/87/"
+    },
+    {
+      "id": 88,
+      "name": "Grimer",
+      "en": "Sludge exposed to X rays from the moon transformed into GRIMER. It loves feeding on filthy things.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/88/"
+    },
+    {
+      "id": 89,
+      "name": "Muk",
+      "en": "It is usually undetectable because it blends in with the ground. Touching it can cause terrible poisoning.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/89/"
+    },
+    {
+      "id": 90,
+      "name": "Shellder",
+      "en": "It is encased in a shell that is harder than diamond. Inside, however, it is surprisingly tender.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/90/"
+    },
+    {
+      "id": 91,
+      "name": "Cloyster",
+      "en": "Its shell is extremely hard. It cannot be shattered, even with a bomb. The shell opens only when it is attacking.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/91/"
+    },
+    {
+      "id": 92,
+      "name": "Gastly",
+      "en": "A being that exists as a thin gas. It can topple an Indian elephant by enveloping the prey in two seconds.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/92/"
+    },
+    {
+      "id": 93,
+      "name": "Haunter",
+      "en": "If you get the feeling of being watched in darkness when nobody is around, HAUNTER is there.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/93/"
+    },
+    {
+      "id": 94,
+      "name": "Gengar",
+      "en": "It is said to emerge from darkness to steal the lives of those who become lost in mountains.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/94/"
+    },
+    {
+      "id": 95,
+      "name": "Onix",
+      "en": "It usually lives underground. It searches for food while boring its way through the ground at 50 miles per hour.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/95/"
+    },
+    {
+      "id": 96,
+      "name": "Drowzee",
+      "en": "A descendent of the legendary animal baku, which is said to eat dreams. It is skilled at hypnotism.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/96/"
+    },
+    {
+      "id": 97,
+      "name": "Hypno",
+      "en": "It carries a pendulum-like device. There once was an incident in which it took away a child it hypnotized.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/97/"
+    },
+    {
+      "id": 98,
+      "name": "Krabby",
+      "en": "It can be found near the sea. The large pincers grow back if they are torn out of their sockets.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/98/"
+    },
+    {
+      "id": 99,
+      "name": "Kingler",
+      "en": "Its large and hard pincer has 10,000- horsepower strength. However, being so big, it is unwieldy to move.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/99/"
+    },
+    {
+      "id": 100,
+      "name": "Voltorb",
+      "en": "A life-form whose identity is unknown. It is said to SCREECH or suddenly SELFDESTRUCT.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/100/"
+    },
+    {
+      "id": 101,
+      "name": "Electrode",
+      "en": "It explodes in response to even minor stimuli. It is feared, with the nickname of “The Bomb Ball.”",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/101/"
+    },
+    {
+      "id": 102,
+      "name": "Exeggcute",
+      "en": "Even though it appears to be eggs of some sort, it was discovered to be a life- form more like plant seeds.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/102/"
+    },
+    {
+      "id": 103,
+      "name": "Exeggutor",
+      "en": "It is called “The Walking Tropical Rainforest.” Each of the nuts has a face and a will of its own.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/103/"
+    },
+    {
+      "id": 104,
+      "name": "Cubone",
+      "en": "It wears the skull of its dead mother on its head. When it becomes lonesome, it is said to cry loudly.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/104/"
+    },
+    {
+      "id": 105,
+      "name": "Marowak",
+      "en": "It is small and was originally very weak. Its temperament turned ferocious when it began using bones.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/105/"
+    },
+    {
+      "id": 106,
+      "name": "Hitmonlee",
+      "en": "The legs freely contract and stretch. The stretchy legs allow it to hit a distant foe with a rising kick.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/106/"
+    },
+    {
+      "id": 107,
+      "name": "Hitmonchan",
+      "en": "The spirit of a pro boxer has infused this POKéMON. It throws punches that are faster than a bullet train.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/107/"
+    },
+    {
+      "id": 108,
+      "name": "Lickitung",
+      "en": "Its tongue is twice the length of its body. It can be moved like an arm for grabbing food and attacking.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/108/"
+    },
+    {
+      "id": 109,
+      "name": "Koffing",
+      "en": "Its thin, balloon-like body is inflated by horribly toxic gases. It reeks when it is nearby.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/109/"
+    },
+    {
+      "id": 110,
+      "name": "Weezing",
+      "en": "Very rarely, a sudden mutation can result in two small KOFFING twins becoming conjoined as a WEEZING.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/110/"
+    },
+    {
+      "id": 111,
+      "name": "Rhyhorn",
+      "en": "Strong, but not too bright, this POKéMON can shatter even a skyscraper with its charging TACKLES.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/111/"
+    },
+    {
+      "id": 112,
+      "name": "Rhydon",
+      "en": "It begins walking on its hind legs after evolution. It can punch holes through boulders with its horn.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/112/"
+    },
+    {
+      "id": 113,
+      "name": "Chansey",
+      "en": "It lays several eggs a day. The eggs are apparently rich in nutrients and extremely delicious.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/113/"
+    },
+    {
+      "id": 114,
+      "name": "Tangela",
+      "en": "Blue plant vines cloak the POKéMON’s identity in a tangled mass. It entangles anything that gets close.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/114/"
+    },
+    {
+      "id": 115,
+      "name": "Kangaskhan",
+      "en": "The female raises its offspring in a pouch on its belly. It is skilled at attacking using COMET PUNCH.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/115/"
+    },
+    {
+      "id": 116,
+      "name": "Horsea",
+      "en": "It maintains balance using its tail, which is wound up like a coil. It may spray ink from its mouth.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/116/"
+    },
+    {
+      "id": 117,
+      "name": "Seadra",
+      "en": "Its body bristles with sharp spikes. Carelessly trying to touch it could cause fainting from the spikes.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/117/"
+    },
+    {
+      "id": 118,
+      "name": "Goldeen",
+      "en": "Its dorsal and pectoral fins are strongly developed like muscles. It can swim at a speed of five knots.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/118/"
+    },
+    {
+      "id": 119,
+      "name": "Seaking",
+      "en": "The horn on its head is sharp like a drill. It bores a hole in a boulder to make its nest.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/119/"
+    },
+    {
+      "id": 120,
+      "name": "Staryu",
+      "en": "It appears in large numbers by seashores. At night, its central core flashes with a red light.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/120/"
+    },
+    {
+      "id": 121,
+      "name": "Starmie",
+      "en": "This POKéMON has a geometric body. Because of its body, the locals suspect that it is an alien creature.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/121/"
+    },
+    {
+      "id": 122,
+      "name": "Mr. Mime",
+      "en": "It is adept at conning people. It is said to be able to create walls out of thin air by miming.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/122/"
+    },
+    {
+      "id": 123,
+      "name": "Scyther",
+      "en": "It tears and shreds prey with its wickedly sharp scythes. It very rarely spreads its wings to fly.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/123/"
+    },
+    {
+      "id": 124,
+      "name": "Jynx",
+      "en": "It speaks using a language that sounds human. Research is under way to determine what is being said.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/124/"
+    },
+    {
+      "id": 125,
+      "name": "Electabuzz",
+      "en": "It loves to feed on strong electricity. It occasionally appears around large power plants and so on.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/125/"
+    },
+    {
+      "id": 126,
+      "name": "Magmar",
+      "en": "Found near the mouth of a volcano. This fire-breather’s body temperature is nearly 2,200 degrees Fahrenheit.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/126/"
+    },
+    {
+      "id": 127,
+      "name": "Pinsir",
+      "en": "Its two long pincer horns are powerful. Once they grip an enemy, they won’t release until the foe is torn.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/127/"
+    },
+    {
+      "id": 128,
+      "name": "Tauros",
+      "en": "When it is about to TACKLE, it whips its body repeatedly with its three long tails.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/128/"
+    },
+    {
+      "id": 129,
+      "name": "Magikarp",
+      "en": "It is virtually worthless in terms of both power and speed. It is the most weak and pathetic POKéMON in the world.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/129/"
+    },
+    {
+      "id": 130,
+      "name": "Gyarados",
+      "en": "It has an extremely aggressive nature. The HYPER BEAM it shoots from its mouth totally incinerates all targets.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/130/"
+    },
+    {
+      "id": 131,
+      "name": "Lapras",
+      "en": "Its high intelligence enables it to understand human speech. It likes to ferry people on its back.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/131/"
+    },
+    {
+      "id": 132,
+      "name": "Ditto",
+      "en": "It can freely recombine its own cellular structure to transform into other life- forms.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/132/"
+    },
+    {
+      "id": 133,
+      "name": "Eevee",
+      "en": "An extremely rare POKéMON that may evolve in a number of different ways depending on stimuli.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/133/"
+    },
+    {
+      "id": 134,
+      "name": "Vaporeon",
+      "en": "Its body’s cellular structure is similar to the molecular composition of water. It can melt invisibly in water.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/134/"
+    },
+    {
+      "id": 135,
+      "name": "Jolteon",
+      "en": "If it is angered or startled, the fur all over its body bristles like sharp needles that pierce foes.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/135/"
+    },
+    {
+      "id": 136,
+      "name": "Flareon",
+      "en": "It has a flame bag inside its body. After inhaling deeply, it blows out flames of nearly 3,100 degrees Fahrenheit.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/136/"
+    },
+    {
+      "id": 137,
+      "name": "Porygon",
+      "en": "Using the most advanced technologies, scientists finally succeeded in making the first artificial POKéMON.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/137/"
+    },
+    {
+      "id": 138,
+      "name": "Omanyte",
+      "en": "A prehistoric POKéMON that lived in the primordial sea, it swims by twisting its 10 tentacles about.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/138/"
+    },
+    {
+      "id": 139,
+      "name": "Omastar",
+      "en": "Its tentacles are highly developed as if they are hands and feet. As soon as it ensnares prey, it bites.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/139/"
+    },
+    {
+      "id": 140,
+      "name": "Kabuto",
+      "en": "This POKéMON was regenerated from the fossil of an ancient creature. It protects itself with a hard shell.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/140/"
+    },
+    {
+      "id": 141,
+      "name": "Kabutops",
+      "en": "It swims freely through water. It catches prey with its scythe-like arms and drains the victim’s fluids.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/141/"
+    },
+    {
+      "id": 142,
+      "name": "Aerodactyl",
+      "en": "It was regenerated from a dinosaur’s genetic matter that was found in amber. It flies with high-pitched cries.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/142/"
+    },
+    {
+      "id": 143,
+      "name": "Snorlax",
+      "en": "It is not satisfied unless it eats over 880 pounds of food every day. When it is done eating, it goes promptly to sleep.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/143/"
+    },
+    {
+      "id": 144,
+      "name": "Articuno",
+      "en": "One of the legendary bird POKéMON. With its long tail trailing behind, its flying form is magnificent.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/144/"
+    },
+    {
+      "id": 145,
+      "name": "Zapdos",
+      "en": "One of the legendary bird POKéMON. While it is flying, it makes crackling and snapping sounds.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/145/"
+    },
+    {
+      "id": 146,
+      "name": "Moltres",
+      "en": "One of the legendary bird POKéMON. Those seeing it are overwhelmed by its orange wings that seem to be on fire.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/146/"
+    },
+    {
+      "id": 147,
+      "name": "Dratini",
+      "en": "Even the young can exceed 6.5 feet in length. It grows larger by repeatedly shedding skin.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/147/"
+    },
+    {
+      "id": 148,
+      "name": "Dragonair",
+      "en": "It is said to live in seas and lakes. Even though it has no wings, it has been seen flying occasionally.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/148/"
+    },
+    {
+      "id": 149,
+      "name": "Dragonite",
+      "en": "It can fly in spite of its big and bulky physique. It circles the globe in just 16 hours.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/149/"
+    },
+    {
+      "id": 150,
+      "name": "Mewtwo",
+      "en": "A POKéMON whose genetic code was repeatedly recombined for research. It turned vicious as a result.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/150/"
+    },
+    {
+      "id": 151,
+      "name": "Mew",
+      "en": "A POKéMON of South America that was thought to have been extinct. It is very intelligent and learns any move.",
+      "version": "firered",
+      "sourceUrl": "https://pokeapi.co/api/v2/pokemon-species/151/"
+    }
+  ]
+}

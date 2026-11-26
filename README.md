@@ -25,6 +25,8 @@ Uma linha de símbolos de giro concede dois giros. Capturar de novo a **mesma va
 | PostgreSQL | Aplicar débito, recompensas e registros da coleção na mesma transação. A operação tem um identificador que permite recuperar a primeira resposta após uma interrupção. |
 | PokéAPI | Fornecer dados das espécies para as fichas. Nomes e sprites de referência incluídos no projeto também vêm dos repositórios da PokéAPI. |
 
+As 151 espécies têm descrições em inglês e português brasileiro. O [catálogo bilíngue](src/pokeapi/README.md) inclui traduções do projeto com apoio de IA e fontes por espécie; os textos continuam disponíveis se a PokéAPI falhar. O jogo não consulta serviços de tradução durante o uso.
+
 ## Decisões e resultados de Caetano
 
 Caetano definiu as regras, a arquitetura, o orçamento de R$ 0 e os critérios de aceite. Conduziu o projeto da prova de saldo até a publicação da máquina. Usou IA para pesquisar alternativas, escrever e revisar código e automatizar verificações. Participou diretamente das provas de troca de conta, recuperação de senha e acessibilidade.

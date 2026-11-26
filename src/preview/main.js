@@ -100,8 +100,9 @@ const messages = {
     detailsTitle: 'Pokémon selecionado — PokéAPI', loadingDetails: 'Carregando dados do Pokémon…',
     failedDetails: 'Não foi possível carregar os dados da PokéAPI.', retry: 'Tentar novamente',
     typeLabel: 'Tipo', electric: 'Elétrico', unknownType: 'Tipo indisponível',
-    noDescription: 'Descrição indisponível em português na PokéAPI.',
+    noDescription: 'Descrição indisponível em português.',
     descriptionSource: (version) => `Descrição da PokéAPI · versão ${version}`,
+    translatedDescriptionSource: (version) => `PokéAPI · ${version} · tradução PT-BR do projeto`,
     unknownVersion: 'não informada',
     missingSprite: 'Imagem indisponível.', spriteAlt: 'Sprite normal',
     account: 'Jogador', signInTitle: 'Sua conta', emailLabel: 'E-mail', passwordLabel: 'Senha', loginButton: 'Entrar', logoutButton: 'Sair',
@@ -174,8 +175,9 @@ const messages = {
     detailsTitle: 'Selected Pokémon — PokéAPI', loadingDetails: 'Loading Pokémon data…',
     failedDetails: 'Could not load data from PokéAPI.', retry: 'Try again',
     typeLabel: 'Type', electric: 'Electric', unknownType: 'Type unavailable',
-    noDescription: 'Description unavailable in English on PokéAPI.',
+    noDescription: 'Description unavailable in English.',
     descriptionSource: (version) => `PokéAPI description · ${version} version`,
+    translatedDescriptionSource: (version) => `PokéAPI · ${version} · project PT-BR translation`,
     unknownVersion: 'unspecified',
     missingSprite: 'Image unavailable.', spriteAlt: 'Normal sprite',
     account: 'Player', signInTitle: 'Your account', emailLabel: 'Email', passwordLabel: 'Password', loginButton: 'Sign in', logoutButton: 'Sign out',
@@ -530,18 +532,16 @@ function renderPokemonDetails(text, visible) {
   sprite.hidden = !selectedOwned || spriteFailed;
   document.querySelector('#sprite-status').textContent = selectedOwned && spriteFailed ? text.missingSprite : '';
   const content = document.querySelector('#detail-content');
-  content.hidden = detailStatus !== 'ready';
+  const description = selectDescription(pokemonData?.descriptions, language, record.speciesId);
+  content.hidden = detailStatus !== 'ready' && !description;
   document.querySelector('#detail-status').textContent = detailStatus === 'loading' ? text.loadingDetails
     : detailStatus === 'error' ? text.failedDetails : '';
   document.querySelector('#retry-detail').hidden = detailStatus !== 'error';
-  if (!pokemonData) return;
-
-  const types = pokemonData.types.map(({ key }) => language === 'pt' ? (portugueseTypes[key] || key) : key);
+  const types = (pokemonData?.types ?? []).map(({ key }) => language === 'pt' ? (portugueseTypes[key] || key) : key);
   document.querySelector('#pokemon-types').textContent = `${text.typeLabel}: ${types.join(', ') || text.unknownType}`;
-  const description = selectDescription(pokemonData.descriptions, language);
   document.querySelector('#pokemon-description').textContent = description?.text || text.noDescription;
   document.querySelector('#description-source').textContent = description
-    ? text.descriptionSource(description.version || text.unknownVersion) : '';
+    ? (description.translated ? text.translatedDescriptionSource : text.descriptionSource)(description.version || text.unknownVersion) : '';
 }
 
 function renderList(selector, values) {
