@@ -1010,7 +1010,9 @@ screenNav.addEventListener('click', (event) => {
   const link = event.target.closest('[data-screen-link]');
   if (link?.getAttribute('aria-disabled') === 'true') event.preventDefault();
 });
+let machineViewGeneration = 0;
 window.addEventListener('hashchange', () => {
+  machineViewGeneration++;
   guestIntro.cancel();
   rewardAudio.stop();
   if (activeScreen() !== 'machine') captureDialog.clear();
@@ -1226,19 +1228,29 @@ async function finishSpin(current = () => true) {
     if (status === 'success') await reelView.stop(grid);
   } finally {
     if (current()) {
-      pending = false;
       spinning = false;
       render();
       if (status === 'success') {
         if (activeScreen() === 'machine' && !document.hidden) {
           const rewards = buildRewardPresentations({ wins, captures: lastCaptures ?? [], vouchers: lastVouchers,
             lineSpins: lastProofReward?.lines, authenticated: neonProof });
-          if (rewards.length) captureDialog.show(rewards, language, (entry) => { void rewardAudio.play(entry); });
+          if (rewards.length) {
+            arcadeSound.stop();
+            const viewGeneration = machineViewGeneration;
+            // Give players time to see the winning lines before presenting rewards.
+            if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              await new Promise(resolve => setTimeout(resolve, 400));
+            }
+            if (current() && viewGeneration === machineViewGeneration && activeScreen() === 'machine' && !document.hidden) {
+              captureDialog.show(rewards, language, (entry) => { void rewardAudio.play(entry); });
+            }
+          }
           else arcadeSound.finish(false);
         } else {
           arcadeSound.stop();
         }
       } else arcadeSound.stop();
+      if (current()) { pending = false; render(); }
     }
   }
 }

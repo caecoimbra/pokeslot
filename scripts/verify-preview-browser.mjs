@@ -8,6 +8,7 @@ import { checkSessionLoading } from './check-session-loading.mjs';
 import { checkZeroBalance } from './check-zero-balance.mjs';
 import { checkCaptureDialog } from './check-capture-dialog.mjs';
 import { checkRewardDialog } from './check-reward-dialog.mjs';
+import { checkRewardTiming } from './check-reward-timing.mjs';
 import { checkPokedexFilters } from './check-pokedex-filters.mjs';
 import { checkPokemonCries } from './check-pokemon-cries.mjs';
 import { checkAccountMenu } from './check-account-menu.mjs';
@@ -87,6 +88,7 @@ try {
   await checkZeroBalance(browser, origin);
   await checkCaptureDialog(browser, origin);
   await checkRewardDialog(browser, origin, axe);
+  await checkRewardTiming(browser, origin);
   await checkPokedexFilters(browser, origin, axe);
   await checkPokemonCries(browser, origin);
   await checkAccountMenu(browser, origin, axe);

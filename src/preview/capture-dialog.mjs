@@ -89,6 +89,7 @@ export function createCaptureDialog({ speciesName }) {
     else dialog.close();
   });
   dialog.addEventListener('close', () => {
+    delete dialog.dataset.ready;
     queue = [];
     if (!restoreFocus) return;
     restoreFocus = false;
@@ -101,7 +102,15 @@ export function createCaptureDialog({ speciesName }) {
     if (!entries.length) return;
     queue = entries; index = 0; language = selectedLanguage; onShow = callback;
     showCurrent();
-    if (!dialog.open) { restoreFocus = true; dialog.showModal(); }
+    if (!dialog.open) {
+      restoreFocus = true;
+      dialog.showModal();
+      const machine = document.querySelector('#grid').getBoundingClientRect();
+      const target = dialog.getBoundingClientRect();
+      dialog.style.setProperty('--reward-origin-x', `${machine.left + machine.width / 2 - target.left - target.width / 2}px`);
+      dialog.style.setProperty('--reward-origin-y', `${machine.top + machine.height / 2 - target.top - target.height / 2}px`);
+      dialog.dataset.ready = 'true';
+    }
   }
 
   function clear() {

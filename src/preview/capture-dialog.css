@@ -73,8 +73,9 @@
 #capture-dialog-close:focus-visible { outline: 3px solid white; outline-offset: 3px; }
 @media (prefers-reduced-motion: no-preference) {
   #capture-dialog[open] .capture-card { animation: capture-arrive .35s cubic-bezier(.2, .8, .25, 1) both; }
-  #capture-dialog[open] .capture-dialog-content { animation: capture-arrive .5s cubic-bezier(.2, .8, .25, 1) both; }
+  #capture-dialog[open][data-ready] { animation: reward-emerge .45s cubic-bezier(.2, .8, .25, 1) both; }
   #capture-dialog[open] .capture-portrait { animation: capture-glow 1.8s ease-in-out infinite alternate; }
 }
 @keyframes capture-arrive { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+@keyframes reward-emerge { from { opacity: 0; transform: translate(var(--reward-origin-x, 0px), var(--reward-origin-y, 0px)) scale(.32); } to { opacity: 1; transform: translate(0, 0) scale(1); } }
 @keyframes capture-glow { from { box-shadow: 0 0 8px #ffe49c55; } to { box-shadow: 0 0 26px #ffe49cbb; } }
