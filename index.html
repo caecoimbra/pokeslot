@@ -166,22 +166,24 @@
             <label><span data-text="numberFilter"></span><input id="collection-number" type="search" maxlength="40" placeholder="#025" autocomplete="off"></label>
             <label><span data-text="variantFilter"></span><select id="collection-variant"><option value="all" data-text="allVariants"></option><option value="normal" data-text="normal"></option><option value="shiny" data-text="shiny"></option></select></label>
           </div>
-          <div class="dex-filter-group" role="group" aria-labelledby="collection-registration-label">
-            <span id="collection-registration-label" data-text="registrationFilter"></span>
-            <div id="collection-registration" class="dex-filter-buttons">
-              <button type="button" data-registration="all" data-text="allRegistrations" aria-pressed="true"></button>
-              <button type="button" data-registration="owned" data-text="capturedFilter" aria-pressed="false"></button>
-              <button type="button" data-registration="missing" data-text="uncapturedFilter" aria-pressed="false"></button>
+          <div class="dex-filter-row">
+            <div class="dex-filter-group" role="group" aria-labelledby="collection-registration-label">
+              <span id="collection-registration-label" data-text="registrationFilter"></span>
+              <div id="collection-registration" class="dex-filter-buttons">
+                <button type="button" data-registration="all" data-text="allRegistrations" aria-pressed="true"></button>
+                <button type="button" data-registration="owned" data-text="capturedFilter" aria-pressed="false"></button>
+                <button type="button" data-registration="missing" data-text="uncapturedFilter" aria-pressed="false"></button>
+              </div>
             </div>
-          </div>
-          <div class="dex-filter-group" role="group" aria-labelledby="collection-rarity-label">
-            <span id="collection-rarity-label" data-text="rarityFilter"></span>
-            <div id="collection-rarity" class="dex-filter-buttons">
-              <button type="button" data-rarity="all" data-text="allRarities" aria-pressed="true"></button>
-              <button type="button" data-rarity="common" data-text="commonRarity" aria-pressed="false"></button>
-              <button type="button" data-rarity="uncommon" data-text="uncommonRarity" aria-pressed="false"></button>
-              <button type="button" data-rarity="rare" data-text="rareRarity" aria-pressed="false"></button>
-              <button type="button" data-rarity="legendary" data-text="legendaryRarity" aria-pressed="false"></button>
+            <div class="dex-filter-group" role="group" aria-labelledby="collection-rarity-label">
+              <span id="collection-rarity-label" data-text="rarityFilter"></span>
+              <div id="collection-rarity" class="dex-filter-buttons">
+                <button type="button" data-rarity="all" data-text="allRarities" aria-pressed="true"></button>
+                <button type="button" data-rarity="common" data-text="commonRarity" aria-pressed="false"></button>
+                <button type="button" data-rarity="uncommon" data-text="uncommonRarity" aria-pressed="false"></button>
+                <button type="button" data-rarity="rare" data-text="rareRarity" aria-pressed="false"></button>
+                <button type="button" data-rarity="legendary" data-text="legendaryRarity" aria-pressed="false"></button>
+              </div>
             </div>
           </div>
           <p id="filter-count" role="status"></p>
