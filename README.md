@@ -1,69 +1,84 @@
 # PokéSlot
 
-Um arcade de coleção idealizado e dirigido por **Caetano Coimbra**. Cada rodada dura alguns instantes. A estratégia aparece entre os giros, ao escolher qual espécie resgatar ou qual Pokémon evoluir para completar a Pokédex de Kanto.
+**English · [Português (Brasil)](README.pt-BR.md)**
 
-**[Abrir a máquina](https://pokeslot.pages.dev/) · [Case do projeto](https://pokeslot.pages.dev/case/) · [English case study](https://pokeslot.pages.dev/case/en/)**
+PokéSlot is a bilingual arcade game where players spin three reels and collect all 151 Pokémon from Kanto. Each account has its own balance, Pokédex and inventory. The server determines rewards and PostgreSQL saves the results.
 
-Crie uma conta para jogar na máquina hospedada e recuperar seu progresso. Use um e-mail ao qual tenha acesso para receber o link de redefinição de senha. O repositório também inclui um modo de desenvolvimento local.
+**[Play the game](https://pokeslot.pages.dev/?lang=en) · [English case study](https://pokeslot.pages.dev/case/en/) · [Estudo de caso em português](https://pokeslot.pages.dev/case/)**
 
-Ao tentar girar sem entrar, o visitante conhece o Professor Coimbra em uma introdução interativa que leva ao cadastro. O [personagem original](docs/arte-professor-coimbra.md) foi criado sob direção de Caetano, com arte apoiada por IA. A apresentação usa animações, diálogos PT/EN, teclado e movimento reduzido, sem gerar uma rodada ou alterar dados de jogadores.
+Create an account to play and recover your progress. Use an email address you can access to receive a password reset link. Visitors who try to spin before signing in meet Professor Coimbra in an introduction that does not create a round or change player data.
 
-![Máquina do PokéSlot após uma rodada local, com os três rolos, o saldo e o comando Girar](public/case/maquina-pt.png)
+![The Kanto Spin arcade cabinet after a local round, showing three reels, a balance and a spin button](public/case/maquina-en.png)
 
-## Como jogar
+## Highlights
 
-1. **Gire.** A conta começa com 20 giros. Cada rodada custa um. Cada rolo embaralha suas 20 posições e para em uma delas. A máquina verifica três horizontais e duas diagonais. Cada linha com três símbolos iguais concede sua própria recompensa.
-2. **Colecione.** Três Pokébolas concedem uma captura. O sorteio escolhe a raridade (70% comum, 22% incomum, 7% raro, 1% lendário) e uma espécie desse grupo. A chance de shiny é de 0,5% por captura, independente da raridade. Uma espécie aparece na Pokédex assim que qualquer uma das variantes é registrada.
-3. **Escolha o próximo registro.** Uma linha de vales sorteia, com chances iguais, um vale Pokémon, um vale pedra ou um vale de dois giros. O vale Pokémon permite escolher uma variante normal faltante por 1 a 4 vales, conforme a raridade. Ao evoluir com uma pedra compatível, o destino herda a variante e a origem continua disponível.
+- **Collect Kanto:** discover 151 species, with search, filters, silhouettes and normal/shiny variants. Shiny is optional for completing the collection.
+- **Spin and earn rewards:** three horizontal and two diagonal paylines can award Pokémon, extra spins or vouchers. Each winning line awards a prize.
+- **Make choices:** redeem Pokémon vouchers for missing normal variants and choose stones for compatible evolutions. Evolution preserves the original Pokémon and its variant.
+- **Resume safely:** the database applies changes transactionally. A pending operation can be recovered using its existing ID after an interrupted response, within the supported recovery period.
+- **Play in Portuguese or English:** the interface supports keyboard use, reduced motion, optional sound, reward effects and Pokédex cries.
 
-Uma linha de símbolos de giro concede dois giros. Capturar de novo a **mesma variante** compensa o jogador com 1, 1, 2 ou 3 giros por raridade. A compensação dobra para um shiny repetido. O saldo recebe mais 10 giros por período completo de 24 horas desde o primeiro acesso. Após 53 horas, são duas reposições e cinco horas já transcorridas para a terceira.
+## Game rules
 
-## Da regra ao banco
+Each reel has 20 positions: 10 Poké Balls, six spin symbols and four vouchers. Reels are shuffled on each round and stop at randomly selected positions. An account starts with **20 spins**; each round costs one. Every complete 24-hour period adds **10 spins**. Periods accumulate while the player is away, and the cycle does not restart when the game is opened.
 
-| Camada | Responsabilidade |
+A Poké Ball payline selects a rarity (70% common, 22% uncommon, 7% rare, 1% legendary), then a species within that tier. The shiny chance is independently **0.5% per catch**. A duplicate of the same variant awards 1, 1, 2 or 3 spins by rarity; this compensation doubles for a shiny duplicate. A spin-symbol payline awards two spins.
+
+A voucher payline awards, with equal probability, a Pokémon voucher, a stone voucher or two spins. A Pokémon voucher redeems a missing normal variant for one to four vouchers according to rarity. A stone voucher lets the player choose a stone for a compatible evolution.
+
+## How it works
+
+| Layer | Responsibility |
 | --- | --- |
-| Interface PT/EN em JavaScript e CSS, servida pelo Cloudflare Pages | Receber comandos, animar os rolos e apresentar o resultado confirmado. A Pokédex usa folhas de sprites locais para preservar as silhuetas e os registros quando a PokéAPI está indisponível. |
-| Neon Auth e Neon Function | Identificar a conta, exigir uma sessão ativa e sortear o resultado no servidor. |
-| PostgreSQL | Aplicar débito, recompensas e registros da coleção na mesma transação. A operação tem um identificador que permite recuperar a primeira resposta após uma interrupção. |
-| PokéAPI | Fornecer dados das espécies para as fichas. Nomes e sprites de referência incluídos no projeto também vêm dos repositórios da PokéAPI. |
+| HTML, CSS and modular JavaScript on Cloudflare Pages | Present the game, animate the confirmed result and provide the bilingual interface. IndexedDB stores pending operation intent in the browser. |
+| Neon Auth and a Neon Function using TypeScript and Hono | Authenticate the player, validate the session and determine round outcomes on the server. |
+| PostgreSQL | Apply debits, replenishment, rewards and collection updates transactionally. Operation IDs support recovery from interrupted responses. |
+| PokéAPI and local assets | Provide Pokémon data and cries. Local sprites and a versioned description catalog preserve useful Pokédex content when live data is unavailable. |
 
-As 151 espécies têm descrições em inglês e português brasileiro. O [catálogo bilíngue](src/pokeapi/README.md) inclui traduções do projeto com apoio de IA e fontes por espécie; os textos continuam disponíveis se a PokéAPI falhar. O jogo não consulta serviços de tradução durante o uso.
+Portuguese descriptions are project translations assisted by AI, with English sources recorded in the [catalog documentation](src/pokeapi/README.md); they are not presented as official translations. The game does not call an AI translation service during play.
 
-## Decisões e resultados de Caetano
+## Product decisions and evidence
 
-Caetano definiu as regras, a arquitetura, o orçamento de R$ 0 e os critérios de aceite. Conduziu o projeto da prova de saldo até a publicação da máquina. Usou IA para pesquisar alternativas, escrever e revisar código e automatizar verificações. Participou diretamente das provas de troca de conta, recuperação de senha e acessibilidade.
+**Caetano Coimbra** conceived and led the project, setting the game rules, architecture, zero-cost constraint and acceptance criteria. He used AI to support research, implementation, code review and automated checks, and took part in manual tests of account switching, password recovery and accessibility.
 
-| Decisão | Como foi avaliada |
+| Decision | Evidence |
 | --- | --- |
-| Separar a apresentação do estado do jogador | Com contas fictícias no mesmo navegador, a coleção de uma conta foi preservada ao entrar em outra. Em um teste com estoque preparado, Pikachu e Raichu continuaram registrados após recarregar. |
-| Dar ao jogador escolhas para completar Kanto | O simulador comparou 1.500 trajetórias por cenário. Com três vales equiprováveis, 72 receitas e até 25 rodadas por dia, a mediana simulada para 151 espécies foi de 61 dias. |
-| Tornar o resultado acessível pelo teclado e por áudio assistivo | No endereço definitivo, uma rodada pelo teclado levou o saldo de 25 para 24. O valor persistiu após recarregar. Caetano confirmou a narração com o Narrador do Windows. |
+| Keep each player's state separate | In a test with prepared inventory, player C redeemed Pikachu, evolved it into Raichu and recovered both after reloading. Player B saw B's own inventory. |
+| Give players choices when completing Kanto | A model compared 1,500 simulated trajectories per scenario. With three equally likely vouchers, 72 evolutions and up to 25 rounds a day, the simulated median was 61 days. This is not observed player behavior. |
+| Support keyboard and assistive technology | On the hosted game, a keyboard spin reduced the balance from 25 to 24 and the result persisted after reload. Caetano confirmed announcements with Windows Narrator. |
 
-O [roteiro e as evidências de validação](docs/roteiro-1.0.md) documentam os ambientes de cada prova. Os [cenários de progressão](docs/vales-evolucao-integracao.md) detalham as hipóteses da simulação.
+The [validation roadmap](docs/roteiro-1.0.md) and [progression scenarios](docs/vales-evolucao-integracao.md) provide additional context in Portuguese. The [English case study](https://pokeslot.pages.dev/case/en/) summarizes the project and its trade-offs.
 
-## Executar e verificar
+## Run locally
 
-O projeto foi verificado com Node.js 26.13.1 e pnpm 11.25.0. O modo local usa o SQLite incluído no Node e funciona sem conta Neon.
+The project has been verified with **Node.js 26.13.1** and **pnpm 11.25.0**. The local development mode uses Node's built-in SQLite and does not require a Neon account.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Abra o endereço indicado pelo Vite. O servidor de desenvolvimento guarda um único jogador no arquivo ignorado `.pokeslot-demo.sqlite`. Esse modo usa sorteio simplificado, cinco tipos de vale e 16 receitas clássicas. A economia completa de giros, compensações, três vales e 72 evoluções funciona na máquina **hospedada**.
+Open the URL printed by Vite. The local server stores one demo player in the ignored `.pokeslot-demo.sqlite` file. Its rules are simplified: it uses five voucher types and 16 classic evolutions. The hosted game uses the full economy, three voucher types and 72 evolutions.
+
+Run the unit and integration suite and create a local build:
 
 ```sh
 pnpm test
 pnpm build
 ```
 
-O build do site usa `pnpm build:site` com os dois endereços públicos `VITE_NEON_PROOF_*` de [.env.example](.env.example) configurados em `.env.local` ou no ambiente. O destino é `dist/homologacao`. As credenciais do banco pertencem exclusivamente ao runtime da Function. A suíte local e a [verificação HTTP da publicação](scripts/verify-public-security.mjs) cobrem camadas diferentes.
+The browser checks in [verify-preview-browser.mjs](scripts/verify-preview-browser.mjs) use Playwright and axe-core installed separately. They are not included in `pnpm test`, and this repository does not currently have a CI pipeline.
 
-## Encontrar o código
+For the hosted-site build, configure the two public `VITE_NEON_PROOF_*` URLs shown in [.env.example](.env.example) in `.env.local` or the environment, then run `pnpm build:site`. The output goes to `dist/homologacao`. Database credentials belong only in the Function runtime; never put them in frontend configuration. The local suite and [public HTTP checks](scripts/verify-public-security.mjs) cover different layers.
 
-- [Regras de domínio](src/domain) e [sorteios no servidor](src/server)
-- [Máquina, Pokédex e inventário](src/preview) e [cliente da PokéAPI](src/pokeapi)
-- [Function autenticada](functions/neon-game-proof/index.ts) e [transações PostgreSQL](db/neon)
-- [Testes](test) e [simulador de progressão](scripts/simular-progressao-v1.mjs)
+## Project layout
 
-Projeto pessoal e não comercial de fã. Pokémon e os personagens pertencem aos respectivos titulares. Dados e sprites utilizados no catálogo estão disponíveis na [PokéAPI](https://pokeapi.co/) e no [repositório de sprites](https://github.com/PokeAPI/sprites).
+- [Domain rules](src/domain) and [server-side draws](src/server)
+- [Game interface and inventory](src/preview) and [PokéAPI client](src/pokeapi)
+- [Authenticated Function](functions/neon-game-proof/index.ts) and [PostgreSQL transactions](db/neon)
+- [Tests](test) and [progression simulator](scripts/simular-progressao-v1.mjs)
+- [Professor Coimbra artwork and its creation](docs/arte-professor-coimbra.md)
+
+## Scope and credits
+
+PokéSlot is a personal, non-commercial fan project. Pokémon and its characters belong to their respective rights holders. Pokémon data and sprites are available from [PokéAPI](https://pokeapi.co/) and its [sprites repository](https://github.com/PokeAPI/sprites). The hosted demo depends on third-party free services and their availability and limits; password recovery uses Neon's shared sender. The repository does not currently include an open-source license.
